@@ -59,11 +59,18 @@ in one list, and no screen writes one of its own: the count is
 `python3 scripts/check_the_one_list.py`, where it is measured rather than
 remembered — C-15 in `docs/CLAIMS.md` is the one other place it is written
 down, and a gate holds that place to this command. The interface is English,
-German and Swedish: the Swedish words were written on 23 October 2026 and the
-first screen offers Svenska because the gates measure that its sentences are
-not the English ones — **they have not been read by a native speaker yet**, and
-that review is a round of its own. The detection packs are German, English and
-Swedish. **Arabic is being built**: the interface's sentences and a name library.
+German, Swedish and Arabic: the Swedish words were written on 23 October 2026
+and the Arabic words on 25 October 2026, and the first screen offers both
+because the gates measure that their sentences are not the English ones —
+**neither has been read by a native speaker yet**, and that review is a round
+of its own. The Arabic is measured the same way as the Swedish: 695 of 701
+values say something other than the English, and the six that do not are names
+and product spellings the law allows in every language. **Arabic is the first
+language here that is read right to left**, so choosing it mirrors every
+screen; the document keeps its own direction, which is the text's and not the
+interface's. The detection packs are German, English, Swedish and Arabic. The Arabic arrives
+in the next build: the published beta of 25 October 2026 speaks English, German
+and Swedish.
 
 Windows is built from git by `.github/workflows/windows-core.yml`, by hand from
 the Actions tab. The core's tests, the nine storage contracts, the one-writer

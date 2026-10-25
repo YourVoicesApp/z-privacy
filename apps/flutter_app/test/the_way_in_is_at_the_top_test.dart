@@ -331,15 +331,27 @@ void main() {
     expect(chosen, withRules.last.id);
 
     // 041-Q — and so does every language under the line. The owner could not
-    // pick Arabic on a build whose vault already held an Arabic list.
-    final arabic = rest.firstWhere((l) => l.id == 'ar');
-    expect(arabic.label, 'العربية', reason: 'Arabic is not named in Arabic');
-    await tester.scrollUntilVisible(find.text(arabic.label), 60,
+    // pick Arabic on a build whose vault already held an Arabic list, which is
+    // where this law came from; **Arabic moved above the line on 25 October
+    // 2026** (paper 115 gave it a pack), so the language measured here is
+    // Japanese — and Arabic is covered by the loop above, which asks for every
+    // label with rules by name.
+    // **The first language under the line, whichever it is**, and not one
+    // picked by name: Japanese was tried first and the tap never registered —
+    // it sits some thirty-five rows down, and a `scrollUntilVisible` that ends
+    // with the row drawn but not reachable leaves the press on whatever was
+    // under the finger, so `chosen` still held the language tapped above.
+    // Reading `rest.first` says the law instead of an example: the list is
+    // sorted with the packs first, so the first row under the line is the
+    // nearest bare language and the test stops depending on which one it is.
+    final bare = rest.first;
+    expect(bare.label, isNotEmpty, reason: 'a language under the line has no name');
+    await tester.scrollUntilVisible(find.text(bare.label), 60,
         scrollable: find.descendant(
             of: find.byKey(LanguageChoices.scroller), matching: find.byType(Scrollable)));
-    await tester.tap(find.text(arabic.label));
+    await tester.tap(find.text(bare.label));
     await settle(tester, rounds: 1);
-    expect(chosen, 'ar', reason: 'a language with no pack could not be chosen');
+    expect(chosen, bare.id, reason: 'a language with no pack could not be chosen');
   });
 }
 

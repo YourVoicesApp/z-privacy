@@ -68,27 +68,45 @@ void main() {
     await RustLib.init();
   });
 
-  testWidgets('rule 56 — Swedish is offered, Arabic is not, and both are in the core',
+  testWidgets('rule 56 — every pack this build carries is offered, and a language with none is not',
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(1100, 950));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     final ground = await fresh(tester, 'offered');
 
     // The core's own labels, so nothing here spells a language for itself.
+    //
+    // **العربية joined this list on 25 October 2026** — papers 115 and 116,
+    // and it is the line that turned rule 56 round: this guard read
+    // `['de', 'en', 'sv']` and «Arabic is not offered», because the direction
+    // had not been measured. It has been, so Arabic is a language of the
+    // interface like the other three and the law left standing is the one
+    // that was always the point — **every pack this build carries is
+    // offered**, and nothing is offered that the core cannot scan.
     final offered = ground.packs.where((p) => offeredLanguages.contains(p.id)).toList();
     expect(
       offered.map((p) => p.id).toList()..sort(),
-      ['de', 'en', 'sv'],
+      ['ar', 'de', 'en', 'sv'],
       reason: 'the languages offered on the glass are ${offered.map((p) => p.id).toList()}',
     );
-    // **Not offered is not absent**: Arabic is a language this build knows and
-    // does not show, which is the half of rule 56 that is easy to lose.
     expect(
-      ground.languages.any((l) => l.id == 'ar'),
-      isTrue,
-      reason: 'Arabic is not even in the language table, so «not offered» measures nothing',
+      ground.packs.map((p) => p.id).toList()..sort(),
+      offered.map((p) => p.id).toList()..sort(),
+      reason: 'a pack this build carries is not offered, which rule 56 forbids',
     );
-    expect(offeredLanguages, isNot(contains('ar')));
+    // **Not offered is not absent**: a language this build knows and does not
+    // show is the half of rule 56 that is easy to lose, and it is Japanese
+    // now — the core has its name and no knowledge for it at all.
+    expect(
+      ground.languages.any((l) => l.id == 'ja'),
+      isTrue,
+      reason: 'Japanese is not even in the language table, so «not offered» measures nothing',
+    );
+    expect(offeredLanguages, isNot(contains('ja')));
+    // And Arabic is on the other side of that line now, with a pack behind it.
+    expect(offeredLanguages, contains('ar'));
+    expect(ground.hasRules('ar'), isTrue,
+        reason: 'Arabic is offered with no knowledge behind it');
 
     await tester.pumpWidget(MaterialApp(
       home: SettingsScreen(ground: ground, onClose: () {}, room: SettingsRoom.language),

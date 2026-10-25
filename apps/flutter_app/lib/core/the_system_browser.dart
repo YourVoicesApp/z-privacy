@@ -39,12 +39,16 @@ import 'dart:io';
 
 /// **The languages the guide page exists in**, as the site serves them.
 ///
-/// `ar` is in the set because the site has an Arabic guide page. No interface
-/// language reaches it **today** — there is no `app_ar.arb`, so `theLocaleOf`
-/// answers English for `ar` and the app never asks for that page — and it is
-/// written here rather than left out so that the day an Arabic interface is
-/// written, the guide follows it with no edit. Said out loud because a branch
-/// nothing reaches is otherwise a thing a later reader deletes as dead.
+/// `ar` is in the set because the site has an Arabic guide page, and it was
+/// written here before anything could reach it — «so that the day an Arabic
+/// interface is written, the guide follows it with no edit».
+///
+/// **That day was 25 October 2026.** `app_ar.arb` is written (115) and the
+/// screens read right to left (116), so `theLocaleOf('ar')` answers `ar` and a
+/// person whose interface is Arabic is handed `/ar/guide/`. The branch that
+/// nothing reached is the branch that needed no edit — which is the whole of
+/// why it was written early, and the reason it is still worth saying out loud
+/// for `sv`, whose page does not exist and whose code is therefore not here.
 const theGuideSpeaks = {'de', 'en', 'ar'};
 
 /// **The guide's own address, in the language the glass is in** — paper 100.

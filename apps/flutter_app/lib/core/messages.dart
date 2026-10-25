@@ -45,6 +45,47 @@ import 'package:zprivacy/src/rust/api/mirrors.dart';
 /// first person whose language is not ours.
 String theirOwnWord(String name) => '\u2068$name\u2069';
 
+/// **A string the machine owns, isolated for the same reason** — 116, the day
+/// the interface learned to speak Arabic.
+///
+/// [theirOwnWord] is about a word the *person* chose. This is its sibling and
+/// not a second copy of it: a token, a file path, a reason the core phrased in
+/// English. They are **ours**, and until 25 October that was the end of the
+/// argument — G44 says in so many words that our own words «are already in the
+/// sentence's direction» and must not be wrapped.
+///
+/// That sentence was true while every sentence of ours ran left to right. It
+/// stopped being true the moment one could run right to left, and the glass
+/// said so when it was measured:
+///
+///   * `حُفظ في /home/…/brief-restored.pdf` laid out as **two** runs — the
+///     leading `/` is a neutral between Arabic and Latin, so it took the
+///     paragraph's direction and drew at the *other end* of the path. A
+///     person reading it is shown `home/…/brief-restored.pdf/`, which is a
+///     spelling no folder window prints;
+///   * the sentence for a save dialog that will not open carries the system's
+///     own words, and those end in a quote — `…path = '/home/x.pdf'` drew
+///     with that closing quote at the **front** of the line. It is not about
+///     slashes: it is about whatever neutral sits at the edge of a Latin run.
+///
+/// A token, measured in the same breath, came out **right** without any help,
+/// and in three runs while it did so: `__Z_…__` has the same neutrals at both
+/// ends, the two displacements cancel, and the glyphs spell the token back
+/// exactly. That is the token's shape and not a rule, so the token sentences
+/// go through here as well — the law is applied to every sibling in the same
+/// act, and `a_machine_string_keeps_its_order_test` holds both halves of that
+/// sentence so neither can be mistaken for the other.
+///
+/// The fix is the same pair of characters, applied for a different reason, and
+/// the two functions are kept apart so that a gate can tell a word of the
+/// person's from a string of the machine's — and so that neither law is
+/// quietly read as the other.
+///
+/// **Not for a filename this application writes** and not for anything that
+/// leaves: these two code points belong on the glass. `a_name_in_a_sentence_
+/// needs_an_isolate` is the older half of the same rule.
+String theMachinesOwnWord(String text) => '\u2068$text\u2069';
+
 /// **One sentence, drawn in two faces** — 092, sitting five.
 ///
 /// A sentence that carries a token has to stay **one** sentence in the list:
@@ -275,20 +316,23 @@ String protectSaid(ProtectOutcome outcome, ProtectAct act) => switch (outcome) {
   ProtectOutcome_Applied(:final token, :final places) => switch (act) {
     ProtectAct.aCell => switch (places) {
       0 => sentences.everyCellWasAlreadyProtected,
-      1 => sentences.protectedOneCell(token),
-      _ => sentences.protectedCellsDownTheColumn(places, token),
+      1 => sentences.protectedOneCell(theMachinesOwnWord(token)),
+      _ => sentences.protectedCellsDownTheColumn(places, theMachinesOwnWord(token)),
     },
     _ => places == 1
-        ? sentences.protectedAs(token)
-        : sentences.protectedAsInPlaces(token, places),
+        ? sentences.protectedAs(theMachinesOwnWord(token))
+        : sentences.protectedAsInPlaces(theMachinesOwnWord(token), places),
   },
   // **Who by, at every press.** The bar left this half out; a person told
   // «already protected» and not told whether that was their own hand or the
   // vault has to go and look.
   ProtectOutcome_AlreadyProtected(:final token, :final source) =>
-    sentences.alreadyProtectedBy(token, sourceName(source).toLowerCase()),
+    sentences.alreadyProtectedBy(
+        theMachinesOwnWord(token), sourceName(source).toLowerCase()),
+  // The entity is a name the person gave the vault, so it takes the **other**
+  // isolate — same two code points, the other law.
   ProtectOutcome_BelongsToEntity(:final entity, :final token) =>
-    sentences.belongsToEntity(entity, token),
+    sentences.belongsToEntity(theirOwnWord(entity), theMachinesOwnWord(token)),
   // One wording, and the act supplies the subject. Nothing changed, and what
   // the act *would* take is said in the same breath so that a second press on
   // «Protect whole items» is a decision and not a surprise.
@@ -455,11 +499,21 @@ String? whatCameBack(ReturnedDocument seen) {
 /// A core fact folded into the middle of a sentence: lower-cased at its first
 /// letter and closed with a stop, so «Z Privacy will not use that location —
 /// the vault folder: a symlink…» reads as one line rather than two halves.
+///
+/// **And isolated here rather than at the two call sites** — 116. The fact is
+/// the core's own English, which this list does not translate and could not;
+/// the stop at the end is **ours**, added by this function, and it is left
+/// outside the isolate on purpose. Inside it, the stop would be laid out as
+/// part of the Latin run and drawn in the middle of an Arabic line instead of
+/// at the end of it — and `messages_test`'s "a sentence ends with a stop"
+/// would be reading an invisible code point as the last character.
 String _lower(String fact) {
   final trimmed = fact.trim();
   if (trimmed.isEmpty) return sentences.theReasonWasNotReported;
   final lowered = trimmed[0].toLowerCase() + trimmed.substring(1);
-  return lowered.endsWith('.') ? lowered : '$lowered.';
+  final withoutTheStop =
+      lowered.endsWith('.') ? lowered.substring(0, lowered.length - 1) : lowered;
+  return '${theMachinesOwnWord(withoutTheStop)}.';
 }
 
 String _sentence(String fact) {

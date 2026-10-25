@@ -713,9 +713,15 @@ class _ShellState extends State<ZShell> {
             ),
           ),
         if (_settingsOpen)
-          Positioned(
+          PositionedDirectional(
+            // **Against the end of the window, not against its right** — paper
+            // 116, 25 October 2026. 063 put it «480 wide against the right
+            // edge — the owner's number», and in an Arabic interface the end
+            // is the left: a panel that opens over the far side of the screen
+            // from where the reading starts is a panel nobody's eye follows.
+            // The width is his number and does not change.
             top: 0,
-            right: 0,
+            end: 0,
             bottom: 0,
             width: 480,
             child: SettingsScreen(

@@ -181,18 +181,24 @@ class _FirstRunScreenState extends State<FirstRunScreen> {
                         .join(' · ')
                     : t!.languageWord),
                 const SizedBox(height: 9),
-                Row(
+                // **A `Wrap` and not a `Row`, since 116.** «العربية» is the
+                // third name on this line and the row overflowed by 81 px the
+                // moment it arrived — which is an error in a test and a
+                // yellow-and-black stripe in a person's hand, on the **first**
+                // screen they ever see. A list of names cannot be told how
+                // many names it will hold, so it takes a second line instead
+                // of running off the first.
+                Wrap(
+                  spacing: 9,
+                  runSpacing: 9,
                   children: [
                     for (final code in languages)
-                      Padding(
-                        padding: const EdgeInsets.only(right: 9),
-                        child: _Lang(
-                          // A language's own name for itself: «Deutsch» is
-                          // what German calls German, in every language.
-                          label: lookupAppLocalizations(Locale(code)).thisLanguageName,
-                          on: _language == code,
-                          onTap: () => setState(() => _language = code),
-                        ),
+                      _Lang(
+                        // A language's own name for itself: «Deutsch» is
+                        // what German calls German, in every language.
+                        label: lookupAppLocalizations(Locale(code)).thisLanguageName,
+                        on: _language == code,
+                        onTap: () => setState(() => _language = code),
                       ),
                   ],
                 ),

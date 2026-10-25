@@ -1345,7 +1345,7 @@ class _ProfileFact extends StatelessWidget {
               .name;
     final enabled = ground.vault == VaultState.unlocked;
     return Padding(
-      padding: const EdgeInsets.only(left: 20),
+      padding: const EdgeInsetsDirectional.only(start: 20),
       child: InkWell(
         key: ProfileSwitcher.door,
         onTap: enabled
@@ -1578,7 +1578,7 @@ class _Fact extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fact = Padding(
-      padding: const EdgeInsets.only(left: 20),
+      padding: const EdgeInsetsDirectional.only(start: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
@@ -1848,7 +1848,7 @@ class _Band extends StatelessWidget {
             Flexible(
               flex: 2,
               child: Padding(
-                padding: const EdgeInsets.only(left: 14),
+                padding: const EdgeInsetsDirectional.only(start: 14),
                 child: InkWell(
                   onTap: onVault,
                   borderRadius: BorderRadius.circular(7),
@@ -1867,7 +1867,7 @@ class _Band extends StatelessWidget {
                               fontWeight: FontWeight.w600,
                             ),
                             overflow: TextOverflow.ellipsis,
-                            textAlign: TextAlign.right,
+                            textAlign: TextAlign.end,
                           ),
                         ),
                         const SizedBox(width: 10),
@@ -2190,7 +2190,7 @@ class _ColumnsState extends State<_Columns> {
                             Padding(
                               padding: const EdgeInsets.fromLTRB(18, 0, 18, 10),
                               child: Align(
-                                alignment: Alignment.centerLeft,
+                                alignment: AlignmentDirectional.centerStart,
                                 child: ZButton(
                                   key: WorkspaceScreen.removeDocument,
                                   label: sentences.removeTheDocument,
@@ -3058,7 +3058,7 @@ class _SafeRail extends StatelessWidget {
       width: 26,
       decoration: const BoxDecoration(
         color: Zc.warmCard,
-        border: Border(left: BorderSide(color: Zc.line)),
+        border: BorderDirectional(start: BorderSide(color: Zc.line)),
       ),
       child: Column(
         children: [

@@ -187,7 +187,7 @@ class _TheChatState extends State<TheChat> {
       width: widget.width,
       decoration: const BoxDecoration(
         color: Zc.card,
-        border: Border(left: BorderSide(color: Zc.line)),
+        border: BorderDirectional(start: BorderSide(color: Zc.line)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -568,7 +568,7 @@ class _Turn extends StatelessWidget {
         const SizedBox(height: 6),
         // **One button per answer, and the default is coded** — rule 66.
         Align(
-          alignment: Alignment.centerLeft,
+          alignment: AlignmentDirectional.centerStart,
           child: ZButton(
             key: TheChat.showTheText(at),
             label: open ? sentences.hideTheText : sentences.showTheText,

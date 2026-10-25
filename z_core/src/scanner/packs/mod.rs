@@ -8,6 +8,7 @@
 //! A pack is not the language of the interface, and the screen says so in its
 //! first line.
 
+pub(crate) mod ar;
 pub(crate) mod de;
 pub(crate) mod en;
 pub(crate) mod pack;
@@ -33,7 +34,10 @@ use super::Candidate;
 /// or promising one that was dropped.
 ///
 pub(crate) fn installed_packs() -> Vec<pack::LanguagePack> {
-    vec![de::pack(), sv::pack(), en::pack()]
+    // **Arabic since paper 115**, and last in the list for no reason but the
+    // order they were written: `pack_of` finds by id and nothing here is
+    // ordered knowledge.
+    vec![de::pack(), sv::pack(), en::pack(), ar::pack()]
 }
 
 fn pack_of(id: &str) -> Option<pack::LanguagePack> {
@@ -75,26 +79,50 @@ pub(crate) fn installed() -> Vec<crate::api::PackRow> {
     // fact drift, and this one already did: `en` shipped as a rule set on 29
     // September while this function still said German was the only pack, so
     // First Run offered a language it could not actually select.
+    //
+    // **And it drifted the other way on 25 October 2026.** Paper 115 shipped
+    // Arabic as a name pack with three rules of its own and **no rule set** —
+    // a label set is a `Name:`-style table and Arabic's knowledge is not that
+    // shape. So `ar` had everything a session needs and appeared in no row:
+    // `ground.packs` is what the app-language card, the session room and the
+    // bar's own list are drawn from, and 116 could put the whole interface
+    // into Arabic that nobody could choose. The first screen offered it (it
+    // reads `offeredLanguages`) and Settings did not, which is the same law at
+    // two doors with two answers.
+    //
+    // So a language is a row if this build carries **either** kind of
+    // knowledge for it. `LanguagePack::label` was written for exactly this —
+    // «kept for the day a pack ships without a rule set beside it» — and the
+    // sets keep their order and their labels, because a set's label is the one
+    // a person chose to see.
     let packs = installed_packs();
-    crate::scanner::sets::all()
-        .into_iter()
-        .map(|set| {
-            let names = packs.iter().find(|p| p.id == set.id);
-            let counts = names
-                .map(|p| de_names::dictionary_of(p.locale, p.names).counts())
-                .unwrap_or((0, 0));
-            crate::api::PackRow {
-                id: set.id.to_string(),
-                label: set.label.to_string(),
-                locale: names.map(|p| p.locale.to_string()).unwrap_or_default(),
-                version: names.map(|p| p.version.to_string()).unwrap_or_default(),
-                own_rules: names
-                    .map(|p| p.extra.iter().map(|(name, _)| (*name).to_string()).collect())
-                    .unwrap_or_default(),
-                provenance: names.map(|p| p.provenance.to_string()).unwrap_or_default(),
-                given: counts.0 as u32,
-                family: counts.1 as u32,
-            }
-        })
-        .collect()
+    let sets = crate::scanner::sets::all();
+    let mut rows: Vec<crate::api::PackRow> =
+        sets.iter().map(|set| row(set.id, set.label, &packs)).collect();
+    for pack in &packs {
+        if !sets.iter().any(|set| set.id == pack.id) {
+            rows.push(row(pack.id, pack.label, &packs));
+        }
+    }
+    rows
+}
+
+/// One row, from whichever of the two registers named the language.
+fn row(id: &str, label: &str, packs: &[pack::LanguagePack]) -> crate::api::PackRow {
+    let names = packs.iter().find(|p| p.id == id);
+    let counts = names
+        .map(|p| de_names::dictionary_of(p.locale, p.names).counts())
+        .unwrap_or((0, 0));
+    crate::api::PackRow {
+        id: id.to_string(),
+        label: label.to_string(),
+        locale: names.map(|p| p.locale.to_string()).unwrap_or_default(),
+        version: names.map(|p| p.version.to_string()).unwrap_or_default(),
+        own_rules: names
+            .map(|p| p.extra.iter().map(|(name, _)| (*name).to_string()).collect())
+            .unwrap_or_default(),
+        provenance: names.map(|p| p.provenance.to_string()).unwrap_or_default(),
+        given: counts.0 as u32,
+        family: counts.1 as u32,
+    }
 }

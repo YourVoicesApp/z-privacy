@@ -297,7 +297,7 @@ class _Known extends StatelessWidget {
                   TextSpan(
                     // The tokens as they stand in the text — one per word of
                     // what the app read for itself (085 ruling 1).
-                    text: view.protectedAs.join(' '),
+                    text: theMachinesOwnWord(view.protectedAs.join(' ')),
                     style: const TextStyle(fontFamily: Zc.mono, fontWeight: FontWeight.w600),
                   ),
                   TextSpan(text: around.after),

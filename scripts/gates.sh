@@ -426,8 +426,12 @@ fi
 # «لم يسألني عن لغة الجلسة».
 #
 #   * **56** — Swedish is offered beside German and English everywhere a
-#     language is chosen; Arabic stays unoffered until he says otherwise, and
-#     both packs stay in the core either way.
+#     language is chosen; Arabic stayed unoffered until he said otherwise, and
+#     both packs stayed in the core either way. **He said otherwise on 25
+#     October 2026**: paper 115 wrote `app_ar.arb` and paper 116 turned the
+#     screens round, so العربية is the fourth. The law has not moved — a
+#     language is offered when its own words are written and its screens are
+#     measured — and the list below is still the one place that says which.
 #   * **57** — a session does not begin before the person picks, nothing is
 #     pre-marked, and the application's own language no longer becomes a
 #     session's language in silence. The doors are enumerated from what they
@@ -438,10 +442,10 @@ LANGS=$FLUTTER_LIB/widgets/language_list.dart
 
 G38_OFFERED=$(grep -oE "offeredLanguages = <String>\[[^]]*\]" "$LANGS" \
               | grep -oE "'[a-z]{2}'" | tr -d "'" | tr '\n' ' ' | sed 's/ $//')
-if [ "$G38_OFFERED" = "de en sv" ]; then
-  pass "G38 the languages offered are the measured three: de en sv (Arabic unoffered, both packs kept)"
+if [ "$G38_OFFERED" = "ar de en sv" ]; then
+  pass "G38 the languages offered are the measured four: ar de en sv (every pack this build carries)"
 else
-  fail "G38 the offered languages are «$G38_OFFERED» — expected «de en sv» (rule 56)"
+  fail "G38 the offered languages are «$G38_OFFERED» — expected «ar de en sv» (rule 56)"
 fi
 
 # One list, every reader. A second literal pair is the «two copies of de, en»
@@ -2299,12 +2303,143 @@ G44_HAND=$(grep -RnE '\\u\{2068\}|\\u2068' z_core/src "$FLUTTER_LIB" --include='
            | grep -v '/src/rust/' \
            | grep -vE 'text\.rs:[0-9]+:[[:space:]]*format!' \
            | grep -vE 'messages\.dart:[0-9]+:String theirOwnWord' \
+           | grep -vE 'messages\.dart:[0-9]+:String theMachinesOwnWord' \
            | grep -vE ':[0-9]+:[[:space:]]*(//|///)' || true)
 if [ -z "$G44_HAND" ]; then
   pass "G44 the isolate is one function on each side, and nothing writes the pair by hand"
 else
   fail "G44 the isolate pair is written out here instead of called, so the next sentence that needs it has nowhere to look:"
   printf '%s\n' "$G44_HAND" | sed 's/^/        /'
+fi
+
+# ---------------------------------------------------------------- G72
+# **A string the machine owns is isolated too** — 116, 25 October 2026, the
+# round the interface learned to speak Arabic.
+#
+# G44 above is the older half of this law and says, in so many words, that our
+# own words «are already in the sentence's direction» and must not be wrapped.
+# That was true while every sentence of ours ran left to right. It stopped
+# being true the day one could run right to left, and the glass said so when it
+# was measured on this tree:
+#
+#   * «حُفظ في /home/…/brief-restored.pdf» drew as
+#     `home/…/brief-restored.pdf/` — the leading slash is a neutral between
+#     Arabic and Latin, so it took the paragraph's direction and went to the
+#     far end of the path. A person is shown a spelling no folder window
+#     prints;
+#   * the sentence for a save dialog that could not be opened carries the
+#     system's own words, and those end in a quote — which jumped from the end
+#     of the line to the front of it.
+#
+# Two sentences were **measured** wrong and the rest of the family is here
+# because the law is applied to every sibling in the same act, not to the two
+# that happened to break first: a token reads correctly today only because
+# `__Z_…__` is symmetric, which is luck and not a rule.
+#
+# `apps/flutter_app/test/a_machine_string_keeps_its_order_test.dart` holds the
+# physics — that the pair of code points really does this, with the bare form
+# pinned beside it. This holds the **sites**.
+#
+# The register is written by hand because nothing a gate can read says what
+# kind of thing a sentence's argument is. Each one is named with its reason.
+G72_SENTENCES='savedToWhere
+couldNotAskWhereToSaveIt
+troubleStorageRefused
+troubleStoragePermissionsKept
+protectedAs
+protectedAsInPlaces
+protectedOneCell
+protectedCellsDownTheColumn
+alreadyProtectedBy
+belongsToEntity'
+# 1–2 · a path, and a system message that holds one.
+# 3–4 · a reason the core phrased in English — a folder, a permission, a state
+#       of the disk. This list does not translate it and could not. These two
+#       isolate **through `_lower`**, which is the seam that lower-cases the
+#       core's fact and closes the sentence after it: the stop is ours, and
+#       inside the isolate it would be drawn in the middle of an Arabic line.
+#       So the carrier is named below, and `_lower` itself is held at the end
+#       of this gate.
+# 5–10 · a token. `belongsToEntity` carries a name of the person's beside it,
+#       and that one takes `theirOwnWord` — the same two code points, the
+#       other law, and G44 is the half that holds it.
+G72_THROUGH_LOWER='troubleStorageRefused
+troubleStoragePermissionsKept'
+G72_LEFT=""
+G72_SEEN=0
+for KEY in $G72_SENTENCES; do
+  CALLS=$(grep -RnE "sentences\.$KEY\(" "$FLUTTER_LIB" --include='*.dart' 2>/dev/null \
+          | grep -v '/l10n/' | grep -v '/src/rust/' \
+          | grep -vE ':[0-9]+:[[:space:]]*(//|///)' || true)
+  if [ -z "$CALLS" ]; then
+    G72_LEFT="$G72_LEFT«$KEY» is in this law's register and nothing calls it
+"
+    continue
+  fi
+  # The call and the three lines under it, as G44 reads them and for the same
+  # reason: `dart format` puts a two-argument call on several lines.
+  while IFS= read -r SITE; do
+    [ -z "$SITE" ] && continue
+    G72_SEEN=$((G72_SEEN + 1))
+    SITE_FILE=${SITE%%:*}
+    SITE_REST=${SITE#*:}
+    SITE_LINE=${SITE_REST%%:*}
+    # The two that isolate inside `_lower` are carried by that call instead.
+    CARRIER='theMachinesOwnWord'
+    case "
+$G72_THROUGH_LOWER
+" in *"
+$KEY
+"*) CARRIER='_lower(' ;; esac
+    if ! ( set +o pipefail; sed -n "${SITE_LINE},$((SITE_LINE + 3))p" "$SITE_FILE" \
+               2>/dev/null | grep -qF "$CARRIER" ); then
+      G72_LEFT="$G72_LEFT$SITE
+"
+    fi
+  done <<EOF
+$CALLS
+EOF
+done
+if [ -z "$G72_LEFT" ]; then
+  pass "G72 every sentence that carries a path, a token or the core's own words isolates it ($G72_SEEN call sites)"
+else
+  fail "G72 these hand a machine string to a sentence without isolating it — in Arabic the line is drawn in a spelling nobody wrote:"
+  printf '%s\n' "$G72_LEFT" | grep . | sed 's/^/        /'
+fi
+
+# **And the seam the two above lean on.** `_lower` is the one hand that turns
+# the core's fact into the middle of a sentence, so if it stops isolating, two
+# gate lines above go on passing while the glass goes back to drawing a path in
+# a spelling nobody wrote. Held by shape here and by behaviour in
+# `a_machine_string_keeps_its_order_test.dart`, which reads the finished
+# sentence out of `humanMessage`.
+G72_LOWER=$(awk '/^String _lower\(String fact\) \{/{inside=1} inside{print} inside && /^\}/{exit}' \
+            "$FLUTTER_LIB/core/messages.dart" 2>/dev/null || true)
+# No pipe into «grep -q»: the shell answers this one by itself, which is G70's
+# rule kept rather than wrapped around.
+case "$G72_LOWER" in *theMachinesOwnWord*) G72_LOWER_OK=1 ;; *) G72_LOWER_OK= ;; esac
+if [ -n "$G72_LOWER_OK" ]; then
+  pass "G72 the seam that folds a core fact into a sentence isolates it"
+else
+  fail "G72 _lower hands the core's own English to a sentence without isolating it"
+fi
+
+# **And the one place a token is drawn beside a sentence rather than inside
+# one** — the KNOWN card, where the sentence is asked for with a mark and the
+# tokens are drawn in the mono face between its two halves (`aroundTheValue`).
+# One `Text.rich` is still one paragraph, so the algorithm reads across the
+# spans and the law is the same; a grep for the call sites above cannot see it,
+# because the value never passes through a sentence's arguments.
+G72_CARD=$(grep -RnE 'protectedAs\.join\(' "$FLUTTER_LIB" --include='*.dart' 2>/dev/null \
+           | grep -v '/src/rust/' | grep -vE ':[0-9]+:[[:space:]]*(//|///)' || true)
+G72_CARD_LEFT=$(printf '%s\n' "$G72_CARD" | grep . | grep -v 'theMachinesOwnWord' || true)
+if [ -n "$G72_CARD" ] && [ -z "$G72_CARD_LEFT" ]; then
+  pass "G72 the tokens drawn beside a sentence are isolated too ($(printf '%s\n' "$G72_CARD" | grep -c .) place)"
+elif [ -z "$G72_CARD" ]; then
+  fail "G72 nothing draws the protected tokens any more — this half of the gate is measuring nothing"
+else
+  fail "G72 the tokens are drawn into a sentence's paragraph without an isolate:"
+  printf '%s\n' "$G72_CARD_LEFT" | sed 's/^/        /'
 fi
 
 # ---------------------------------------------------------------- G43
@@ -3250,14 +3385,25 @@ fi
 #     reason: a gate that forbids everything on the day the work starts is a
 #     gate somebody turns off. The named exceptions are in the checker, each
 #     with its reason.
-#   * **G51** every key of the English file is in the German and the Swedish,
-#     and no value in either is the English one — a copy is a key nobody
-#     translated. The Swedish **was** the English until 23 October 2026 (56-أ,
-#     which said the first screen offers Svenska on the day those values
-#     differ); paper 106 wrote the Swedish words on the owner's word, so the
-#     exception is gone and both languages answer the same rule. The few values
-#     a language really does share with the English are named in the checker,
-#     each with its reason.
+#   * **G51** every key of the English file is in the German, the Swedish and
+#     the Arabic, and no value in any of them is the English one — a copy is a
+#     key nobody translated. The Swedish **was** the English until 23 October
+#     2026 (56-أ, which said the first screen offers Svenska on the day those
+#     values differ); paper 106 wrote the Swedish words on the owner's word, so
+#     the exception is gone and both languages answer the same rule. **The
+#     Arabic was written on 25 October 2026** (paper 115) and answered the same
+#     rule on its first run, with no exception list of its own — it shares no
+#     word with English, so the common list covers every value it keeps in
+#     Latin letters. The few values a language really does share with the
+#     English are named in the checker, each with its reason.
+#
+#     **Three lists written, and one of them not offered yet.** `ar` is not in
+#     `offeredLanguages`, so no screen draws these sentences today: what 56-أ
+#     measured was whether a language's promise is in that language, and
+#     Arabic's is — what is not measured yet is the **direction**, which German
+#     and Swedish never made anyone ask. The screens are read right to left in
+#     116, and the one line that offers العربية belongs to that paper, beside
+#     the measurement that earns it.
 #
 # The checker is a file of its own because the question is about JSON, and the
 # reasons are prose that belongs beside the rule rather than inside a `case`.
@@ -4267,7 +4413,10 @@ if [ -d "$PACKS" ]; then
   RELEASE_README=packaging/linux/README.txt
   if [ -f "$RELEASE_README" ] && [ -f "$PACKS/mod.rs" ]; then
     MISSING=""
-    for pack in de:German sv:Swedish en:English; do
+    # **`ar:Arabic` since 116.** `ar::pack()` went into the registry with paper
+    # 115 and this loop still asked after three, so a gate whose sentence is
+    # «every pack the registry offers» was measuring three quarters of it.
+    for pack in de:German sv:Swedish en:English ar:Arabic; do
       code=${pack%%:*}
       word=${pack##*:}
       if grep -qE "\b$code::pack\(\)" "$PACKS/mod.rs" \
@@ -4675,6 +4824,13 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          an_ordinary_document_is_not_one \
          the_door_back_reads_a_file_with_no_bench_of_its_own \
          the_door_back_reads_a_file_another_session_protected \
+         a_name_after_an_arabic_salutation_is_protected \
+         a_name_the_library_knows_waits_for_your_word \
+         a_name_is_found_with_its_marks_and_without_them \
+         a_number_in_arabic_digits_is_seen_at_all \
+         the_arabic_letter_reads_better_than_it_did \
+         a_german_name_is_reported_the_same_way \
+         the_arabic_rules_run_only_when_arabic_is_asked_for \
          the_door_back_brings_a_taught_value_back_after_the_bench_is_gone \
          the_door_back_reads_a_pdf_and_a_text_file_the_same_way \
          the_door_back_leaves_the_bench_and_the_vault_untouched \

@@ -28,19 +28,38 @@ import 'package:zprivacy/widgets/bits.dart';
 /// 56** since 16 October 2026: Swedish beside German and English, after the
 /// owner worked in it.
 ///
-/// The word «offered» is exact: the Arabic pack is in the core, untouched and
-/// measured, and nothing is deleted — it stays unoffered until the owner says
-/// so (rule 56's own second half). What this list decides is what a person is
-/// **shown** when they choose the language of a session: in the room where a
-/// session is created, in Settings where the application's own language is
-/// set, in the head of an open document, which writes the open session's
-/// language through the same core door, and at the birth of a session that
-/// a document brings with it (rule 57b).
+/// **And Arabic since 25 October 2026** — the owner's word, papers 115 and 116.
+/// The line below said «the day Arabic is offered, one row changes here and
+/// nothing else», and this is that day: the words are written (115) and the
+/// screens read right to left (116), so the pack that was in the core,
+/// untouched and measured, is now offered on the glass.
+///
+/// What this list decides is what a person is **shown** when they choose the
+/// language of a session: in the room where a session is created, in Settings
+/// where the application's own language is set, in the head of an open
+/// document, which writes the open session's language through the same core
+/// door, and at the birth of a session that a document brings with it
+/// (rule 57b).
 ///
 /// One list, every reader, because a second copy of «de, en, sv» is a second
-/// chance to disagree the day a fourth pack is offered — and the day Arabic is,
-/// one row changes here and nothing else.
-const offeredLanguages = <String>['de', 'en', 'sv'];
+/// chance to disagree the day a fourth pack is offered. **The order is the
+/// order a person reads them in** and `ar` goes first for the same reason `de`
+/// did: alphabetical, decided once, so nobody has to defend a position.
+///
+/// It is one row and it is not a small one: adding `ar` here is what puts the
+/// whole interface into Arabic for a person who picks it, which is why 116
+/// measured the direction **before** this line changed rather than after.
+///
+/// **And it was not the whole of what remained.** Paper 115 said «the one line
+/// that offers it is the whole of what remains», and the glass said otherwise:
+/// every door that draws this list draws `ground.packs` beside it, and
+/// `scanner::packs::installed` built its rows from the **rule sets** — so
+/// Arabic, which ships as a name pack with three rules of its own and no
+/// label set, was offered by `first_run.dart` (which reads this list) and
+/// absent from Settings, the session room and the bar (which read that one).
+/// The core is where that was fixed, and this is the note for the next
+/// language that arrives in only one of the two registers.
+const offeredLanguages = <String>['ar', 'de', 'en', 'sv'];
 
 /// The sheet after a file was chosen is **gone** — 080. It asked «which
 /// language is this document?», which the owner replaced with two sources and

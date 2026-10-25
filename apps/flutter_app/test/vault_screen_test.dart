@@ -63,6 +63,18 @@ Future<void> settle(WidgetTester tester, {int rounds = 4}) async {
 String isolated(String word) => '\u2068$word\u2069';
 String quoted(String word) => '«${isolated(word)}»';
 
+/// **A press on the first screen, scrolled to first** — 116.
+///
+/// The page offers one block of promises per language and four languages are
+/// written now, so the names themselves sit below the fold at the size these
+/// guards use. It is a `SingleChildScrollView`, so a person reaches them by
+/// scrolling and so does this.
+Future<void> _press(WidgetTester tester, String label) async {
+  await tester.ensureVisible(find.text(label));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text(label));
+}
+
 void main() {
   final dir = Directory('${Directory.systemTemp.path}/zprivacy-vault-screen-$pid');
 
@@ -350,7 +362,7 @@ void main() {
     expect(find.textContaining('Interface translation is coming later'), findsNothing);
 
     // ------------------------------------------------ Deutsch
-    await tester.tap(find.text('Deutsch'));
+    await _press(tester, 'Deutsch');
     await settle(tester, rounds: 1);
     expect(find.text('Kein Konto.'), findsOneWidget);
     expect(find.text('Keine Werbung.'), findsOneWidget);
@@ -380,17 +392,17 @@ void main() {
     // **Scrolled to first since 23 October 2026** (paper 106): the first page
     // draws one promise block per offered language before a choice, and the
     // third language put the language row below the fold of a 1000-tall
-    // window. The page scrolls; a tap at a fixed point does not.
-    await tester.ensureVisible(find.text('English'));
-    await settle(tester, rounds: 1);
-    await tester.tap(find.text('English'));
+    // window. The page scrolls; a tap at a fixed point does not. The fourth
+    // language (العربية, 116) put every one of these presses in the same
+    // place, so the scroll moved into `_press` and all of them go through it.
+    await _press(tester, 'English');
     await settle(tester, rounds: 1);
     expect(find.text(sentences.noAccount), findsOneWidget);
     expect(find.text('Kein Konto.'), findsNothing);
     expect(find.text(sentences.theseRulesWillBeEnabled), findsOneWidget);
     expect(find.widgetWithText(ZButton, sentences.start), findsOneWidget);
 
-    await tester.tap(find.text('Deutsch'));
+    await _press(tester, 'Deutsch');
     await settle(tester, rounds: 1);
     await tester.tap(find.text('Starten'));
     await settle(tester, rounds: 1);
@@ -440,7 +452,7 @@ void main() {
     expect(find.textContaining('Choose a language to continue'), findsOneWidget,
         reason: 'the shell did not show the first run on a fresh install');
 
-    await tester.tap(find.text('Deutsch'));
+    await _press(tester, 'Deutsch');
     await settle(tester, rounds: 1);
     await tester.tap(find.text('Starten'));
     await settle(tester);

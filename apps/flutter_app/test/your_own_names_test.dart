@@ -201,16 +201,21 @@ void main() {
     // **And «not offered» is still something a test can see** — since rule 56
     // (the owner, 16 October) every *pack* this build carries is offered, so
     // the half that makes the half above a measurement is read from the
-    // language table instead: Arabic is a language the core knows, rule 56
-    // leaves it unoffered until he says otherwise, and this menu does not list
-    // it. Nothing is deleted either way — that is what «offered» means.
+    // language table instead: a language the core knows, which this menu does
+    // not list. Nothing is deleted either way — that is what «offered» means.
+    //
+    // **It was Arabic until 25 October 2026**, and 116 offered it. The control
+    // is Japanese now, which is the same language `a_language_is_a_choice`
+    // moved to and for the same reason: the core knows its name and carries no
+    // knowledge for it, so it is a language that is not offered rather than a
+    // language that is missing.
     final unoffered =
         ground.languages.where((l) => !offeredLanguages.contains(l.id)).toList();
-    expect(unoffered.any((l) => l.id == 'ar'), isTrue,
-        reason: 'Arabic is not in the language table, so «not offered» cannot be seen');
-    final arabic = unoffered.firstWhere((l) => l.id == 'ar');
-    expect(find.text(arabic.label), findsNothing,
-        reason: '«${arabic.label}» is not offered and the menu offers it anyway');
+    expect(unoffered.any((l) => l.id == 'ja'), isTrue,
+        reason: 'Japanese is not in the language table, so «not offered» cannot be seen');
+    final notOffered = unoffered.firstWhere((l) => l.id == 'ja');
+    expect(find.text(notOffered.label), findsNothing,
+        reason: '«${notOffered.label}» is not offered and the menu offers it anyway');
     expect(packs.every((p) => offeredLanguages.contains(p.id)), isTrue,
         reason: 'a pack this build carries is not offered: ${packs.map((p) => p.id)}');
 

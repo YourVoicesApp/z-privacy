@@ -629,7 +629,7 @@ class _SendSheetState extends State<SendSheet> {
                     // Two sentences, joined by the screen: G55 refuses a
                     // newline inside a value, and this was the sentence that
                     // taught the gate's own author so.
-                    '${sentences.savedToWhere(_savedTo!)}\n'
+                    '${sentences.savedToWhere(theMachinesOwnWord(_savedTo!))}\n'
                     '${sentences.whatThePdfHolds}',
                     style: Zc.small.copyWith(color: Zc.ink2),
                   ),
@@ -908,7 +908,7 @@ class _WhichModelState extends State<_WhichModel> {
           // greyed names and the way in are in the AI room, where setting
           // something up is what a person came to do.
           Align(
-            alignment: Alignment.centerLeft,
+            alignment: AlignmentDirectional.centerStart,
             child: TheModelThatAnswers(
               ground: widget.ground,
               bench: bench,

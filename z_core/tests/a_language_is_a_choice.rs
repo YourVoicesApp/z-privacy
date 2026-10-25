@@ -11,6 +11,13 @@
 //     de          5 auto · 2    5 auto · 2
 //     ar          4 auto · 2    5 auto · 2     ← and it can be chosen at all
 //
+// **And on 25 October 2026 Arabic stopped being the example** (paper 115): it
+// has a pack of its own now — the owner's name library and three rules — and
+// reads AR-1 at 19 auto · 6 waiting, which `tests/the_arabic_pack.rs` measures.
+// This file's own law did not change and is measured below on a language that
+// is still bare, because the law was never about Arabic: it is that the general
+// rules, the world rows and the vault layer run whatever language is chosen.
+//
 // The one that was missing under a bare language was a **BIC**, found only
 // because the German rule set happens to carry the row `de-11 bic`. `BIC`,
 // `SWIFT` and `IBAN` are ISO abbreviations and belong to no language, so they
@@ -50,16 +57,27 @@ fn scan_under(pack: &str, text: &str) -> (u32, u32) {
     out
 }
 
-/// The owner's own case: Arabic reads the Arabic letter as well as German did.
+/// The owner's own case, measured on a language that is still bare.
+///
+/// It was Arabic until 25 October 2026, when Arabic got a pack (paper 115). The
+/// claim is unchanged and so is the fixture: a session in a language this build
+/// carries **no** knowledge for reads the Arabic letter exactly as well as the
+/// German pack does, because what finds those seven things belongs to no
+/// language — the general rules and `sets/world.rs`.
+///
+/// Japanese is the bare language now, and it is a better control than Arabic
+/// ever was: it shares no script with the fixture, so there is nothing a pack
+/// could half-recognise. Arabic's own numbers are in `the_arabic_pack.rs`, with
+/// the German baseline beside them as the control that nothing shared moved.
 #[test]
 fn a_language_with_no_pack_reads_as_well_as_one_with() {
     let _guard = serial();
     fresh("arabic");
     assert_eq!(scan_under("de", AR1), (5, 2), "the German baseline moved");
     assert_eq!(
-        scan_under("ar", AR1),
+        scan_under("ja", AR1),
         (5, 2),
-        "a bare Arabic session finds less than German on an Arabic letter"
+        "a bare Japanese session finds less than German on an Arabic letter"
     );
 }
 
@@ -96,7 +114,14 @@ fn the_table_names_every_language_in_its_own_language() {
     assert_eq!(find("de").label, "Deutsch");
     assert!(find("de").has_rules, "German is said to have no rules");
     assert!(find("sv").has_rules, "Swedish is said to have no rules");
-    assert!(!find("ar").has_rules, "this build is claiming Arabic rules it does not have");
+    // **Arabic has rules since paper 115** — the owner's name library and three
+    // rules of its own, in `scanner/packs/ar.rs`. This line read
+    // `!find("ar").has_rules` until that paper, and it was the honest state of
+    // a build that carried an Arabic **list** and no Arabic knowledge. A
+    // language with no rules is still measured, one line below: Japanese is in
+    // the table, in its own name, and says it has none.
+    assert!(find("ar").has_rules, "the Arabic pack is installed and the table denies it");
+    assert!(!find("ja").has_rules, "this build is claiming Japanese rules it does not have");
 
     // The ones with rules come first, so the line on the screen is one split.
     let first_without = rows.iter().position(|r| !r.has_rules).expect("some have none");

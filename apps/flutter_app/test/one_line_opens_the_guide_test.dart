@@ -25,6 +25,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:zprivacy/core/messages.dart';
 import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/core/the_system_browser.dart';
@@ -121,9 +122,17 @@ void main() {
     expect(press, findsOneWidget, reason: 'there is no press to open the guide');
     expect(tester.widget<ZButton>(press).onPressed, isNotNull,
         reason: 'the press is dead, and a dead control is a finding (rule 35)');
-    expect(tester.widget<ZButton>(press).label, theGuideAddress('en'),
+    // **Through `theMachinesOwnWord` since 116**, which is the law and not a
+    // decoration: an address drawn in an Arabic panel without the isolate put
+    // its closing slash at the front of the line. The label is compared with
+    // the isolated form rather than with the bare one, so that the day the
+    // isolate is dropped this line says so instead of the glass — and the
+    // address **inside** it is still the address, letter for letter.
+    expect(tester.widget<ZButton>(press).label, theMachinesOwnWord(theGuideAddress('en')),
         reason: 'the press does not say where it is going — and the address is '
             'also the one thing left to a person by hand if no browser opens');
+    expect(tester.widget<ZButton>(press).label.contains(theGuideAddress('en')), isTrue,
+        reason: 'the address itself is not in the label at all');
 
     // And the card says what the press does before it is pressed, which is the
     // half of rule 35 that is about the person rather than about the control.

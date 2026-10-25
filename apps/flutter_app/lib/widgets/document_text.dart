@@ -13,6 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
 import 'package:zprivacy/core/palette.dart';
+import 'package:zprivacy/core/protected_pdf.dart' show theWayTheTextReads;
 import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/widgets/line_gutter.dart';
@@ -792,7 +793,26 @@ class _OriginalTextState extends State<OriginalText> {
   GlobalKey? get focusKey => widget.focusKey;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => Directionality(
+        // **The document reads its own way, and the interface's way is not its
+        // business** — paper 116, 25 October 2026, the owner's Arabic.
+        //
+        // One wrapper around the column and everything drawn with it: the text,
+        // the gutter beside it, the page rules behind it and `_anchorAt`'s own
+        // painter, which asks `Directionality.of(context)` and is now asking
+        // about the **document**. Measured before it was written: in an Arabic
+        // interface a German letter's first word moved 64 px → 233 px into its
+        // column, and its IBAN moved with it — a bidi pass nobody asked for,
+        // over a number the person has to read against a bank statement.
+        //
+        // `theWayTheTextReads` is `directionBlocks`'s own answer, which is
+        // 086's reading base: the first run with an opinion, and a `__Z_…__`
+        // token does not get a vote.
+        textDirection: theWayTheTextReads(text),
+        child: _laidOut(context),
+      );
+
+  Widget _laidOut(BuildContext context) {
     // The press is read here rather than by a recognizer on each word: a raw
     // `Listener` sees every pointer event, takes part in no gesture arena, and
     // so cannot be out-voted by the text's own drag-selection. See `_slop`.
@@ -831,11 +851,17 @@ class _OriginalTextState extends State<OriginalText> {
         Stack(
           children: [
             Padding(
-              padding: const EdgeInsets.only(left: LineGutter.width),
+              // **Directional, so the numbers stand beside the line starts** —
+              // paper 116. The gutter belongs to the document and not to the
+              // interface: an Arabic letter's lines begin on the right, so its
+              // numbers do, in an English interface as much as in an Arabic
+              // one. Written `left:` until today, which put the numbers on the
+              // far side of every Arabic document ever reviewed.
+              padding: const EdgeInsetsDirectional.only(start: LineGutter.width),
               child: body,
             ),
-            Positioned(
-              left: 0,
+            PositionedDirectional(
+              start: 0,
               top: 0,
               bottom: 0,
               width: LineGutter.width,
@@ -1078,7 +1104,16 @@ class _SafeTextState extends State<SafeText> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => Directionality(
+        // The payload reads the way the document does — paper 116. Its own
+        // tokens are Latin and ours, and they do not get a vote
+        // (`theWayTheTextReads`), so a protected Arabic letter does not flip
+        // sides because we put `__Z_…__` in it.
+        textDirection: theWayTheTextReads(widget.text),
+        child: _laidOut(context),
+      );
+
+  Widget _laidOut(BuildContext context) {
     // The parent scrolls this widget.text. An inner Scrollable would swallow the wheel
     // over the whole payload and leave only a sliver of the outer sheet movable.
     final body = PaintSelectionOnce(
