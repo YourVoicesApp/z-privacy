@@ -31,15 +31,16 @@ import 'package:zprivacy/widgets/language_list.dart' show offeredLanguages;
 /// than being quietly wrong about it.
 class _Promise {
   const _Promise({
-    required this.name,
     required this.nots,
     required this.paragraphs,
     required this.rules,
     required this.start,
   });
 
-  /// The language's own name for itself.
-  final String name;
+  /// **No name on it since 117.** The block was headed by the language's own
+  /// word while four of them stood on the page together; there is one block
+  /// now, directly under the name that was pressed, and `aLanguageInItsOwnWords`
+  /// is the one place a language is named.
   final List<String> nots;
   final List<String> paragraphs;
 
@@ -67,7 +68,6 @@ class _Promise {
 _Promise _promiseOf(String code) {
   final t = lookupAppLocalizations(Locale(code));
   return _Promise(
-    name: t.thisLanguageName,
     nots: [t.noAccount, t.noAds, t.noAnalytics, t.noZPrivacyServer],
     paragraphs: [t.originalDataStaysHere, t.onlyTheProtectedVersionIsSent],
     rules: [t.theseRulesWillBeEnabled],
@@ -134,7 +134,17 @@ class _FirstRunScreenState extends State<FirstRunScreen> {
     final languages = _languagesThisPageSpeaks();
     final chosen = _language == null ? null : _promiseOf(_language!);
     final t = _language == null ? null : lookupAppLocalizations(Locale(_language!));
-    return Scaffold(
+    // **And the page turns round with the choice** — 117, found while taking
+    // the picture item 6 asked for: everything on it was Arabic and all of it
+    // was laid out left to right, because this is the one screen that runs
+    // before there is a locale for `MaterialApp` to wrap the tree in (116).
+    // So it asks for itself, once a language is chosen; before that it is
+    // speaking every language at once and keeps the direction it is built in.
+    return Directionality(
+      textDirection: _language == null
+          ? Directionality.of(context)
+          : theWayALanguageIsRead(_language!),
+      child: Scaffold(
       body: Stack(
         children: [
           Center(
@@ -160,20 +170,28 @@ class _FirstRunScreenState extends State<FirstRunScreen> {
                 ),
                 const SizedBox(height: 30),
 
-                // Before a choice: both, each under its own name so nobody has
-                // to work out which language they are reading. After a choice:
-                // theirs alone.
-                if (chosen == null)
-                  for (final code in languages)
-                    _Block(_promiseOf(code), named: true)
-                else
-                  _Block(chosen, named: false),
-
-                const SizedBox(height: 8),
+                // **The question first, and one answer below it** — paper
+                // 117 item 6, 25 October 2026, after the owner read the
+                // Arabic screens.
+                //
+                // This page drew one promise block **per offered language**
+                // before a choice, each under its own name. With two that was
+                // the whole argument for the page: a person reads the promise
+                // in their own language before choosing anything. With four it
+                // is about 1 500 px of promises standing between them and the
+                // names, and a person on a 1000-tall window scrolls past three
+                // languages they do not read to reach the one they do.
+                //
+                // So the names come first, and under them stands **one**
+                // block: the language that was chosen. The promise is still
+                // said in every language — one at a time, in the language the
+                // person picked — and nothing is pre-selected, which is P2-6
+                // and still the law of this page.
+                //
                 // **The word for «language» in every language on offer** while
                 // the answer is unknown, each out of its own list and joined
                 // here — so it was «Sprache · Language» and still is, and a
-                // third language would say its own word without this line
+                // fifth language would say its own word without this line
                 // being touched.
                 Eyebrow(chosen == null
                     ? languages
@@ -181,40 +199,55 @@ class _FirstRunScreenState extends State<FirstRunScreen> {
                         .join(' · ')
                     : t!.languageWord),
                 const SizedBox(height: 9),
-                // **A `Wrap` and not a `Row`, since 116.** «العربية» is the
-                // third name on this line and the row overflowed by 81 px the
-                // moment it arrived — which is an error in a test and a
-                // yellow-and-black stripe in a person's hand, on the **first**
-                // screen they ever see. A list of names cannot be told how
-                // many names it will hold, so it takes a second line instead
-                // of running off the first.
+                // **A `Wrap` and not a `Row`, since 116.** «العربية (AR)» is
+                // the fourth name on this line and the row overflowed by 81 px
+                // the moment Arabic arrived — which is an error in a test and
+                // a yellow-and-black stripe in a person's hand, on the
+                // **first** screen they ever see. A list of names cannot be
+                // told how many names it will hold, so it takes a second line
+                // instead of running off the first.
                 Wrap(
                   spacing: 9,
                   runSpacing: 9,
                   children: [
                     for (final code in languages)
                       _Lang(
-                        // A language's own name for itself: «Deutsch» is
-                        // what German calls German, in every language.
-                        label: lookupAppLocalizations(Locale(code)).thisLanguageName,
+                        // The one way this product names a language, code and
+                        // all — the same spelling the core hands Settings, and
+                        // a guard holds the two equal.
+                        label: aLanguageInItsOwnWords(code),
                         on: _language == code,
                         onTap: () => setState(() => _language = code),
                       ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 18),
+
+                if (chosen != null) _Block(chosen),
 
                 if (chosen == null)
-                  // Why there is no Start yet, in both languages — a control
-                  // that is absent has to be accounted for, like a disabled one.
-                  Text(
-                    // One line per language on offer, each in its own: a page
-                    // that asked in one language would be asking the question
-                    // in the answer.
-                    languages
-                        .map((c) => lookupAppLocalizations(Locale(c)).chooseALanguage)
-                        .join('\n'),
-                    style: Zc.small,
+                  // Why there is no Start yet, in every language on offer — a
+                  // control that is absent has to be accounted for, like a
+                  // disabled one, and a page that asked in one language would
+                  // be asking the question in the answer.
+                  //
+                  // **One `Text` per language, and each reads its own way** —
+                  // 117. They were one string joined by newlines, so the
+                  // Arabic line was laid out in the page's own left-to-right
+                  // and its full stop stood at the wrong end. A line is in one
+                  // language; the page, until somebody chooses, is not.
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      for (final code in languages)
+                        Directionality(
+                          textDirection: theWayALanguageIsRead(code),
+                          child: Text(
+                            lookupAppLocalizations(Locale(code)).chooseALanguage,
+                            style: Zc.small,
+                          ),
+                        ),
+                    ],
                   )
                 else ...[
                   Container(
@@ -289,29 +322,28 @@ class _FirstRunScreenState extends State<FirstRunScreen> {
           // still holds against a badge in every corner.
         ],
       ),
+      ),
     );
   }
 }
 
 /// One language's promise: the four lines, then the two sentences.
+///
+/// **It carries no name of its own since 117.** It was headed by the
+/// language's name while every language's block stood on the page at once;
+/// there is one block now, directly under the name that was pressed, and a
+/// heading repeating that name is a word doing nothing.
 class _Block extends StatelessWidget {
-  const _Block(this.promise, {required this.named});
+  const _Block(this.promise);
 
   final _Promise promise;
 
-  /// Headed by the language's name — only while both are on the page.
-  final bool named;
-
   @override
   Widget build(BuildContext context) => Padding(
-        padding: EdgeInsets.only(bottom: named ? 24 : 12),
+        padding: const EdgeInsets.only(bottom: 12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (named) ...[
-              Eyebrow(promise.name),
-              const SizedBox(height: 8),
-            ],
             for (final line in promise.nots)
               Padding(
                 padding: const EdgeInsets.only(bottom: 7),

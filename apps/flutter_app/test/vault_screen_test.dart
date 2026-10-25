@@ -63,16 +63,16 @@ Future<void> settle(WidgetTester tester, {int rounds = 4}) async {
 String isolated(String word) => '\u2068$word\u2069';
 String quoted(String word) => '«${isolated(word)}»';
 
-/// **A press on the first screen, scrolled to first** — 116.
+/// **A press on one of the first screen's language names** — 116, and since
+/// 117 it is a press and nothing more.
 ///
-/// The page offers one block of promises per language and four languages are
-/// written now, so the names themselves sit below the fold at the size these
-/// guards use. It is a `SingleChildScrollView`, so a person reaches them by
-/// scrolling and so does this.
-Future<void> _press(WidgetTester tester, String label) async {
-  await tester.ensureVisible(find.text(label));
-  await tester.pumpAndSettle();
-  await tester.tap(find.text(label));
+/// The page used to draw one block of promises per language **before** a
+/// choice, so with four written languages the names themselves sat below the
+/// fold and this scrolled to them first. Paper 117 put the names at the top
+/// and one block under them, so there is nothing to scroll to — and the name
+/// carries its code now, which is the one place this file spells it.
+Future<void> _press(WidgetTester tester, String code) async {
+  await tester.tap(find.text(aLanguageInItsOwnWords(code)));
 }
 
 void main() {
@@ -308,20 +308,26 @@ void main() {
     // ------------------------------------------------ fresh: nothing assumed
     // P2-6. The page used to start at `en`, so a German speaker met an English
     // promise and the German text existed only for whoever found the button.
-    // Both promises stand here, each under its own name, and neither language
-    // is on.
-    for (final line in ['No account.', 'No ads.', 'No analytics.', 'No Z Privacy server.']) {
-      expect(find.text(line), findsOneWidget);
-    }
+    // Neither language is on, and **since 117 no promise is on either**: the
+    // page drew one block per offered language, and the fourth language made
+    // that 1 500 px of promises standing between a person and the names. The
+    // question comes first now and the promise follows the answer.
     for (final line in [
+      'No account.',
+      'No ads.',
+      'No analytics.',
+      'No Z Privacy server.',
       'Kein Konto.',
       'Keine Werbung.',
       'Keine Analyse- oder Tracking-Daten.',
       'Kein Z-Privacy-Server.',
     ]) {
-      expect(find.text(line), findsOneWidget, reason: 'the German promise is not on a fresh page');
+      expect(find.text(line), findsNothing,
+          reason: '«$line» is promised before anybody chose the language to read it in');
     }
-    // No Start until a language is chosen, and the page says why — in both.
+    // No Start until a language is chosen, and the page says why — in every
+    // language it offers, which is what makes the question readable by
+    // whoever is holding the machine.
     expect(find.widgetWithText(ZButton, sentences.start), findsNothing);
     expect(find.widgetWithText(ZButton, 'Starten'), findsNothing);
     expect(find.textContaining('Wählen Sie eine Sprache'), findsOneWidget);
@@ -329,19 +335,6 @@ void main() {
     // And nothing claims a rule set before one is picked.
     expect(find.textContaining('werden aktiviert'), findsNothing);
     expect(find.textContaining('will be enabled'), findsNothing);
-
-    // The sentence F-11 made necessary: «stays on this device» is not «can
-    // never leave», because Copy Restored exists.
-    expect(
-      find.textContaining('unless you explicitly copy restored content'),
-      findsOneWidget,
-    );
-    expect(
-      find.textContaining('es sei denn, Sie kopieren ausdrücklich wiederhergestellte Inhalte'),
-      findsOneWidget,
-    );
-    // The old wording promised more than the app does.
-    expect(find.text('Your original data stays on this device.'), findsNothing);
     expect(find.text(AppLocalizationsEn().byYourVoices), findsOneWidget);
     // **And Svenska is offered here since paper 106** — rule 56-أ, met on 23
     // October 2026. The page never held an opinion of its own: it offers the
@@ -349,7 +342,7 @@ void main() {
     // Swedish values stopped being the English ones, and this is the guard
     // that said it would change. What it does not claim is that the Swedish
     // reads well — that is the owner's own round.
-    expect(find.text(AppLocalizationsSv().thisLanguageName), findsOneWidget,
+    expect(find.text(aLanguageInItsOwnWords('sv')), findsOneWidget,
         reason: 'the Swedish list is written, so the first page offers it');
     expect(offeredLanguages, contains('sv'),
         reason: 'Swedish left the offered list, and then this guard measures nothing');
@@ -362,10 +355,17 @@ void main() {
     expect(find.textContaining('Interface translation is coming later'), findsNothing);
 
     // ------------------------------------------------ Deutsch
-    await _press(tester, 'Deutsch');
+    await _press(tester, 'de');
     await settle(tester, rounds: 1);
     expect(find.text('Kein Konto.'), findsOneWidget);
     expect(find.text('Keine Werbung.'), findsOneWidget);
+    // The sentence F-11 made necessary: «stays on this device» is not «can
+    // never leave», because Copy Restored exists. It is read here rather than
+    // on the fresh page, because the fresh page no longer promises anything.
+    expect(
+      find.textContaining('es sei denn, Sie kopieren ausdrücklich wiederhergestellte Inhalte'),
+      findsOneWidget,
+    );
     expect(find.widgetWithText(ZButton, 'Starten'), findsOneWidget);
     // The page is now in one language, not two.
     expect(find.text(sentences.noAccount), findsNothing);
@@ -395,14 +395,20 @@ void main() {
     // window. The page scrolls; a tap at a fixed point does not. The fourth
     // language (العربية, 116) put every one of these presses in the same
     // place, so the scroll moved into `_press` and all of them go through it.
-    await _press(tester, 'English');
+    await _press(tester, 'en');
     await settle(tester, rounds: 1);
     expect(find.text(sentences.noAccount), findsOneWidget);
+    expect(
+      find.textContaining('unless you explicitly copy restored content'),
+      findsOneWidget,
+    );
+    // The old wording promised more than the app does.
+    expect(find.text('Your original data stays on this device.'), findsNothing);
     expect(find.text('Kein Konto.'), findsNothing);
     expect(find.text(sentences.theseRulesWillBeEnabled), findsOneWidget);
     expect(find.widgetWithText(ZButton, sentences.start), findsOneWidget);
 
-    await _press(tester, 'Deutsch');
+    await _press(tester, 'de');
     await settle(tester, rounds: 1);
     await tester.tap(find.text('Starten'));
     await settle(tester, rounds: 1);
@@ -452,7 +458,7 @@ void main() {
     expect(find.textContaining('Choose a language to continue'), findsOneWidget,
         reason: 'the shell did not show the first run on a fresh install');
 
-    await _press(tester, 'Deutsch');
+    await _press(tester, 'de');
     await settle(tester, rounds: 1);
     await tester.tap(find.text('Starten'));
     await settle(tester);

@@ -4127,14 +4127,35 @@ fn taught_rule_scopes() -> std::collections::BTreeMap<u32, String> {
     })
 }
 
-/// «de:label» → «A German (DE) privacy rule». The set names itself; a screen
-/// may not, and neither may this sentence.
+/// «de:label» → «A German privacy rule». The set names itself; a screen may
+/// not, and neither may this sentence.
+///
+/// **And it asks for the language's English name, not its label** — paper 117
+/// item 2. The label was «German (DE)» and this sentence read correctly by
+/// accident; the day a language is named in its own words, «A Deutsch (DE)
+/// privacy rule» is the second kind of wrong `LanguagePack::in_english` was
+/// written for («a legal form in Svenska»). A reason is an English sentence:
+/// the core is English only and the host translates what it shows.
+///
+/// A set with no pack beside it keeps its label, which is the honest fallback
+/// — a name somebody can look up beats no name at all.
+///
+/// **Not reached by any fixture in this tree, and that is said out loud.** A
+/// `LanguagePack` source only survives until the word becomes a vault block,
+/// and since 089 every protected word is one — so every explanation the tests
+/// can reach answers «You protected this word before». The guard that would
+/// hold this line needs a scan whose finding is neither blocked nor protected,
+/// which is a fixture of its own and not this round's.
 fn set_label_of(source_detail: &str) -> String {
     let id = source_detail.split(':').next().unwrap_or_default();
+    let in_english = crate::scanner::packs::installed_packs()
+        .into_iter()
+        .find(|p| p.id == id)
+        .map(|p| p.in_english.to_string());
     crate::scanner::sets::all()
         .into_iter()
         .find(|s| s.id == id)
-        .map(|s| format!("A {} privacy rule", s.label))
+        .map(|s| format!("A {} privacy rule", in_english.unwrap_or_else(|| s.label.to_string())))
         .unwrap_or_else(|| "A privacy rule".to_string())
 }
 

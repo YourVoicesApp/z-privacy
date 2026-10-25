@@ -40,8 +40,10 @@ import 'package:zprivacy/core/palette.dart';
 import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/l10n/app_localizations.dart';
+import 'package:zprivacy/screens/first_run.dart';
 import 'package:zprivacy/screens/settings.dart';
 import 'package:zprivacy/screens/workspace.dart';
+import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 import 'the_folder_lets_go.dart';
@@ -246,11 +248,43 @@ void main() {
     await _aPictureOf(tester, 'the-one-screen');
   }, skip: _facesMissing.isNotEmpty);
 
+  // **With the setting really set to Arabic** — the lead, 117: the first
+  // picture of this panel stood over a **fresh** config, whose language is
+  // `en`, so the guide link in it read `/en/guide/` and the owner read that
+  // as a fault. It was the fixture. The config is written here before the
+  // panel is drawn, so the picture is of a person who chose العربية rather
+  // than of a person who chose nothing.
   testWidgets('the settings, in Arabic', (tester) async {
     await tester.binding.setSurfaceSize(const Size(520, 1000));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     final ground = Ground();
-    await tester.runAsync(() => ground.refresh());
+    await tester.runAsync(() async {
+      final own = Directory('${Directory.systemTemp.path}/zprivacy-ar-settings-$pid');
+      removeWhenItLetsGo(own);
+      own.createSync(recursive: true);
+      addTearDown(() => removeWhenItLetsGo(own));
+      await z.vaultLock();
+      await z.setDataDir(dir: own.path);
+      await z.vaultCreateWithPassphrase(passphrase: 'كلمة مرور للوحة');
+      final now = await z.settings();
+      await ground.saveConfig(Settings(
+        originalPanePercent: now.originalPanePercent,
+        columnsInStep: now.columnsInStep,
+        safeColumnOpen: now.safeColumnOpen,
+        reviewPanelWide: now.reviewPanelWide,
+        scanOnImport: now.scanOnImport,
+        revealSeconds: now.revealSeconds,
+        autoLockMinutes: now.autoLockMinutes,
+        // One choice writes both, as the card itself does (080).
+        packId: 'ar',
+        language: 'ar',
+        firstRunDone: true,
+        sessionOnly: now.sessionOnly,
+      ));
+      await ground.refresh();
+    });
+    expect(ground.config?.language, 'ar',
+        reason: 'the panel is about to be photographed over a config that is not Arabic');
     await tester.pumpWidget(_inArabic(Scaffold(
       backgroundColor: Zc.paper,
       body: SettingsScreen(ground: ground, onClose: () {}, room: SettingsRoom.language),
@@ -259,5 +293,46 @@ void main() {
 
     expect(find.byType(SettingsScreen), findsOneWidget);
     await _aPictureOf(tester, 'the-settings');
+  }, skip: _facesMissing.isNotEmpty);
+
+  // **And the screen a person meets before any of it** — paper 117 item 6,
+  // which is the one the owner asked to be reshaped. Two pictures, because
+  // the page has two states and the complaint was about the first of them:
+  // the question with nothing promised yet, and the one promise that follows
+  // the answer.
+  //
+  // It is **not** drawn through `_inArabic`: this page runs before there is a
+  // setting, so it has no locale of its own and reads every sentence out of
+  // the list the button names. A picture of it in a forced Arabic locale would
+  // be a picture of a screen that does not exist.
+  testWidgets('the first screen, before and after choosing العربية', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(900, 1000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final ground = Ground();
+    await tester.runAsync(() async {
+      await z.vaultLock();
+      final own = Directory('${Directory.systemTemp.path}/zprivacy-ar-first-$pid');
+      removeWhenItLetsGo(own);
+      own.createSync(recursive: true);
+      addTearDown(() => removeWhenItLetsGo(own));
+      await z.setDataDir(dir: own.path);
+      await ground.refresh();
+    });
+    await tester.pumpWidget(MaterialApp(
+      theme: ThemeData(
+        fontFamily: 'ArabicLook',
+        fontFamilyFallback: const ['LatinLook'],
+      ),
+      home: RepaintBoundary(
+        key: _theWholeScreen,
+        child: FirstRunScreen(ground: ground, onStart: (_, {required wantsVault}) {}),
+      ),
+    ));
+    await _settle(tester, rounds: 3);
+    await _aPictureOf(tester, 'the-first-screen');
+
+    await tester.tap(find.text(aLanguageInItsOwnWords('ar')));
+    await _settle(tester, rounds: 2);
+    await _aPictureOf(tester, 'the-first-screen-in-arabic');
   }, skip: _facesMissing.isNotEmpty);
 }

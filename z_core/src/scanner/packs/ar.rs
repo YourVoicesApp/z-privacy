@@ -116,6 +116,42 @@ const COURTESIES: &[&str] = &[
     "الموقر", "الموقرة", "حفظه", "حفظها",
 ];
 
+/// **The fixed courtesy phrases a letter closes with** — paper 117 item 5, the
+/// owner's own finding on the Arabic screens: AR-1 ends «وتفضلوا بقبول فائق
+/// الاحترام», and `ar-2` offered **«فائق»** as a person to look at, because it
+/// is a given name in his library and the library is right — «فائق» is a name.
+/// It is not a name *there*, and the only thing that can tell the difference is
+/// the word after it.
+///
+/// **A closed list of pairs, and it is never widened into a rule.** «Any word
+/// followed by a noun» would be a shape that swallows half the language; what
+/// is here is a two-word formula, in that order, which Arabic writes the same
+/// way every time. Each head is a word the owner's library really holds — فائق,
+/// خالص, وافر, جميل — so every entry buys something; the heads that are not in
+/// it (جزيل, أطيب, أرق) are deliberately absent, because a pair whose first word
+/// is no name could never have produced the question this list exists to stop.
+///
+/// **What a wrong entry costs, said plainly:** nothing can become protected by
+/// this list, and nothing can become unprotected. It can only take a
+/// **question** away — so an entry that is not really a formula would cost one
+/// missed suggestion in a place where the formula is almost certainly what
+/// stands. Measured on AR-1: the waiting list goes from 6 to 5, which is one
+/// per courtesy phrase in the letter, and the person it was never about is
+/// still offered everywhere else (`a_name_in_a_courtesy_phrase_is_not_offered`
+/// measures both halves).
+const FIXED_COURTESIES: &[(&str, &str)] = &[
+    ("فائق", "الاحترام"),
+    ("فائق", "التقدير"),
+    ("فائق", "الشكر"),
+    ("خالص", "الشكر"),
+    ("خالص", "التقدير"),
+    ("خالص", "الاحترام"),
+    ("خالص", "التحيات"),
+    ("وافر", "الاحترام"),
+    ("وافر", "التقدير"),
+    ("جميل", "الشكر"),
+];
+
 /// Ordinary Arabic words that end a name run.
 ///
 /// Not a list of «words that are also names» — that is the Suggested side's
@@ -313,13 +349,28 @@ fn names_after_a_salutation(words: &[Word<'_>], out: &mut Vec<Candidate>) {
 /// one name.
 fn a_name_the_library_knows(words: &[Word<'_>], out: &mut Vec<Candidate>) {
     let known = given_names();
-    for word in words {
+    for (at, word) in words.iter().enumerate() {
         if !could_be_part_of_a_name(word.text) {
             continue;
         }
         let folded = as_the_pack_reads_it(bare_ar(word.text));
         if !known.contains(&folded) {
             continue;
+        }
+        // **Not a name when it is half of a courtesy phrase** — 117 item 5.
+        // The word after it decides, on the same line, and the list is closed
+        // (`FIXED_COURTESIES` says what that costs).
+        let next = words
+            .get(at + 1)
+            .filter(|w| !w.newline_before)
+            .map(|w| as_the_pack_reads_it(bare_ar(w.text)));
+        if let Some(after) = next.as_deref() {
+            if FIXED_COURTESIES
+                .iter()
+                .any(|(head, tail)| *head == folded.as_str() && *tail == after)
+            {
+                continue;
+            }
         }
         out.push(people::candidate(
             &pack(),
@@ -412,7 +463,10 @@ pub(crate) fn pack() -> LanguagePack {
     LanguagePack {
         locale: "ar-SA",
         id: "ar",
-        label: "العربية",
+        // **With its code, like every other row** — paper 117 item 2. This is
+        // the label the glass draws for a language whose knowledge is a name
+        // pack and no rule set, so it carries what the sets' labels carry.
+        label: "العربية (AR)",
         in_english: "Arabic",
         version: "1",
         salutations: SALUTATIONS,

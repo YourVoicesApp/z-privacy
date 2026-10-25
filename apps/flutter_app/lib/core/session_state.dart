@@ -247,13 +247,21 @@ class Ground extends ChangeNotifier {
   /// the list, which would be a guess that is wrong the first time two hands
   /// begin a session at once.
   ///
-  /// A rename that fails leaves «$_aSessionCalled», which is less than was
-  /// wanted and still true — and the session is open, which is what the press
-  /// needed.
+  /// A rename that fails leaves the bare word for a session in the language
+  /// this app is in, which is less than was wanted and still true — and the
+  /// session is open, which is what the press needed.
+  ///
+  /// **Two languages, one choice** (080): the provisional word is the app's,
+  /// because that is what a session born now will be born with, and the name
+  /// that stays is spelled from the **row's** own `packId` — the language the
+  /// core recorded at the birth. If those two ever differ, the stored name
+  /// follows the core, which is the half that owns it.
   Future<int?> beginSessionItNames({SessionId? bench}) async {
     try {
-      final row = await z.conversationBegin(name: _aSessionCalled, bench: bench);
-      await z.conversationRename(number: row.number, name: nameForSession(row.number));
+      final row = await z.conversationBegin(
+          name: aSessionCalledIn(config?.language), bench: bench);
+      await z.conversationRename(
+          number: row.number, name: nameForSession(row.number, row.packId));
       await refresh();
       return row.renamedTokens;
     } on ApiError catch (e) {
@@ -2022,25 +2030,74 @@ String? packForTheNextText(Ground ground) {
 String? theLanguageAFileCarries(Ground ground, PayloadSession? session) =>
     session == null ? null : ground.rowOfSession(session.number)?.packId;
 
-/// The provisional name a nameless birth is begun with, before the core's
-/// number is known. One word, and never left behind as a lie: the rename that
-/// follows it turns it into [nameForSession].
+/// **What this house calls a session, per language** — the owner's word of 25
+/// October 2026, looking at the Arabic screens: a person working in Arabic was
+/// handed a list called «Session 1», «Session 2» in the middle of their own
+/// language.
+///
 /// **Not a sentence, and deliberately not in the one list** — 092, sitting
-/// five. This word is *written into the core* as a session's name, and the core
-/// spells it too (`A_SESSION_CALLED`); G37 measures the two spellings against
-/// each other. Translating it on this side alone would name a German person's
-/// sessions «Sitzung 3» while the core wrote «Session 3» — and the name is
-/// stored, so the two halves would then disagree about which sessions nobody
-/// has named. A name is data, and data does not cross a language seam.
-const _aSessionCalled = 'Session';
+/// five. These words are *written into the core* as a session's name, and the
+/// core spells them too (`A_SESSION_CALLED` in `ops/conversation.rs`); G37
+/// measures the two tables against each other. Spelling one of them on this
+/// side alone would name a German person's sessions «Sitzung 3» while the core
+/// wrote «Session 3» — and the name is **stored**, so the two halves would then
+/// disagree about which sessions nobody has named. A name is data, and data
+/// does not cross a language seam; what crosses it here is a table both sides
+/// hold and a gate compares.
+const _aSessionCalled = <String, String>{
+  'ar': 'جلسة',
+  'de': 'Sitzung',
+  'en': 'Session',
+  'sv': 'Session',
+};
 
-/// **The name a session nobody named carries** — «الجلسة 1، الجلسة 2…», 081.
+/// English, because English is the source list — the same answer
+/// [theLocaleOf] gives a code whose sentences are not written.
+const _aSessionCalledFallback = 'Session';
+
+/// **The name a session nobody named carries** — «جلسة 1», «Sitzung 1», 081.
 ///
 /// One function, because three places read it: the birth that sets it, the
-/// line in the sheet that must not say «Session 3 «Session 3»», and the guard
-/// that measures it. A fourth copy of this string is a fourth chance to spell
-/// it differently.
-String nameForSession(int number) => '$_aSessionCalled $number';
+/// line in the sheet that must not say «جلسة 3 «جلسة 3»», and the guard that
+/// measures it. A fourth copy of this string is a fourth chance to spell it
+/// differently.
+///
+/// **The language is the session's own, not the interface's** — the name was
+/// written at the birth and the interface may have moved since. A caller that
+/// has no language says so by leaving it out, and gets the source list's word:
+/// that is a session born before this table existed, or one born in a language
+/// the interface does not speak, and both of them really are called «Session N»
+/// in the vault.
+String nameForSession(int number, [String? language]) =>
+    '${aSessionCalledIn(language)} $number';
+
+/// **Is this still the name the house gave it?** — the question the send sheet
+/// actually asks, and the reason it is not a comparison against one language.
+///
+/// A session's name is written at its birth, in the language it was born with,
+/// and **the language may move afterwards**: the header changes the open
+/// session's language and the core writes the new one on the row (075c), while
+/// the name stays exactly as it was, because the name is data and a house that
+/// rewrote it would be rewriting what it cannot tell from the person's own
+/// words. So a session born in Arabic and switched to German is «جلسة 3» on a
+/// row that says `de` — and a sheet comparing against the row's language alone
+/// would read it as a name somebody chose, and quote it back at them: «جلسة 3
+/// «جلسة 3»», which is the very thing 081 took out.
+///
+/// Every word the house uses, therefore, and the fallback with them. A person
+/// who types «جلسة 3» by hand into session 3 is read as having named nothing —
+/// the same ambiguity the single comparison had, and the same answer: what they
+/// typed is what the house would have written anyway.
+bool isTheHouseName(String name, int number) =>
+    _aSessionCalled.values
+        .followedBy(const [_aSessionCalledFallback])
+        .any((word) => name == '$word $number');
+
+/// The word alone, for the one caller that needs it before a number exists:
+/// the provisional name of a birth, which the rename a line later turns into
+/// [nameForSession].
+String aSessionCalledIn(String? language) =>
+    _aSessionCalled[language] ?? _aSessionCalledFallback;
 
 /// **What a birth did, in one sentence** — 064f.
 ///

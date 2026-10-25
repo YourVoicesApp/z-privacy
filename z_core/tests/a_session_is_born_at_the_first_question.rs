@@ -120,7 +120,13 @@ fn a_question_taken_out_with_no_document_is_born_into_a_session() {
     pasted(s, LETTER);
     let out = payload_to_take_out(s).expect("the copy door");
     let row = the_only_session();
-    assert_eq!(row.name, format!("Session {}", row.number), "a nameless birth carries the house's name");
+    // **In the language of the bench it was born on** (117): this one reads
+    // German, so the house's own name for it is German.
+    assert_eq!(
+        row.name,
+        format!("Sitzung {}", row.number),
+        "a nameless birth carries the house's name, in the birth language"
+    );
     assert_eq!(row.turns, 0, "nothing was answered, so there is no turn yet");
     // **The text that left belongs to the session it was born into**, which is
     // the whole reason the birth is before the build: a payload stamped with a

@@ -11,8 +11,9 @@
 //! **The numbers, on AR-1:**
 //!
 //! ```text
-//!     before this paper     5 auto ·  2 waiting      not one of its 8 people
-//!     after it             19 auto ·  6 waiting
+//!     before 115            5 auto ·  2 waiting      not one of its 8 people
+//!     after 115            19 auto ·  6 waiting
+//!     after 117 item 5     19 auto ·  5 waiting      one courtesy phrase out
 //! ```
 //!
 //! The fourteen that moved are the name words of the seven people a salutation
@@ -118,11 +119,16 @@ fn a_name_after_an_arabic_salutation_is_protected() {
 /// **A given name in the owner's library waits for his word, and never protects
 /// itself.**
 ///
-/// The three below are the measured cost of a 2,414-name library on one letter:
-/// «سلطان» is a street named after a prince, «صاحب» is the word for an account
-/// holder, «فائق» is half of «فائق الاحترام». Every one of them is a real name
-/// in Arabic and a real word in the sentence it stands in — which is why a
-/// dictionary hit is a question here and a verdict nowhere.
+/// The two below are the measured cost of a 2,414-name library on one letter:
+/// «سلطان» is a street named after a prince and «صاحب» is the word for an
+/// account holder. Both are real names in Arabic and real words in the sentence
+/// they stand in — which is why a dictionary hit is a question here and a
+/// verdict nowhere.
+///
+/// **«فائق» was the third until 117 item 5**: it is half of «فائق الاحترام»,
+/// and the word after it is the only thing that can say so. It is in
+/// `a_name_in_a_courtesy_phrase_is_not_offered` now, with the control that it
+/// is still offered where it really is a name.
 #[test]
 fn a_name_the_library_knows_waits_for_your_word() {
     let _guard = serial();
@@ -133,7 +139,7 @@ fn a_name_the_library_knows_waits_for_your_word() {
         .filter(|(_, state, _)| *state == MarkState::Suggested)
         .map(|(text, _, _)| text.as_str())
         .collect();
-    for word in ["سلطان", "صاحب", "فائق"] {
+    for word in ["سلطان", "صاحب"] {
         assert!(waiting.contains(&word), "«{word}» is not waiting: {waiting:?}");
     }
     // A form word is never offered either — the fault this file found on its
@@ -214,6 +220,43 @@ fn a_number_in_arabic_digits_is_seen_at_all() {
     );
 }
 
+/// **A name inside a fixed courtesy phrase is not offered, and the same name
+/// standing alone still is** — paper 117 item 5, the owner's own finding on the
+/// Arabic screens.
+///
+/// Both halves, because one without the other is a different rule: a list that
+/// only silenced «فائق» would be a list that deleted a name from the library,
+/// and that is not what he asked for. What decides is the word **after** it,
+/// which is why `FIXED_COURTESIES` is a list of pairs and never «any word
+/// followed by a noun».
+#[test]
+fn a_name_in_a_courtesy_phrase_is_not_offered() {
+    let _guard = serial();
+    fresh("courtesy");
+    // AR-1's own closing line: «وتفضلوا بقبول فائق الاحترام،».
+    let found = found_in("ar", AR1);
+    assert!(
+        found.iter().all(|(t, _, _)| t != "فائق"),
+        "the first word of a courtesy phrase was offered as a person: {found:?}"
+    );
+    // The same word, as a name: offered, and waiting for the person's word.
+    let found = found_in("ar", "وصل فائق إلى المكتب أمس.");
+    assert!(
+        found.iter().any(|(t, state, kind)| t == "فائق"
+            && *state == MarkState::Suggested
+            && *kind == Kind::Person),
+        "a real name was silenced by the courtesy list: {found:?}"
+    );
+    // And a phrase this list does not hold is not silenced by it: «جزيل» is no
+    // name in the library, so «جزيل الشكر» was never a question to begin with —
+    // what is measured here is that the list did not grow a rule of its own.
+    let found = found_in("ar", "ولكم خالص الشكر على تعاونكم.");
+    assert!(
+        found.iter().all(|(t, _, _)| t != "خالص"),
+        "«خالص الشكر» is in the list and «خالص» was still offered: {found:?}"
+    );
+}
+
 /// **What the pack is worth on AR-1, in one line each way.**
 ///
 /// The counts are here and nowhere else — a number in a comment is a number
@@ -226,8 +269,9 @@ fn the_arabic_letter_reads_better_than_it_did() {
     fresh("counts");
     assert_eq!(
         counts("ar", AR1),
-        (19, 6),
-        "AR-1 under the Arabic pack — it was (5, 2) with no pack at all"
+        (19, 5),
+        "AR-1 under the Arabic pack — (5, 2) with no pack at all, (19, 6) before \
+         117 item 5 took the courtesy phrase out of the waiting list"
     );
     // **The German pack on the same letter is unchanged**, which is the control
     // that says the Arabic rules are Arabic's: nothing was added to the shared

@@ -40,7 +40,8 @@
 // sentence — words English and keeps saying what it always said. Sixty test
 // files depend on that, and so does the rule that the English file is the
 // source rather than a translation of something else.
-import 'package:flutter/widgets.dart' show Locale;
+import 'package:flutter/widgets.dart' show Locale, TextDirection;
+import 'package:intl/intl.dart' show Bidi;
 
 import 'package:zprivacy/l10n/app_localizations.dart';
 import 'package:zprivacy/l10n/app_localizations_en.dart';
@@ -158,3 +159,44 @@ bool theListIsWrittenIn(String code) {
 /// room lie about a choice the person actually made.
 Locale theLocaleOf(String code) =>
     theListIsWrittenIn(code) ? Locale(code) : const Locale('en');
+
+/// **A language named the way every door in this product names it** — paper
+/// 117 item 2, 25 October 2026, after the owner read the Arabic screens.
+///
+/// «Deutsch (DE)», «English (EN)», «Svenska (SV)», «العربية (AR)»: the
+/// language's own word for itself, then its code, the same in every interface
+/// language. A person scanning a list looks for the word **they** would write,
+/// and the code is what tells two spellings of one language apart.
+///
+/// **The core says this too**, in `PackRow.label`, and that is the spelling
+/// Settings and the session room draw. This exists because the first screen
+/// cannot ask the core: it runs before there is a setting, and the panel it
+/// draws is read by locale out of the generated lookup rather than through the
+/// holder. So the two are composed separately and held equal by a guard — the
+/// core's row is the one that decides, and the day they differ,
+/// `a_language_is_named_the_same_everywhere_test` says so rather than the
+/// glass.
+///
+/// The code is **not** a translation: it is the language's own id, upper-cased,
+/// which is why it is composed here and not written into the one list four
+/// times over.
+String aLanguageInItsOwnWords(String code) =>
+    '${lookupAppLocalizations(Locale(code)).thisLanguageName} (${code.toUpperCase()})';
+
+/// **Which way a language is read** — 117, found while taking the picture the
+/// owner asked for.
+///
+/// Everywhere else in this application the direction arrives with the locale:
+/// `main.dart` hands `MaterialApp` the language and
+/// `GlobalWidgetsLocalizations` wraps the whole tree in a `Directionality`
+/// (116). The **first screen** is the one place that cannot work that way — it
+/// runs before there is a setting, and the language is being chosen on the
+/// page itself — so it asks here instead.
+///
+/// `Bidi.isRtlLanguage` is `intl`'s own table and not a list of ours: a list
+/// of two codes would be a second place to forget Urdu or Persian the day one
+/// of them is offered. Before a choice there is no answer to give, and the
+/// page keeps the left-to-right it is laid out in: it is speaking every
+/// language at once, and no single direction is true of it.
+TextDirection theWayALanguageIsRead(String code) =>
+    Bidi.isRtlLanguage(code) ? TextDirection.rtl : TextDirection.ltr;

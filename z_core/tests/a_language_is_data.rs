@@ -126,6 +126,66 @@ fn german_reads_exactly_what_it_read_before() {
     assert!(plate.iter().any(|(_, kind, _)| *kind == Kind::Vehicle), "{plate:?}");
 }
 
+/// **Every language names itself, and carries its code** — paper 117 item 2,
+/// 25 October 2026, from the owner's look at the Arabic screens.
+///
+/// Settings drew «German (DE)», «English (EN)», «Svenska (SV)», «العربية».
+/// Two faults in one line of four: German was named in **English**, and
+/// Arabic carried **no code**. A person scanning a list for their own
+/// language looks for the word they would write themselves, and the code is
+/// what tells two spellings of one language apart.
+///
+/// So the shape is the law rather than four literals: a row's label ends with
+/// its own id in brackets, and the word before the brackets is not the
+/// language's English name unless English is what that language calls itself.
+/// The second half is what would have caught «German (DE)» — it is the one a
+/// literal list could never express, because the list would have been written
+/// from the same mistake.
+#[test]
+fn every_language_names_itself_and_carries_its_code() {
+    let rows = packs().expect("the installed packs");
+    assert!(rows.len() >= 4, "fewer rows than this build carries packs: {rows:?}");
+    for row in &rows {
+        let code = format!(" ({})", row.id.to_uppercase());
+        assert!(
+            row.label.ends_with(&code),
+            "«{}» does not end with its own code «{}» — a person cannot tell two \
+             spellings of one language apart without it",
+            row.label,
+            code.trim()
+        );
+        let own_name = row.label[..row.label.len() - code.len()].trim().to_string();
+        assert!(!own_name.is_empty(), "«{}» is a code and no name", row.label);
+        // The English name is what a **reason** uses, and it is a different
+        // field in the pack for exactly that purpose. Where a language's own
+        // word differs from its English name, the label must carry the own
+        // word — which is the half that catches «German (DE)». The English
+        // names are written here because `in_english` is the core's own and
+        // not in the public row; they are facts about four languages, and a
+        // fifth that is missing from this table simply is not checked.
+        let in_english: &[(&str, &str)] =
+            &[("de", "German"), ("en", "English"), ("sv", "Swedish"), ("ar", "Arabic")];
+        if let Some((_, english)) = in_english.iter().find(|(id, _)| *id == row.id) {
+            // English is the one language whose own word **is** its English
+            // name, so it is the exception the rule has to name.
+            assert!(
+                own_name != *english || row.id == "en",
+                "«{}» names {} in English, and a language is named in its own words",
+                row.label,
+                english
+            );
+        }
+    }
+    // And the four this build carries, by name, so that a shape nobody reads
+    // cannot pass over an empty list.
+    let by_id: std::collections::BTreeMap<_, _> =
+        rows.iter().map(|r| (r.id.as_str(), r.label.as_str())).collect();
+    assert_eq!(by_id.get("de"), Some(&"Deutsch (DE)"));
+    assert_eq!(by_id.get("en"), Some(&"English (EN)"));
+    assert_eq!(by_id.get("sv"), Some(&"Svenska (SV)"));
+    assert_eq!(by_id.get("ar"), Some(&"العربية (AR)"));
+}
+
 /// A pack's own rules are declared, and the number of them is the measure of
 /// the contract: German needs three, Swedish needs none.
 #[test]

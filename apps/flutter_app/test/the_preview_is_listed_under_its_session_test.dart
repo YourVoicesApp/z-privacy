@@ -187,12 +187,32 @@ void main() {
     // nobody named, and the glass spells the same words in `nameForSession` —
     // the send sheet reads it to tell an unnamed session from a named one. If
     // either side changed its spelling this is where it is caught.
+    //
+    // **In the session's own language since 117**, and the language is read off
+    // the row rather than typed here: this bench is German, so the stored name
+    // is «Sitzung 1», and a test that spelled «Session 1» would be asserting
+    // the thing the owner asked us to stop doing.
     expect(ground.sessions, hasLength(1), reason: 'no session was born of the first document');
+    expect(ground.sessions.first.packId, 'de', reason: 'the birth did not record its language');
     expect(
       ground.sessions.first.name,
-      nameForSession(number),
+      nameForSession(number, ground.sessions.first.packId),
       reason: 'the core and the glass spell an unnamed session differently',
     );
+    expect(ground.sessions.first.name, 'Sitzung $number',
+        reason: 'a session born on a German bench is not named in German');
+    // **And the question the send sheet actually asks** (117): «is this still
+    // the name the house gave it?» — answered in every language the house
+    // names in, because the session's language may move after the name was
+    // written and the name may not. A name a person chose is not one of them.
+    expect(isTheHouseName(ground.sessions.first.name, number), isTrue,
+        reason: 'the sheet would quote the house’s own name back at the person');
+    expect(isTheHouseName('جلسة $number', number), isTrue,
+        reason: 'a session named in Arabic reads as one somebody named');
+    expect(isTheHouseName('Die Mahnungen', number), isFalse,
+        reason: 'a name the person chose reads as the house’s own');
+    expect(isTheHouseName('Sitzung ${number + 1}', number), isFalse,
+        reason: 'another session’s name reads as this one’s');
     final held = ground.kept[number] ?? const [];
     expect(held, hasLength(1), reason: 'the first document was not kept');
     expect(held.first.handle, 'doc1');
@@ -205,7 +225,7 @@ void main() {
     await settle(tester);
 
     expect(
-      find.text(nameForSession(number)),
+      find.text(nameForSession(number, ground.sessions.first.packId)),
       findsOneWidget,
       reason: 'a session that holds only documents is not in the list',
     );
