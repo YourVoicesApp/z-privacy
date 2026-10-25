@@ -8,6 +8,7 @@
 //! A pack is not the language of the interface, and the screen says so in its
 //! first line.
 
+pub(crate) mod ar;
 pub(crate) mod de;
 pub(crate) mod en;
 pub(crate) mod pack;
@@ -33,7 +34,10 @@ use super::Candidate;
 /// or promising one that was dropped.
 ///
 pub(crate) fn installed_packs() -> Vec<pack::LanguagePack> {
-    vec![de::pack(), sv::pack(), en::pack()]
+    // **Arabic since paper 115**, and last in the list for no reason but the
+    // order they were written: `pack_of` finds by id and nothing here is
+    // ordered knowledge.
+    vec![de::pack(), sv::pack(), en::pack(), ar::pack()]
 }
 
 fn pack_of(id: &str) -> Option<pack::LanguagePack> {

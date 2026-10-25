@@ -46,8 +46,13 @@ down, and a gate holds that place to this command. The interface is English,
 German and Swedish: the Swedish words were written on 23 October 2026 and the
 first screen offers Svenska because the gates measure that its sentences are
 not the English ones — **they have not been read by a native speaker yet**, and
-that review is a round of its own. The detection packs are German, English and
-Swedish. Private beta.
+that review is a round of its own. **The Arabic words were written on 25
+October 2026** and are measured the same way — 695 of 701 values say something
+other than the English, and the six that do not are names and product spellings
+the law allows in every language — but العربية is **not offered on the first
+screen yet**: Arabic is the first language here that is read right to left, and
+the screens are measured for the direction in their own round. The detection
+packs are German, English, Swedish and Arabic. Private beta.
 
 Windows is built from git by `.github/workflows/windows-core.yml`, by hand from
 the Actions tab: the core's tests, the nine storage contracts, the one-writer

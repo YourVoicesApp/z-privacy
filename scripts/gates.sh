@@ -3250,14 +3250,25 @@ fi
 #     reason: a gate that forbids everything on the day the work starts is a
 #     gate somebody turns off. The named exceptions are in the checker, each
 #     with its reason.
-#   * **G51** every key of the English file is in the German and the Swedish,
-#     and no value in either is the English one — a copy is a key nobody
-#     translated. The Swedish **was** the English until 23 October 2026 (56-أ,
-#     which said the first screen offers Svenska on the day those values
-#     differ); paper 106 wrote the Swedish words on the owner's word, so the
-#     exception is gone and both languages answer the same rule. The few values
-#     a language really does share with the English are named in the checker,
-#     each with its reason.
+#   * **G51** every key of the English file is in the German, the Swedish and
+#     the Arabic, and no value in any of them is the English one — a copy is a
+#     key nobody translated. The Swedish **was** the English until 23 October
+#     2026 (56-أ, which said the first screen offers Svenska on the day those
+#     values differ); paper 106 wrote the Swedish words on the owner's word, so
+#     the exception is gone and both languages answer the same rule. **The
+#     Arabic was written on 25 October 2026** (paper 115) and answered the same
+#     rule on its first run, with no exception list of its own — it shares no
+#     word with English, so the common list covers every value it keeps in
+#     Latin letters. The few values a language really does share with the
+#     English are named in the checker, each with its reason.
+#
+#     **Three lists written, and one of them not offered yet.** `ar` is not in
+#     `offeredLanguages`, so no screen draws these sentences today: what 56-أ
+#     measured was whether a language's promise is in that language, and
+#     Arabic's is — what is not measured yet is the **direction**, which German
+#     and Swedish never made anyone ask. The screens are read right to left in
+#     116, and the one line that offers العربية belongs to that paper, beside
+#     the measurement that earns it.
 #
 # The checker is a file of its own because the question is about JSON, and the
 # reasons are prose that belongs beside the rule rather than inside a `case`.
@@ -4675,6 +4686,13 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          an_ordinary_document_is_not_one \
          the_door_back_reads_a_file_with_no_bench_of_its_own \
          the_door_back_reads_a_file_another_session_protected \
+         a_name_after_an_arabic_salutation_is_protected \
+         a_name_the_library_knows_waits_for_your_word \
+         a_name_is_found_with_its_marks_and_without_them \
+         a_number_in_arabic_digits_is_seen_at_all \
+         the_arabic_letter_reads_better_than_it_did \
+         a_german_name_is_reported_the_same_way \
+         the_arabic_rules_run_only_when_arabic_is_asked_for \
          the_door_back_brings_a_taught_value_back_after_the_bench_is_gone \
          the_door_back_reads_a_pdf_and_a_text_file_the_same_way \
          the_door_back_leaves_the_bench_and_the_vault_untouched \

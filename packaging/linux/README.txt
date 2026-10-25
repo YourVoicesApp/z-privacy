@@ -56,8 +56,11 @@ launcher and the icons back as well.
 
 The interface is English, German and Swedish; every sentence it shows is
 gathered in one list. The Swedish words were written on 2026-10-23 and have not
-been read by a native speaker yet.
-The detection packs are German, English and Swedish.
+been read by a native speaker yet. The Arabic words were written on 2026-10-25
+and have not been read by a native speaker either; العربية is not offered on the
+first screen yet, because it is read right to left and the screens are measured
+for that in their own round.
+The detection packs are German, English, Swedish and Arabic.
 
 Faruk AB — Aktiebolag (AB), Sweden. Org.nr 559473-3494.
 zprivacy@mono-peak.com

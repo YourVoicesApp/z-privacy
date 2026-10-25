@@ -213,13 +213,50 @@ owner's machine, and only as counts.
 
 ---
 
-## 4 · Arabic — the baseline before any Arabic pack exists
+## 4 · Arabic — the baseline, and what the third pack does
 
-There is no `ar` pack on this build. The measurement is made with pack `de`,
-which on Arabic text means: **the general rules alone** (e-mail, IBAN, BIC,
-phone), and nothing that reads Arabic.
+**The baseline below was measured before 25 October 2026, when there was no
+`ar` pack at all**, with pack `de`, which on Arabic text means the general
+rules alone. Paper 115 gave Arabic a pack — the owner's own name library and
+three rules — and §4.0 is what it changed. The old numbers stay because they
+are what the pack is measured against.
 
-### 4.1 · The letter we wrote (AR-1), ground truth known
+### 4.0 · What the Arabic pack found on AR-1 (paper 115, 25 October 2026)
+
+| | auto | waiting |
+|---|---|---|
+| no pack at all (the baseline below) | 5 | 2 |
+| the Arabic pack | **19** | **6** |
+
+What moved, by name — `z_core/tests/the_arabic_pack.rs` asserts every one of
+them rather than the counts alone:
+
+| what | state | which rule |
+|---|---|---|
+| 7 people — كاترين لندمان · طارق بن سعود الريحاني · أميرة الحداد · يوسف العمري · سارة البراك · يونس دمير, 14 name words in all | auto | `ar-1`, a salutation or a title in front of the name |
+| 3 ordinary words the library also holds as names — a street named after a prince, «صاحب» in «اسم صاحب الحساب», «فائق» in «فائق الاحترام» | waiting | `ar-2`, the owner's library |
+| the internal extension written «٠١٢١٢٣٤٥٩٩» | waiting | `ar-3`, Arabic-Indic digits |
+| «محمد بن عبدالله الحربي» (the writer's own name, introduced by «بياناتي الشخصية») and the signature «محمد الحربي» | **still in the clear** | no form word in front of it, and «محمد» is **not in the owner's library** |
+
+**The library**: 2,414 given names from `~/الأسماء العربية.txt` (1,292 male,
+1,135 female, 2,427 lines, 13 names in both lists), 2,306 distinct once the
+harakat are folded off. No surnames at all. Six names a reader would expect are
+missing, measured against 26 common ones: محمد, عثمان, يوسف, إبراهيم, عبدالله
+as one word, and نور — see
+`z_core/assets/licenses/arabic_names_sources.md`.
+
+**What the pack does not touch**: the numbers the letter writes after an Arabic
+label — the commercial register, the national ID, the two VAT numbers, the
+customer number — are still in the clear. They need Arabic **label** rules
+(«رقم العميل», «الرقم الضريبي», «رقم الهوية الوطنية»), which is the next
+measurable round and not this one. And §4.2 below is unchanged: an Arabic
+**PDF** still reaches the scanner as presentation forms in visual order, so no
+Arabic rule can match a word in one, however good the rule. The pack works on
+`.txt` and on pasted text, which is what AR-1 is.
+
+**Reproduce:** `cargo test -p z_core --test the_arabic_pack`
+
+### 4.1 · The letter we wrote (AR-1), ground truth known — before the pack
 
 | present in the letter | found | state |
 |---|---|---|
