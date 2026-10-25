@@ -278,7 +278,9 @@ void main() {
     expect(out.refused, isNull, reason: 'a nameless send was refused: ${out.refused}');
     final rows = await z.conversations();
     expect(rows, hasLength(1), reason: 'a nameless send began no session');
-    expect(rows.single.name, 'Session ${rows.single.number}',
+    // Spelled through the one function both halves read, in this bench's own
+    // language (117).
+    expect(rows.single.name, nameForSession(rows.single.number, rows.single.packId),
         reason: 'a session nobody named carries «${rows.single.name}» instead of its '
             'own number, so the sessions list is a list of blanks');
     expect(g.bodies, hasLength(1), reason: 'the nameless send reached no model');
@@ -367,7 +369,8 @@ void main() {
     final born = g.ground.openSession;
     expect(born, isNotNull,
         reason: 'the press neither began a session nor refused: ${g.ground.trouble}');
-    expect(g.ground.openSessionRow?.name, 'Session $born',
+    expect(g.ground.openSessionRow?.name,
+        nameForSession(born!, g.ground.openSessionRow?.packId),
         reason: 'a session nobody named must carry its own number as its name');
     expect(find.textContaining('Give it a name first'), findsNothing,
         reason: 'the refusal the owner met is still on the glass');

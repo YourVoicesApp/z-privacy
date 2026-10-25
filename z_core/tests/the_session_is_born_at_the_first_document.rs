@@ -240,6 +240,12 @@ fn a_chat_in_a_new_session_is_kept_as_chat1() {
 /// where the owner had the name field deleted: «أبسط من البساطة ذاتها»). It is
 /// written in the core now, because the core is where the birth happens; the
 /// Dart guard beside this one measures that the glass still spells it the same.
+///
+/// **And since 117 the spelling is the birth language's**: this bench reads
+/// German, so the name is «Sitzung N». The owner asked for it after the Arabic
+/// screens handed him «Session 1» in the middle of his own language, and
+/// `the_session_names_itself.rs` measures all four words and the fallback. What
+/// did not change is that the name never moves again — it is data (G37).
 #[test]
 fn a_session_of_documents_only_is_named_by_its_number() {
     let _guard = serial();
@@ -250,8 +256,8 @@ fn a_session_of_documents_only_is_named_by_its_number() {
     let rows = conversations().expect("the list");
     assert_eq!(rows.len(), 1, "{rows:?}");
     assert_eq!(
-        rows[0].name, "Session 1",
-        "a session born of its first document shows «{}»",
+        rows[0].name, "Sitzung 1",
+        "a session born of its first document on a German bench shows «{}»",
         rows[0].name
     );
     assert_eq!(rows[0].turns, 0, "nothing was written to a model, and it says there was");

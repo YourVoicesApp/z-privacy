@@ -310,7 +310,10 @@ void main() {
     final born = g.ground.openSession;
     expect(born, isNotNull,
         reason: 'nothing was born and nothing was refused either: ${g.ground.trouble}');
-    expect(g.ground.openSessionRow?.name, 'Session $born',
+    // Spelled through the one function both halves of the house read, in the
+    // language this bench is in (117): a session born on a German bench is
+    // «Sitzung N».
+    expect(g.ground.openSessionRow?.name, nameForSession(born!, 'de'),
         reason: 'a session nobody named must carry its own number as its name, so '
             'the sessions list is a list of things and not of blanks');
     expect(out.said, isNull,
@@ -399,7 +402,10 @@ void main() {
     final saved = g.out.listSync().whereType<File>().toList();
     expect(saved, hasLength(1), reason: 'the press did not write one file');
     final named = saved.first.uri.pathSegments.last;
-    expect(named, contains('Session $born'),
+    // **And the file carries that name as it was written** (117): the session's
+    // own language reaches the file name, because the name does — which is the
+    // same reason the app says the file name leaves with the file.
+    expect(named, contains(nameForSession(born!, 'de')),
         reason: '«$named» is not named after the session that owns it');
     expect(named, isNot(contains('Brief_Weber')),
         reason: '«$named» carries the person’s own file name out of the machine, '
@@ -480,7 +486,9 @@ void main() {
     // and since 081 that session is named by its own number, because the exit
     // has no name to give it and asks for none.
     expect(view.session, isNotNull, reason: 'the text that would leave belongs to no session');
-    expect(view.session!.name, nameForSession(view.session!.number),
+    // The bench is German, so the name the house gave it is German (117) —
+    // spelled through the one function both halves of the house read.
+    expect(view.session!.name, nameForSession(view.session!.number, 'de'),
         reason: 'the session the text belongs to is not named by its own number');
     // And what actually leaves: not one pre-birth name among it. This is the
     // property the core holds from its own end; here it is held of the string
