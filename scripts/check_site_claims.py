@@ -195,19 +195,83 @@ def path(lits):
 #
 # **And the absent language is French, not Arabic.** The first draft of this
 # round reached for Arabic — the next language, untranslated on purpose — and
-# it cannot be the control: all three pages **name** Arabic in order to deny it
-# («Arabic is a reading pack and not a language of the interface»), so a
-# word-absence control over it would red on a correct page. French is named
-# nowhere in the three pages, there is no `app_fr.arb`, and `fr` is already the
-# control on the floor below — `theListIsWrittenIn('fr')` is the case that
-# keeps the app's own law biting. One language, both floors.
+# it could not be the control: all three pages **named** Arabic in order to
+# deny it («Arabic is a reading pack and not a language of the interface»), so
+# a word-absence control over it would have redded on a correct page. French is
+# named nowhere in the three pages, there is no `app_fr.arb`, and `fr` is
+# already the control on the floor below — `theListIsWrittenIn('fr')` is the
+# case that keeps the app's own law biting. One language, both floors.
+#
+# **And on 25 October 2026 the denial became false** — paper 115 wrote
+# `app_ar.arb`, paper 116 turned the screens round, and `ar` crossed the line
+# this file measures with 695 of 701 values differing from the English. So
+# Arabic joins the three lists below and the retired sentence joins the
+# register under them. French is untouched by that: it is still the language
+# this tree does not speak, which is the whole of why it was chosen.
 SPEAKS = {
-    'en': ('English', 'German', 'Swedish'),
-    'de': ('Englisch', 'Deutsch', 'Schwedisch'),
-    'ar': ('الإنجليزيّة', 'الألمانيّة', 'السويديّة'),
+    'en': ('English', 'German', 'Swedish', 'Arabic'),
+    'de': ('Englisch', 'Deutsch', 'Schwedisch', 'Arabisch'),
+    'ar': ('الإنجليزيّة', 'الألمانيّة', 'السويديّة', 'العربيّة'),
 }
 NOT_SPOKEN = {'en': ('French',), 'de': ('Französisch',), 'ar': ('الفرنسيّة',)}
-TRANSLATED = {'de': 'German', 'sv': 'Swedish'}   # what the measurement must come back with
+TRANSLATED = {'ar': 'Arabic', 'de': 'German', 'sv': 'Swedish'}   # what the measurement must come back with
+
+
+# **The sentence that stopped being true** — 116, 25 October 2026.
+#
+# Four pages said, in three languages, that «Arabic is a reading pack and not a
+# language of the interface». It was true the day it was written and it is
+# false now, and a sentence like that does not stay corrected by itself: the
+# word-list above is satisfied by the page merely **naming** Arabic, which the
+# old sentences did in order to deny it. So this round takes the same two
+# halves paper 105 took for the narrowed claims — mark the new fact, and refuse
+# the retired wording — because either one alone is silent about half of what
+# can go wrong.
+#
+# The guide's Arabic page carried its own copy, in its own words, about its own
+# control names. It is in the register under its own pattern and not folded in
+# with the home pages: one wording per page is what can be refused, and a
+# register that pretends two pages said the same thing would miss the one that
+# changed.
+THE_RETIRED = {
+    'site/%s/index.html': {
+        'en': 'Arabic is a reading pack and not a language of the interface',
+        'de': 'Arabisch ist ein Lesepaket und keine Sprache der Oberfläche',
+        'ar': 'فالعربيّةُ حزمةُ قراءةٍ لا لغةَ واجهة',
+    },
+    'site/%s/guide/index.html': {
+        'ar': 'العربيّةُ في هذا المنتَج حزمةُ قراءةٍ لا لغةَ واجهة',
+    },
+}
+
+#: The key the three home pages carry on the paragraph that says it.
+ARABIC_IS_A_LANGUAGE = 'arabic-is-an-interface-language'
+
+
+def the_arabic_claim(langs):
+    """The new fact marked once a page, and the old wording served nowhere."""
+    bad = 0
+    for lang in langs:
+        rel = 'site/%s/index.html' % lang
+        page = served(read(rel))
+        n = len(re.findall(r'data-fact="%s"' % re.escape(ARABIC_IS_A_LANGUAGE), page))
+        if n != 1:
+            say('FAIL', '%s marks «%s» %d time(s), and each of the three carries it once '
+                        '— a language has dropped the corrected sentence or doubled it'
+                % (rel, ARABIC_IS_A_LANGUAGE, n))
+            bad = 1
+    for pattern, retired in sorted(THE_RETIRED.items()):
+        for lang, old in sorted(retired.items()):
+            rel = pattern % lang
+            if not os.path.exists(os.path.join(ROOT, rel)):
+                say('FAIL', '%s is in the retired-wording register and not in this tree' % rel)
+                bad = 1
+                continue
+            if old in served(read(rel)):
+                say('FAIL', '%s serves «%s» again, and the interface has spoken Arabic '
+                            'since 25 October 2026' % (rel, old))
+                bad = 1
+    return bad
 
 
 # **Two sentences the outside review found larger than the tree** — paper 105,
@@ -741,6 +805,7 @@ def the_interface():
                     % (lang, word))
                 bad = 1
     bad |= a_narrowed_sentence('site/%s/index.html', ('en', 'de', 'ar'))
+    bad |= the_arabic_claim(('en', 'de', 'ar'))
     if not bad:
         say('PASS', 'the interface speaks what the lists really hold (%s), the three pages name the '
                     'services this tree really speaks to, and they owe the one list\u2019s own numbers: '

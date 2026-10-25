@@ -61,7 +61,7 @@ class _TokensPanelState extends State<TokensPanel> {
       width: widget.width,
       decoration: const BoxDecoration(
         color: Zc.card,
-        border: Border(left: BorderSide(color: Zc.line)),
+        border: BorderDirectional(start: BorderSide(color: Zc.line)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

@@ -136,7 +136,11 @@ pub(crate) struct LanguagePack {
     /// The list the UI draws comes from the rule sets, which carry the label a
     /// person chose to see — «Deutsch (DE)». This one is the pack's own name,
     /// kept for the day a pack ships without a rule set beside it.
-    #[allow(dead_code, reason = "a pack names itself; the UI reads the rule set's label today")]
+    ///
+    /// **That day was 25 October 2026**, and Arabic is the pack it came for:
+    /// `scanner::packs::installed` reads this label for any language that has
+    /// a name pack and no set of its own. The `allow(dead_code)` that stood
+    /// here went with it.
     pub label: &'static str,
     /// The pack's own version, so a vault or a report can say which knowledge
     /// produced a finding.

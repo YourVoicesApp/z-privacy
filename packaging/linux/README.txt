@@ -54,12 +54,11 @@ launcher and the icons back as well.
   BUILD-INFO.txt   which commit this was built from, and its hashes
   third-party/     everything else in here, and the licence it travels under
 
-The interface is English, German and Swedish; every sentence it shows is
-gathered in one list. The Swedish words were written on 2026-10-23 and have not
-been read by a native speaker yet. The Arabic words were written on 2026-10-25
-and have not been read by a native speaker either; العربية is not offered on the
-first screen yet, because it is read right to left and the screens are measured
-for that in their own round.
+The interface is English, German, Swedish and Arabic; every sentence it shows
+is gathered in one list. The Swedish words were written on 2026-10-23 and the
+Arabic words on 2026-10-25, and neither has been read by a native speaker yet.
+Arabic is read right to left: choosing it mirrors every screen, and a document
+keeps its own direction whatever the interface is doing.
 The detection packs are German, English, Swedish and Arabic.
 
 Faruk AB — Aktiebolag (AB), Sweden. Org.nr 559473-3494.

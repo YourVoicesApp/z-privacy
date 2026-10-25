@@ -45,7 +45,7 @@ class ReviewPanel extends StatelessWidget {
       width: width,
       decoration: const BoxDecoration(
         color: Zc.card,
-        border: Border(left: BorderSide(color: Zc.line)),
+        border: BorderDirectional(start: BorderSide(color: Zc.line)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

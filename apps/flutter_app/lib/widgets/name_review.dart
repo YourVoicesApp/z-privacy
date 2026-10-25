@@ -56,7 +56,7 @@ class NameReviewPanel extends StatelessWidget {
       width: width,
       decoration: const BoxDecoration(
         color: Zc.card,
-        border: Border(left: BorderSide(color: Zc.line)),
+        border: BorderDirectional(start: BorderSide(color: Zc.line)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -499,7 +499,7 @@ class _NameRow extends StatelessWidget {
             ? ' · ${sentences.reachEverywhere}'
             : ' · ${sentences.reachThisClient}';
     return Padding(
-      padding: const EdgeInsets.only(left: 6, bottom: 6),
+      padding: const EdgeInsetsDirectional.only(start: 6, bottom: 6),
       child: Opacity(
         opacity: faded ? 0.5 : 1,
         child: Row(

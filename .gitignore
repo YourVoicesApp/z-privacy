@@ -42,3 +42,12 @@ __pycache__/
 # four cities again. `scripts/build_de_names.py --fetch` writes it beside the
 # bank; git does not carry it, and the gate compares the bank alone.
 z_core/assets/de_names_v2_tier3.csv
+
+# The Arabic screens, written by `the_screens_in_arabic_test` on every run —
+# 116, and they are a **look** rather than a measurement. A token is derived
+# from the vault's own key, so no two runs draw the same picture and a golden
+# comparison was 1 314 pixels apart against the same screen. Carrying them in
+# git would mean the Dart suite dirties the tree every time it runs; the test
+# writes them, the path is in its own first lines, and whoever wants a look
+# runs it.
+apps/flutter_app/test/screens_in_arabic/

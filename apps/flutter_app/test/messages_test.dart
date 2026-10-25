@@ -398,20 +398,28 @@ void main() {
   test('every protect outcome has one sentence, and only a column is told about cells', () {
     const token = '__Z_17A9_CUSTOM_0F63__';
     const here = Span(start: 10, end: 19);
+    // **116.** Every one of these sentences now draws its token through
+    // `theMachinesOwnWord`, so the expected line carries the isolate too — and
+    // carries it through the product's own function rather than as two code
+    // points written here, so that this table follows the law instead of
+    // restating it. `Lindqvist AB` is a name the vault was given, so it takes
+    // the other isolate, which is G44's half of the same rule.
+    final drawn = theMachinesOwnWord(token);
+    final who = theirOwnWord('Lindqvist AB');
     final said = <(ProtectOutcome, ProtectAct), String>{
       // Applied — the one arm whose **shape** the press changes.
       (const ProtectOutcome.applied(token: token, places: 1), ProtectAct.aSelection):
-          'Protected as $token.',
+          'Protected as $drawn.',
       (const ProtectOutcome.applied(token: token, places: 1), ProtectAct.aPlaceTheBarFound):
-          'Protected as $token.',
+          'Protected as $drawn.',
       (const ProtectOutcome.applied(token: token, places: 1), ProtectAct.aCell):
-          'Protected one cell, as $token.',
+          'Protected one cell, as $drawn.',
       (const ProtectOutcome.applied(token: token, places: 3), ProtectAct.aSelection):
-          'Protected as $token, in 3 places.',
+          'Protected as $drawn, in 3 places.',
       (const ProtectOutcome.applied(token: token, places: 3), ProtectAct.aPlaceTheBarFound):
-          'Protected as $token, in 3 places.',
+          'Protected as $drawn, in 3 places.',
       (const ProtectOutcome.applied(token: token, places: 3), ProtectAct.aCell):
-          'Protected 3 cells down that column, the first as $token.',
+          'Protected 3 cells down that column, the first as $drawn.',
       // A column that was already protected top to bottom. Only a column can
       // answer «0 places»: a selection and the bar's fold answer with the
       // outcome the core gave instead, which is why there is no row for them.
@@ -423,14 +431,14 @@ void main() {
       (
         const ProtectOutcome.alreadyProtected(token: token, source: Source.hand, sourceDetail: 'selected by you'),
         ProtectAct.aPlaceTheBarFound,
-      ): 'Already protected as $token, by you.',
+      ): 'Already protected as $drawn, by you.',
       (
         const ProtectOutcome.alreadyProtected(token: token, source: Source.vault, sourceDetail: 'Z Vault · CLIENT #17'),
         ProtectAct.aSelection,
-      ): 'Already protected as $token, by vault.',
+      ): 'Already protected as $drawn, by vault.',
       // The vault's question, answered by the core after the act.
       (const ProtectOutcome.belongsToEntity(entity: 'Lindqvist AB', token: token), ProtectAct.aCell):
-          'That belongs to Lindqvist AB and keeps its token $token.',
+          'That belongs to $who and keeps its token $drawn.',
       // Snapped — one wording, and the press supplies the subject.
       (const ProtectOutcome.snapped(spans: [here]), ProtectAct.aSelection):
           'The selection cuts into protected text, so nothing changed. It would snap to 1 whole item.',

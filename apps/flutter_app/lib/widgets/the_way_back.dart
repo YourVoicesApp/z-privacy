@@ -113,7 +113,7 @@ class _TheReadingState extends State<TheReading> {
       if (!mounted) return;
       setState(() {
         _saving = false;
-        _trouble = sentences.couldNotAskWhereToSaveIt('$e');
+        _trouble = sentences.couldNotAskWhereToSaveIt(theMachinesOwnWord('$e'));
       });
       return;
     }
@@ -225,7 +225,7 @@ class _TheReadingState extends State<TheReading> {
               if (_savedTo != null) ...[
                 const SizedBox(height: 8),
                 // Where it went, in full. «Saved» is not an answer to «where».
-                Text(sentences.savedToWhere(_savedTo!),
+                Text(sentences.savedToWhere(theMachinesOwnWord(_savedTo!)),
                     style: Zc.small.copyWith(color: Zc.ink2)),
               ],
               if (_trouble != null) ...[

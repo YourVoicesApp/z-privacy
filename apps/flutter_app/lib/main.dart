@@ -152,8 +152,14 @@ class _ZPrivacyAppState extends State<ZPrivacyApp> {
       locale: _locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      // Left to right, always: Arabic is stopped (rule 56-أ's sibling), and
-      // every language this list carries is written left to right.
+      // **And the direction comes with the locale, since 25 October 2026** —
+      // papers 115 and 116, the owner's Arabic. This said «left to right,
+      // always: Arabic is stopped», which was true while the pack sat in the
+      // core unoffered; it is not true now. `GlobalWidgetsLocalizations` is in
+      // the delegates above, so `MaterialApp` wraps the whole application in a
+      // `Directionality` the locale decides, and `ar` mirrors every screen.
+      // Nothing here has to say right or left: what 116 had to do was find the
+      // places that had said it already.
       home: ZShell(ground: _ground, troubleAtTheStart: widget.folderTrouble),
     );
   }

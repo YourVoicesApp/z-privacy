@@ -182,7 +182,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       builder: (context, _) => Material(
         color: Zc.paper,
         elevation: 10,
-        shape: const Border(left: BorderSide(color: Zc.line)),
+        shape: const BorderDirectional(start: BorderSide(color: Zc.line)),
         // **The `Material` is what stops what it covers**, and that is measured
         // rather than assumed: a press on the top strip and a press in the
         // middle of the room both end inside this panel and reach nothing in
@@ -226,13 +226,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   // lesson the home's own strip learnt on 3 October: it is
                   // three times the length of «z_core 0.1.0» and the door
                   // beside it is what a person is reaching for.
+                  //
+                  // **And it reads left to right whatever the interface
+                  // does** — 116. «z_core 0.1.0 · date · sha» is the core's
+                  // own line and not a sentence; in an Arabic panel the
+                  // paragraph took it right to left, so the shortening put
+                  // the «…» at the **front** and cut the date's last digit
+                  // off the end. The direction is pinned to the line's own,
+                  // and the alignment is logical so the box it shortens in
+                  // still follows the panel.
                   Flexible(
                     child: Text(
                       coreVersion(),
                       style: Zc.tiny.copyWith(fontFamily: Zc.mono),
                       overflow: TextOverflow.ellipsis,
                       softWrap: false,
-                      textAlign: TextAlign.right,
+                      textDirection: TextDirection.ltr,
+                      textAlign: TextAlign.end,
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -678,10 +688,16 @@ class _GuideCardState extends State<_GuideCard> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Align(
-            alignment: Alignment.centerLeft,
+            alignment: AlignmentDirectional.centerStart,
             child: ZButton(
               key: _GuideCard.thePress,
-              label: address,
+              // **The address, isolated** — 116. It is drawn and not sent:
+              // `openInTheBrowser` is handed `address` itself, because these
+              // two code points belong on the glass and never in what leaves.
+              // Without them an Arabic panel drew `/https://z-privacy.com/en/
+              // guide` — the closing slash at the front, which is an address
+              // nobody can type.
+              label: theMachinesOwnWord(address),
               icon: Icons.open_in_new,
               tint: Zc.river,
               onPressed: () async {
@@ -1526,7 +1542,7 @@ class _KeptDocument extends StatelessWidget {
             Padding(
               // Indented to the document's own text, under it, because it is
               // about that document and not about the session's list.
-              padding: const EdgeInsets.only(left: 21),
+              padding: const EdgeInsetsDirectional.only(start: 21),
               child: Text(doors, style: Zc.tiny.copyWith(color: Zc.ink4)),
             ),
         ],

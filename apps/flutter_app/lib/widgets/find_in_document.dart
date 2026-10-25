@@ -257,7 +257,7 @@ class _FindInDocumentState extends State<FindInDocument> {
                     // Tab takes it; typing on refuses it.
                     if (_offered != null)
                       Padding(
-                        padding: const EdgeInsets.only(left: 12, top: 3),
+                        padding: const EdgeInsetsDirectional.only(start: 12, top: 3),
                         // Two texts and a gap, not a run of spaces inside one
                         // literal: G25 reads such a run as a sentence somebody
                         // wrapped by accident, and it is right to — a gap

@@ -187,7 +187,7 @@ class _WhySheetState extends State<WhySheet> {
               const SizedBox(height: 10),
               for (final line in why.because)
                 Padding(
-                  padding: const EdgeInsets.only(left: 25, bottom: 4),
+                  padding: const EdgeInsetsDirectional.only(start: 25, bottom: 4),
                   child: Text(line, style: Zc.small),
                 ),
 
@@ -256,7 +256,7 @@ class _WhySheetState extends State<WhySheet> {
                 ),
                 if (_showSpellings)
                   Padding(
-                    padding: const EdgeInsets.only(left: 21, top: 4),
+                    padding: const EdgeInsetsDirectional.only(start: 21, top: 4),
                     child: Wrap(
                       spacing: 7,
                       runSpacing: 6,
