@@ -14,16 +14,17 @@ here, locally.
 
 ## Download
 
-The first public beta was published on 25 October 2026. Download it from
+The first public beta was published on 25 October 2026, and Arabic joined it
+the same day. Download it from
 https://z-privacy.com/en/download/, or from this repository's
 [Releases](https://github.com/YourVoicesApp/z-privacy/releases).
 
 | File | SHA-256 |
 |---|---|
-| `zprivacy-v1-linux-x86_64.tar.gz` — Linux x86_64 (GTK3) | `c07d9bc8d939e4ba4aa2cff6e3cec01697bc31bc820e0a223326b525188801d5` |
-| `zprivacy-v1-windows-x86_64-setup.exe` — Windows 10/11 x86_64 | `f4b2dcfe33b7859d1f9fafb7417032ff8571a1495d5371573ae663d22ed75885` |
+| `zprivacy-v1-linux-x86_64.tar.gz` — Linux x86_64 (GTK3) | `b180bc49898fb1aa7f49b449ee756ab72cbaf16682a488f10bc27893b361ffe6` |
+| `zprivacy-v1-windows-x86_64-setup.exe` — Windows 10/11 x86_64 | `ba56b81b7484ae233274fdea00630ddc50f2d802d8ff017d54768119fcfc46d9` |
 
-Both were built from `e38bc78`. The Windows installer is not signed yet, so
+Both were built from `4920398`. The Windows installer is not signed yet, so
 Windows shows «Windows protected your PC» the first time: «More info», then
 «Run anyway». The fingerprint is what says the file is ours.
 
@@ -68,14 +69,12 @@ values say something other than the English, and the six that do not are names
 and product spellings the law allows in every language. **Arabic is the first
 language here that is read right to left**, so choosing it mirrors every
 screen; the document keeps its own direction, which is the text's and not the
-interface's. The detection packs are German, English, Swedish and Arabic. The Arabic arrives
-in the next build: the published beta of 25 October 2026 speaks English, German
-and Swedish.
+interface's. The detection packs are German, English, Swedish and Arabic.
 
 Windows is built from git by `.github/workflows/windows-core.yml`, by hand from
 the Actions tab. The core's tests, the nine storage contracts, the one-writer
 measurement and the whole Dart suite run there, and the job writes a zip, an
-installer and an MSIX. The published installer comes from run 40164955026, on
+installer and an MSIX. The published installer comes from run 40207163367, on
 the same commit as the Linux archive. The MSIX is not distributed: it does not
 yet carry every file the installer does, and the workflow says so. What is
 still Linux's alone is `docs/MEASURED_ON_LINUX.txt`, the numbers every gate run
