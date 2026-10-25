@@ -426,8 +426,12 @@ fi
 # «لم يسألني عن لغة الجلسة».
 #
 #   * **56** — Swedish is offered beside German and English everywhere a
-#     language is chosen; Arabic stays unoffered until he says otherwise, and
-#     both packs stay in the core either way.
+#     language is chosen; Arabic stayed unoffered until he said otherwise, and
+#     both packs stayed in the core either way. **He said otherwise on 25
+#     October 2026**: paper 115 wrote `app_ar.arb` and paper 116 turned the
+#     screens round, so العربية is the fourth. The law has not moved — a
+#     language is offered when its own words are written and its screens are
+#     measured — and the list below is still the one place that says which.
 #   * **57** — a session does not begin before the person picks, nothing is
 #     pre-marked, and the application's own language no longer becomes a
 #     session's language in silence. The doors are enumerated from what they
@@ -438,10 +442,10 @@ LANGS=$FLUTTER_LIB/widgets/language_list.dart
 
 G38_OFFERED=$(grep -oE "offeredLanguages = <String>\[[^]]*\]" "$LANGS" \
               | grep -oE "'[a-z]{2}'" | tr -d "'" | tr '\n' ' ' | sed 's/ $//')
-if [ "$G38_OFFERED" = "de en sv" ]; then
-  pass "G38 the languages offered are the measured three: de en sv (Arabic unoffered, both packs kept)"
+if [ "$G38_OFFERED" = "ar de en sv" ]; then
+  pass "G38 the languages offered are the measured four: ar de en sv (every pack this build carries)"
 else
-  fail "G38 the offered languages are «$G38_OFFERED» — expected «de en sv» (rule 56)"
+  fail "G38 the offered languages are «$G38_OFFERED» — expected «ar de en sv» (rule 56)"
 fi
 
 # One list, every reader. A second literal pair is the «two copies of de, en»
@@ -2411,7 +2415,10 @@ fi
 # sentence out of `humanMessage`.
 G72_LOWER=$(awk '/^String _lower\(String fact\) \{/{inside=1} inside{print} inside && /^\}/{exit}' \
             "$FLUTTER_LIB/core/messages.dart" 2>/dev/null || true)
-if printf '%s\n' "$G72_LOWER" | grep -q 'theMachinesOwnWord'; then
+# No pipe into «grep -q»: the shell answers this one by itself, which is G70's
+# rule kept rather than wrapped around.
+case "$G72_LOWER" in *theMachinesOwnWord*) G72_LOWER_OK=1 ;; *) G72_LOWER_OK= ;; esac
+if [ -n "$G72_LOWER_OK" ]; then
   pass "G72 the seam that folds a core fact into a sentence isolates it"
 else
   fail "G72 _lower hands the core's own English to a sentence without isolating it"
