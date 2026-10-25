@@ -18,6 +18,7 @@ import 'package:zprivacy/core/a_date_in_words.dart';
 import 'package:zprivacy/core/messages.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/core/sentences.dart';
+import 'package:zprivacy/l10n/app_localizations_ar.dart';
 import 'package:zprivacy/l10n/app_localizations_de.dart';
 import 'package:zprivacy/l10n/app_localizations_en.dart';
 import 'package:zprivacy/l10n/app_localizations_sv.dart';
@@ -40,6 +41,7 @@ void main() {
     final en = AppLocalizationsEn();
     final de = AppLocalizationsDe();
     final sv = AppLocalizationsSv();
+    final ar = AppLocalizationsAr();
     // The generated classes carry one getter or method per key, so «the same
     // keys» is «the same interface» — and Dart has no reflection here. What
     // can be measured without it is the thing that matters: the three classes
@@ -81,6 +83,23 @@ void main() {
     expect(sv.theChatKeepsNothing, isNot(en.theChatKeepsNothing),
         reason: 'the Swedish value is the English again, so a person who '
             'chooses Svenska reads English promises — 56-أ');
+    // **And the Arabic, written on 25 October 2026** (paper 115), which is the
+    // third language and the first one that is **not** read left to right. The
+    // same six sentences, for the same reason: a list that cannot say what
+    // this product refuses to do cannot carry the interface of a privacy
+    // product.
+    for (final sentence in <String>[
+      ar.theKeyIsBehindTheLockedVault,
+      ar.theChatKeepsNothing,
+      ar.unnamedTrouble,
+      ar.troubleVaultLocked,
+      ar.refusalEncryptedPdf,
+      ar.networkUnreachable,
+    ]) {
+      expect(sentence.trim(), isNotEmpty, reason: 'an Arabic sentence is empty');
+    }
+    expect(ar.theChatKeepsNothing, isNot(en.theChatKeepsNothing),
+        reason: 'the Arabic value is the English again — 56-أ');
   });
 
   // ----------------------------------------------------------------- guard 2b
@@ -104,6 +123,37 @@ void main() {
         reason: 'the Swedish calls a token something other than «platshållare»');
     expect(sv.troubleVaultLocked, contains('valv'),
         reason: 'the Swedish calls the vault something other than «valv»');
+  });
+
+  // ----------------------------------------------------------------- guard 2c
+  //
+  // **The Arabic is Arabic** — guard 2b's rule, applied to the third language
+  // on the day it got one (paper 115, 25 October 2026).
+  //
+  // **And its glossary is the site's**, not a fresh choice made here: the
+  // Arabic home page carries a table of this house's words in three languages
+  // («مفردات Z Privacy»), under the owner's own hand, and the words below are
+  // read out of it — a token is a «رمز» and a vault is «الخزنة» (German
+  // «Platzhalter»/«Tresor», Swedish «platshållare»/«valv»). The site and the
+  // app saying one fact two ways is the whole thing this guard exists to
+  // refuse, and the site's table is the older of the two.
+  //
+  // The guide's own Arabic page calls the vault «التِّرس» in one heading, which
+  // is the site's second word for one thing and belongs to the seat that owns
+  // those pages. This guard holds the app to the glossary table, and names the
+  // other word so the next reader does not take it for a third opinion.
+  test('the Arabic list says something other than the English', () {
+    final en = AppLocalizationsEn();
+    final ar = AppLocalizationsAr();
+    expect(ar.theKeyIsBehindTheLockedVault, isNot(en.theKeyIsBehindTheLockedVault));
+    expect(ar.troubleVaultLocked, isNot(en.troubleVaultLocked));
+    expect(ar.refusalEmptyDocument, isNot(en.refusalEmptyDocument));
+    expect(ar.belongsToEntity('Nordstern', '__Z_1234_PERSON_ABCD__'),
+        contains('رمز'),
+        reason: 'the Arabic calls a token something other than «رمز»');
+    expect(ar.troubleVaultLocked, contains('خزنت'),
+        reason: 'the Arabic calls the vault something other than «الخزنة» — '
+            'matched on the stem, because this sentence says «خزنتك»');
   });
 
   // ------------------------------------------------------------------ guard 2

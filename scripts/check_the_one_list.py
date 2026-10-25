@@ -31,10 +31,20 @@ The named exceptions inside a migrated file, each with its reason:
 
 ## G51 — the copies carry every key, and each one speaks its own language
 
-Every key in the English file is in the German and the Swedish, and a value
-identical to the English is a key nobody translated — refused in **both**
-files, except for the named list below (product names, «OK», bare numbers,
-and the few words a language really does spell the English way).
+Every key in the English file is in the German, the Swedish and the Arabic, and
+a value identical to the English is a key nobody translated — refused in **all
+three** files, except for the named list below (product names, «OK», bare
+numbers, and the few words a language really does spell the English way).
+
+**And the Arabic adds no list of its own** — paper 115, 25 October 2026. The
+Swedish needed four names beside the common list, because Swedish spells four of
+the house's words the English way. Arabic shares no word with English at all, so
+the six values it keeps in Latin letters — the two greyed examples of a German
+field and a German spelling, the two surnames, the frame that joins two keys and
+the answer page's own top line — are **already** in
+[SAME_IN_EVERY_LANGUAGE]: every one of them is a name or a product's own
+spelling, which is what that list is for. Measured, not assumed: the six were
+read off the written file.
 
 The Swedish was allowed to be the English until 23 October 2026, which was
 56-أ: the file existed so this gate could count it. Paper 106 wrote the
@@ -548,12 +558,20 @@ def g50() -> list[str]:
     en = json.loads((L10N / 'app_en.arb').read_text(encoding='utf-8'))
     de = json.loads((L10N / 'app_de.arb').read_text(encoding='utf-8'))
     sv = json.loads((L10N / 'app_sv.arb').read_text(encoding='utf-8'))
+    ar = json.loads((L10N / 'app_ar.arb').read_text(encoding='utf-8'))
     keys = [k for k in en if not k.startswith('@')]
     for k in keys:
         if k not in de:
             bad.append(f'«{k}» is in the English list and not in the German')
         if k not in sv:
             bad.append(f'«{k}» is in the English list and not in the Swedish')
+        # **The Arabic, since paper 115** — read in its own loop rather than
+        # folded into a list of three, because what each language is allowed to
+        # share with the English differs and a single loop would need a table
+        # of exceptions per language anyway. The messages are what a reader of
+        # a red line gets, and each one names its own file.
+        if k not in ar:
+            bad.append(f'«{k}» is in the English list and not in the Arabic')
     for k in keys:
         if k in de and de[k] == en[k] and not SAME_IN_EVERY_LANGUAGE.match(en[k]):
             bad.append(f'«{k}» is the English sentence in the German file — '
@@ -563,8 +581,15 @@ def g50() -> list[str]:
                 and not SAME_IN_SWEDISH.match(en[k])):
             bad.append(f'«{k}» is the English sentence in the Swedish file — '
                        f'nobody translated it (paper 106 closed 56-أ)')
+        # No `SAME_IN_ARABIC`, and the docstring says why: Arabic shares no
+        # word with English, so the common list is the whole of its exception.
+        if k in ar and ar[k] == en[k] and not SAME_IN_EVERY_LANGUAGE.match(en[k]):
+            bad.append(f'«{k}» is the English sentence in the Arabic file — '
+                       f'nobody translated it (paper 115 wrote the Arabic)')
     for extra in [k for k in de if not k.startswith('@') and k not in en]:
         bad.append(f'«{extra}» is in the German file and in no English key')
+    for extra in [k for k in ar if not k.startswith('@') and k not in en]:
+        bad.append(f'«{extra}» is in the Arabic file and in no English key')
     return bad
 
 
@@ -627,7 +652,7 @@ def main() -> int:
         # from the English, with the handful that legitimately do not named
         # above — so these two numbers are «written», never «reviewed».
         en_v = json.loads((L10N / 'app_en.arb').read_text(encoding='utf-8'))
-        for code in ('de', 'sv'):
+        for code in ('de', 'sv', 'ar'):
             other = json.loads((L10N / f'app_{code}.arb').read_text(encoding='utf-8'))
             written = sum(1 for k in keys if other.get(k) != en_v.get(k))
             print(f'  {code}: {written} of {len(keys)} values say something other '

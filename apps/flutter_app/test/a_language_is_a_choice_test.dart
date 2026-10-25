@@ -64,7 +64,14 @@ void main() {
     expect(ground.languages.length, greaterThan(60), reason: 'the core sent a short list');
     expect(ground.languageName('ar'), 'العربية');
     expect(ground.hasRules('de'), isTrue);
-    expect(ground.hasRules('ar'), isFalse);
+    // **Arabic has rules since paper 115** — the owner's name library and three
+    // rules of its own. This line read `isFalse` until that paper, and the law
+    // this test holds is not about Arabic: it is that the bar says «general
+    // rules» **when that is all there is**. So the language with none is
+    // Japanese now, and both halves are measured below — Arabic without the
+    // phrase, Japanese with it.
+    expect(ground.hasRules('ar'), isTrue);
+    expect(ground.hasRules('ja'), isFalse);
 
     // German is a pack: the bar says the pack's own label.
     expect(find.textContaining('Deutsch'), findsWidgets, reason: 'the bar does not name German');
@@ -78,8 +85,20 @@ void main() {
     expect(refused, isNull, reason: 'Arabic was refused: $refused');
     expect(bench.packId, 'ar');
 
-    // And the bar says what ran, in the language's own name.
+    // And the bar says what ran, in the language's own name — and **not**
+    // «general rules», because Arabic has a pack now.
     expect(find.textContaining('العربية'), findsOneWidget, reason: 'the bar does not name Arabic');
+    expect(find.textContaining('general rules'), findsNothing,
+        reason: 'the bar denies the Arabic pack this build carries');
+
+    // The other half of the law, on a language this build really has nothing
+    // for: the bar names it and says what ran.
+    await tester.runAsync(() async {
+      refused = await bench.switchPack('ja');
+    });
+    await settle(tester);
+    expect(refused, isNull, reason: 'Japanese was refused: $refused');
+    expect(find.textContaining('日本語'), findsOneWidget, reason: 'the bar does not name Japanese');
     expect(find.textContaining('general rules'), findsOneWidget,
         reason: 'the bar claims rules this build does not have');
 
