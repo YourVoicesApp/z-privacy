@@ -81,6 +81,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart' as c;
+import 'package:flutter/painting.dart' show TextDirection;
 import 'package:flutter/services.dart' show ByteData, rootBundle;
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -195,6 +196,33 @@ class DirectionBlock {
 
   @override
   String toString() => '${rtl ? 'rtl' : 'ltr'}: ${text.replaceAll('\n', '⏎')}';
+}
+
+/// **Which way a whole document reads, for a screen that has to lay it out** —
+/// paper 116, 25 October 2026.
+///
+/// The first run with an opinion decides, which is `directionBlocks`'s own
+/// answer read once: a German letter is left to right, an Arabic one is right
+/// to left, and a letter that opens with an amount takes the direction of its
+/// first real word. **A `__Z_…__` token does not vote**, which is the half that
+/// matters on the glass: the Safe column is full of tokens whose letters are
+/// Latin and ours, and a protected Arabic letter must not flip because we put
+/// them there.
+///
+/// It lives here, beside the rule it reads, because the alternative is a second
+/// opinion about one fact. The PDF asks the blocks paragraph by paragraph and
+/// the screen asks for the document's base; neither of them owns a copy of the
+/// script tables.
+///
+/// **This is 086's reading base applied to a layout, not a new decision.** The
+/// interface's own direction is a different question with a different answer —
+/// the person's choice of language — and the document may never be laid out by
+/// it: an English letter in an Arabic interface still reads left to right.
+TextDirection theWayTheTextReads(String text) {
+  for (final block in directionBlocks(text)) {
+    return block.rtl ? TextDirection.rtl : TextDirection.ltr;
+  }
+  return TextDirection.ltr;
 }
 
 /// Cut the text into runs of paragraphs that share a direction.
