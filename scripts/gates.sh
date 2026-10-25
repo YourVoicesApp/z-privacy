@@ -2670,17 +2670,34 @@ else
   fail "G37 keep_the_preview births a session without asking first whether anything is in the preview"
 fi
 
-# **One name, two languages.** The core writes the name of a session nobody
+# **One name, four languages.** The core writes the name of a session nobody
 # named and the glass reads it to tell an unnamed session from a named one
 # (081). Two spellings of one string is this house's «one fact, one source»,
 # and a cross-language seam is where it goes wrong quietly.
-G37_RUST=$(grep -oE 'A_SESSION_CALLED: &str = "[^"]+"' "$BORN" | sed 's/.*= "//; s/"$//')
-G37_DART=$(grep -oE "_aSessionCalled = '[^']+'" "$FLUTTER_LIB/core/session_state.dart" \
-           | sed "s/.*= '//; s/'$//")
-if [ -n "$G37_RUST" ] && [ "$G37_RUST" = "$G37_DART" ]; then
-  pass "G37 the core and the glass spell a session nobody named the same: «$G37_RUST N»"
+#
+# **It was one word until 25 October 2026** (paper 117, the owner looking at the
+# Arabic screens: a person working in Arabic was handed «Session 1», «Session
+# 2» in the middle of their own language). It is a **table** now — the word per
+# language, in both halves — and the stored name is written in the language the
+# session was born with and never translated again, because the name is data.
+# So this check compares the tables row for row, and the fallback beside them:
+# a language in one and not the other, or one row spelled differently, is a
+# session the send sheet reads as one somebody named.
+G37_RUST=$(sed -n '/^const A_SESSION_CALLED: &\[/,/^\];/p' "$BORN" \
+           | grep -oE '\("[a-z]+", "[^"]+"\)' \
+           | sed 's/^("//; s/", "/=/; s/")$//' | sort | tr '\n' ' ' | sed 's/ $//')
+G37_DART=$(sed -n '/^const _aSessionCalled = <String, String>{/,/^};/p' \
+             "$FLUTTER_LIB/core/session_state.dart" \
+           | grep -oE "'[a-z]+': '[^']+'" \
+           | sed "s/^'//; s/': '/=/; s/'$//" | sort | tr '\n' ' ' | sed 's/ $//')
+G37_RUST_LAST=$(grep -oE 'A_SESSION_CALLED_FALLBACK: &str = "[^"]+"' "$BORN" | sed 's/.*= "//; s/"$//')
+G37_DART_LAST=$(grep -oE "_aSessionCalledFallback = '[^']+'" "$FLUTTER_LIB/core/session_state.dart" \
+                | sed "s/.*= '//; s/'$//")
+if [ -n "$G37_RUST" ] && [ "$G37_RUST" = "$G37_DART" ] \
+   && [ -n "$G37_RUST_LAST" ] && [ "$G37_RUST_LAST" = "$G37_DART_LAST" ]; then
+  pass "G37 the core and the glass call a session nobody named the same in every language: $G37_RUST (and «$G37_RUST_LAST» for a language neither speaks)"
 else
-  fail "G37 the core calls it «$G37_RUST» and the glass «$G37_DART», so one of them draws a name the other cannot read"
+  fail "G37 the core's table is «$G37_RUST» with «$G37_RUST_LAST» behind it and the glass's is «$G37_DART» with «$G37_DART_LAST» — one of them draws a name the other cannot read"
 fi
 
 # **And every door a document enters by on the glass tells the list.** The rule
@@ -4831,6 +4848,11 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          the_arabic_letter_reads_better_than_it_did \
          a_german_name_is_reported_the_same_way \
          the_arabic_rules_run_only_when_arabic_is_asked_for \
+         a_name_in_a_courtesy_phrase_is_not_offered \
+         a_session_born_in_arabic_is_called_a_session_in_arabic \
+         every_language_the_interface_speaks_names_its_own_sessions \
+         a_language_the_glass_does_not_speak_falls_back_to_the_source \
+         the_name_stays_as_it_was_written_when_the_language_moves \
          the_door_back_brings_a_taught_value_back_after_the_bench_is_gone \
          the_door_back_reads_a_pdf_and_a_text_file_the_same_way \
          the_door_back_leaves_the_bench_and_the_vault_untouched \

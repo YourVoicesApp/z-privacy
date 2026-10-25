@@ -226,7 +226,8 @@ are what the pack is measured against.
 | | auto | waiting |
 |---|---|---|
 | no pack at all (the baseline below) | 5 | 2 |
-| the Arabic pack | **19** | **6** |
+| the Arabic pack (115) | **19** | 6 |
+| and 117 item 5, the courtesy phrases | **19** | **5** |
 
 What moved, by name — `z_core/tests/the_arabic_pack.rs` asserts every one of
 them rather than the counts alone:
@@ -234,7 +235,8 @@ them rather than the counts alone:
 | what | state | which rule |
 |---|---|---|
 | 7 people — كاترين لندمان · طارق بن سعود الريحاني · أميرة الحداد · يوسف العمري · سارة البراك · يونس دمير, 14 name words in all | auto | `ar-1`, a salutation or a title in front of the name |
-| 3 ordinary words the library also holds as names — a street named after a prince, «صاحب» in «اسم صاحب الحساب», «فائق» in «فائق الاحترام» | waiting | `ar-2`, the owner's library |
+| 2 ordinary words the library also holds as names — a street named after a prince, «صاحب» in «اسم صاحب الحساب» | waiting | `ar-2`, the owner's library |
+| «فائق» in «فائق الاحترام» — a name everywhere else, and not there | **in the clear** | 117 item 5: a closed list of fixed courtesy pairs, measured one phrase at a time |
 | the internal extension written «٠١٢١٢٣٤٥٩٩» | waiting | `ar-3`, Arabic-Indic digits |
 | «محمد بن عبدالله الحربي» (the writer's own name, introduced by «بياناتي الشخصية») and the signature «محمد الحربي» | **still in the clear** | no form word in front of it, and «محمد» is **not in the owner's library** |
 

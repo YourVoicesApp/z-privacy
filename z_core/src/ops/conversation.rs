@@ -136,18 +136,66 @@ fn begin_in(
     })
 }
 
-/// **The name a session nobody named carries** — «Session 1», «Session 2»…
+/// **The name a session nobody named carries** — «جلسة 1», «Sitzung 1»,
+/// «Session 1».
 ///
 /// 081, where the owner had the name field at the exit deleted — «أبسط من
 /// البساطة ذاتها» — so a press that needs a session gets one called by its own
-/// number. The glass spells the same two words in `nameForSession`, and G37
-/// measures that the two agree: one of them saying «Sitzung 2» would be a
-/// session the send sheet cannot tell from one a person named.
-pub(crate) fn a_session_called(number: u32) -> String {
-    format!("{A_SESSION_CALLED} {number}")
+/// number. The glass spells the same words in `nameForSession`, and G37
+/// measures that the two tables agree: one of them saying «Sitzung 2» where the
+/// other says «Session 2» would be a session the send sheet cannot tell from
+/// one a person named.
+///
+/// **In the language the session was born with** — the owner, 25 October 2026,
+/// looking at the Arabic screens: a person working in Arabic was handed a list
+/// of sessions called «Session 1», «Session 2» in the middle of their own
+/// language. The word now comes from `born_with`, which the birth already
+/// records beside the session (075c), so the name is **stored** in one spelling
+/// in one language and never translated again.
+///
+/// **And that is the whole of the change: the name is data** (G37). A session
+/// already in the vault keeps the name it was given — switching the interface
+/// to German does not make «جلسة 3» into «Sitzung 3», because the name is a
+/// string a person may have chosen and a house that rewrote it would be
+/// rewriting what it cannot tell from their own words. The language is read at
+/// the birth and never again.
+pub(crate) fn a_session_called(number: u32, born_with: Option<&str>) -> String {
+    format!("{} {number}", the_word_for_a_session(born_with))
 }
 
-const A_SESSION_CALLED: &str = "Session";
+/// **What this house calls a session, per language.**
+///
+/// The four the interface speaks, and nothing else: a word here is a word the
+/// product's own glass can draw, and a scanner language with no interface — a
+/// session read in Japanese — is named in the source list's own language, which
+/// is what the rest of the house does with a language whose sentences are not
+/// written (`theLocaleOf`, rule 56-أ).
+///
+/// **Swedish is «Session» on purpose**, and it is the one row a reader might
+/// take for an omission: Swedish spells the word exactly as English does, which
+/// `check_the_one_list.py` already names among the four values that language
+/// shares with the source.
+const A_SESSION_CALLED: &[(&str, &str)] = &[
+    ("ar", "جلسة"),
+    ("de", "Sitzung"),
+    ("en", "Session"),
+    ("sv", "Session"),
+];
+
+/// The word, with the fallback named rather than implied.
+fn the_word_for_a_session(language: Option<&str>) -> &'static str {
+    let Some(code) = language else { return A_SESSION_CALLED_FALLBACK };
+    A_SESSION_CALLED
+        .iter()
+        .find(|(id, _)| *id == code)
+        .map_or(A_SESSION_CALLED_FALLBACK, |(_, word)| *word)
+}
+
+/// **English, because English is the source list** — the same answer
+/// `theLocaleOf` gives a code whose sentences are not written. Never empty: a
+/// session whose name is a bare number would be a session the sheet reads as
+/// one somebody named.
+const A_SESSION_CALLED_FALLBACK: &str = "Session";
 
 /// **The session the house begins for itself** — rule 55c, the owner's answer
 /// of 16 October 2026, and rule 55-و, his answer of 18 October: «نعم» twice.
@@ -180,8 +228,20 @@ pub(crate) fn a_session_is_born(
     core: &mut crate::session::Core,
     bench: SessionId,
 ) -> ApiResult<u32> {
-    let row = begin_in(core, A_SESSION_CALLED.to_string(), Some(bench))?;
-    core.vault.rename_conversation(row.number, &a_session_called(row.number))?;
+    // **The provisional name is in the birth language too**, which is what the
+    // sentence about a failed rename below is worth: «جلسة» alone is less than
+    // was wanted and still in the person's own language, while «Session» alone
+    // would be the English word this round took out of their list. Read from
+    // the bench here and recorded by `begin_in` from the same bench one line
+    // later — one fact, read twice in the same act, rather than a parameter
+    // threaded through a door whose other callers name their own session.
+    let language = core.get(bench.id).map(|s| s.pack_id.clone());
+    let row = begin_in(core, the_word_for_a_session(language.as_deref()).to_string(), Some(bench))?;
+    // And the name that stays is the number's, in the language the row itself
+    // reports — asked of the row rather than of the bench, so that the stored
+    // name and the stored language can never be two different answers.
+    core.vault
+        .rename_conversation(row.number, &a_session_called(row.number, row.pack_id.as_deref()))?;
     Ok(row.number)
 }
 

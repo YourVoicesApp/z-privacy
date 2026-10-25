@@ -409,7 +409,12 @@ class _SendSheetState extends State<SendSheet> {
     if (whose != null) {
       // A session nobody named is already «Session N», and «Session 3 «Session
       // 3»» is the app reading its own placeholder back to the person (081).
-      final named = whose.name == nameForSession(whose.number)
+      // **Every language the house names in** (117), and not this screen's:
+      // the name was written at the birth and the language may have moved
+      // since — `isTheHouseName` says why in full. Comparing against the
+      // interface's word alone would make a session born in Arabic look like
+      // one a person named, the moment the app was switched to German.
+      final named = isTheHouseName(whose.name, whose.number)
           ? sentences.sessionNumber(whose.number)
           // **Isolated** — the owner's test of 16 October: an Arabic name in
           // an English line pulls the number and the quotes into its own

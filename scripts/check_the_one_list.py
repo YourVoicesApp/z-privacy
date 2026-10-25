@@ -343,7 +343,17 @@ PRODUCT_NAMES = {'Z Privacy', 'z-pdf', 'YourVoices', 'Grok', 'xAI', 'Ollama',
 # A name is data, and data does not cross a language seam. It was in the list
 # for one afternoon of sitting five and G37 reddened, which is the gate doing
 # exactly what it was written for.
-A_NAME_BOTH_HALVES_SPELL = {'Session'}
+#
+# **It became a table on 25 October 2026** — paper 117, the owner looking at the
+# Arabic screens: a person working in Arabic was handed a list of sessions
+# called «Session 1», «Session 2» in the middle of their own language. So the
+# house now writes the name in the language the session was **born** with, and
+# both halves hold the same four words — G37 compares the tables row for row.
+# Each word below is therefore the same kind of thing «Session» was: a name
+# written into the vault, not a sentence drawn on a screen. The one that reads
+# oddest is «Session» appearing twice over — it is English's word and Swedish's,
+# which is the same coincidence `SAME_IN_SWEDISH` already names.
+A_NAME_BOTH_HALVES_SPELL = {'Session', 'Sitzung', 'جلسة'}
 
 # **An address is not a sentence.** `connect_form.dart` puts
 # `http://127.0.0.1:11434` into the field as a default and shows `https://…`
