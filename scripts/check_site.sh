@@ -48,13 +48,68 @@ fi
 # what a counter actually looks like: a script, an event handler, a cookie, or
 # one of the vendors by their own hostnames. The first form would also have
 # gone red the day a German page said «kein Analytics-Konto».
-COUNTERS='<script|javascript:|document\.cookie|localStorage|on(click|load|error|submit|focus|change|input|mouseover|keyup|keydown)=|google-analytics|googletagmanager|gtag\(|analytics\.js|plausible\.io|matomo|fathom\.|hotjar|segment\.(io|com)|mixpanel'
+#
+# **And the opening tag left this pattern on 26 October 2026, for a reason
+# worth writing down rather than merging quietly.** Paper 118 puts a
+# `SoftwareApplication` on the three home pages, which is structured data: a
+# block a browser never executes, in a tag the browser does execute things in.
+# This guard could not tell them apart, so it would have refused a fact and
+# called it a counter. The ban is therefore narrowed rather than relaxed: a
+# page may carry a data block of **one** declared type and nothing else, and
+# the vendor names, the handlers and the cookie keep scanning the whole file
+# — inside that block too, so a counter hidden in structured data is still a
+# counter. What was lost is one grep; what replaces it is below, and it is
+# stricter than what it replaced, because `<script src=…>` never had to be
+# spelled out before and now does.
+COUNTERS='javascript:|document\.cookie|localStorage|on(click|load|error|submit|focus|change|input|mouseover|keyup|keydown)=|google-analytics|googletagmanager|gtag\(|analytics\.js|plausible\.io|matomo|fathom\.|hotjar|segment\.(io|com)|mixpanel'
 if grep -rqiE "$COUNTERS" --include='*.html' . 2>/dev/null; then
-  say FAIL "a script, a handler, a cookie or a counter is on a page:"
+  say FAIL "a handler, a cookie or a counter is on a page:"
   grep -rniE "$COUNTERS" --include='*.html' . | sed 's/^/           /' | head -10
   FAIL=1
 else
-  say PASS "no JavaScript, no handler, no cookie, no counter"
+  say PASS "no handler, no cookie, no counter"
+fi
+
+# The one tag that may open, and the one thing it may hold. Anything else —
+# a src, a module, a type this site has not agreed to, a bare opener — is a
+# program on a page that promises none.
+OPENERS=$(grep -rhoE '<script[^>]*>' --include='*.html' . 2>/dev/null | sort -u || true)
+STRANGE=$(printf '%s' "$OPENERS" | grep -vE '^<script type="application/ld\+json">$' || true)
+if [ -n "$(printf '%s' "$STRANGE" | tr -d '[:space:]')" ]; then
+  say FAIL "a page opens a script that is not structured data:"
+  printf '%s\n' "$STRANGE" | sed 's/^/           /'
+  FAIL=1
+else
+  say PASS "the only tag a page opens is a declared data block"
+fi
+
+# And a data block that does not parse is not data — it is a claim of
+# structure that any reader of it, machine or person, is entitled to check.
+# This asks the same question Google's own tool would, from the tree, before
+# anything is uploaded.
+if ! python3 - <<'PARSE'
+import json, pathlib, re, sys
+bad = 0
+for p in sorted(pathlib.Path('.').rglob('*.html')):
+    page = p.read_text(encoding='utf-8')
+    for block in re.findall(r'<script type="application/ld\+json">(.*?)</script>',
+                            page, re.S):
+        try:
+            data = json.loads(block)
+        except Exception as exc:
+            print('  FAIL   %s: the data block does not parse — %s' % (p, exc))
+            bad = 1
+            continue
+        if '@context' not in data or '@type' not in data:
+            print('  FAIL   %s: a data block with no @context or no @type says '
+                  'nothing to anybody' % p)
+            bad = 1
+sys.exit(bad)
+PARSE
+then
+  FAIL=1
+else
+  say PASS "every data block parses and names its type"
 fi
 
 # A filled-in link is not a real link. The promise was that nothing goes public
@@ -161,7 +216,12 @@ if grep -rn '<span class="z"' --include='*.html' . 2>/dev/null; then
   FAIL=1; TILED=1
 fi
 for f in index.html en/index.html de/index.html ar/index.html license/index.html third-party/index.html; do
-  n=$(grep -c 'assets/logo-512.png' "$f" 2>/dev/null || true); n=${n:-0}
+  # **Drawn, not named.** This counted the file name until 26 October 2026,
+  # when paper 118 put the same picture in an `og:image` so a pasted link
+  # shows something — a reference for somebody else's preview, not a second
+  # mark on the page. The rule in the line below has not moved; what moved is
+  # the thing it reads, from any mention of the file to a `src` that paints it.
+  n=$(grep -cE 'src="[^"]*assets/logo-512\.png"' "$f" 2>/dev/null || true); n=${n:-0}
   [ "$n" = 1 ] || { say FAIL "$f draws the mark $n times, and the rule is exactly once"; FAIL=1; TILED=1; }
   # The tab is a screen too, and three pages had no icon at all until today.
   grep -q 'rel="icon"' "$f" || { say FAIL "$f asks for no icon, so its tab wears nothing"; FAIL=1; TILED=1; }
@@ -605,9 +665,28 @@ done < <(find . -name index.html | sort)
 #
 # The guard asks each page's set of its members, so a page cannot be the only
 # one telling the truth.
+# **And every one of those hrefs is fully qualified, since 26 October 2026.**
+# Google's own documentation asks for an absolute URL in `hreflang` and says
+# so plainly; a root-relative one is read by some crawlers and dropped by
+# others, which makes it a tag that is present and may be doing nothing. It is
+# checked before the sets below are compared, because a page that names its
+# siblings in a form half the readers ignore has not named them.
+LOOSE=$(grep -rhoE '<link[^>]+rel="alternate"[^>]*href="[^"]+"' --include='*.html' . 2>/dev/null \
+        | grep -vE 'href="https://z-privacy\.com/' || true)
+if [ -n "$(printf '%s' "$LOOSE" | tr -d '[:space:]')" ]; then
+  say FAIL "an hreflang is not a fully qualified URL:"
+  printf '%s\n' "$LOOSE" | sed 's/^/           /'
+  FAIL=1
+else
+  say PASS "every hreflang is an absolute address at our own origin"
+fi
+
+# The origin comes off again here, and only here, so that everything below
+# this line goes on comparing paths the way it always has.
 sets_of() {
   grep -oE '<link[^>]+rel="alternate"[^>]*>' "$1" 2>/dev/null \
-  | sed -E 's/.*hreflang="([^"]+)"[^>]*href="([^"]+)".*/\1 \2/' | sort
+  | sed -E 's/.*hreflang="([^"]+)"[^>]*href="([^"]+)".*/\1 \2/' \
+  | sed -E 's#^([^ ]+ )https://z-privacy\.com#\1#' | sort
 }
 HREF=0
 h_fail() { say FAIL "$1"; FAIL=1; HREF=1; }
