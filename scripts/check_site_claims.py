@@ -1040,6 +1040,8 @@ THE_HONEST_SENTENCES = (
      'with no signature, the fingerprint is the only thing that says the file is ours'),
     ('the-signed-version-follows', 'the MSIX and a signed installer wait for a real certificate — rule 81-أ'),
     ('the-claims-review-report', 'the outside model’s report belongs beside the download'),
+    ('every-release-is-listed',
+     'this page offers one build, and the releases page keeps the rest findable'),
 )
 
 # The owner's approved beta line, in the three languages it is approved in. It
