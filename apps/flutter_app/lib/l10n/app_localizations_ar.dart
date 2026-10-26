@@ -233,6 +233,11 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
+  String refusalTextInDisplayForms(int percent) {
+    return '$percent% من عربيّة هذا النصّ مكتوبةٌ بأشكال العرض التي يرسمها برنامجُ التنسيق، فما قرأه Z بترتيب الرسم لا بترتيب الكتابة — فتخرج الكلماتُ والأرقامُ مقلوبة. ولن يحمي Z نصّاً قرأه مقلوباً: الاسمُ المقروءُ مقلوباً اسمٌ لا يستطيع حمايته. وملفُّ Word أو ملفُّ النصّ العاديّ يُقرأ بالترتيب الذي كُتب به.';
+  }
+
+  @override
   String refusalDocumentTooLarge(int mib, int limitMib) {
     return 'حجم هذا الملفّ نحو $mib MiB، وZ Privacy يفتح وثائق حتّى $limitMib MiB.';
   }

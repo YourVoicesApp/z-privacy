@@ -5764,6 +5764,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         return Refusal_TookTooLong(millis: dco_decode_u_32(raw[1]));
       case 11:
         return Refusal_EmptyDocument();
+      case 12:
+        return Refusal_TextInDisplayForms(percent: dco_decode_u_32(raw[1]));
       default:
         throw Exception("unreachable");
     }
@@ -7980,6 +7982,9 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         return Refusal_TookTooLong(millis: var_millis);
       case 11:
         return Refusal_EmptyDocument();
+      case 12:
+        var var_percent = sse_decode_u_32(deserializer);
+        return Refusal_TextInDisplayForms(percent: var_percent);
       default:
         throw UnimplementedError('');
     }
@@ -10032,6 +10037,9 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_encode_u_32(millis, serializer);
       case Refusal_EmptyDocument():
         sse_encode_i_32(11, serializer);
+      case Refusal_TextInDisplayForms(percent: final percent):
+        sse_encode_i_32(12, serializer);
+        sse_encode_u_32(percent, serializer);
     }
   }
 

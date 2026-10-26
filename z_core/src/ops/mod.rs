@@ -65,6 +65,20 @@ pub(crate) fn import_text(session: SessionId, text_in: String) -> ApiResult<Docu
             &crate::documents::Budget::new(text_in.len()),
         )?)
     };
+    // **The second road to a bench, closed with the first** — paper 119, item 3.
+    // A paste is not an extraction *we* made, and that is exactly why it had to
+    // be closed here: the refusal a file gets tells the person their document
+    // was read backwards, and the shortest thing they can do next is open it in
+    // a viewer and paste — the same reversed text, by the one road nothing
+    // checked. Typed Arabic is untouched: a keyboard writes `U+06xx`.
+    if let Some(extracted) = read.as_ref() {
+        if let Some(percent) = crate::documents::the_order_cannot_be_trusted(&extracted.text) {
+            return Err(crate::documents::refuse(
+                crate::api::Refusal::TextInDisplayForms { percent },
+                crate::documents::the_sentence(percent),
+            ));
+        }
+    }
     with_session(session.id, |s| {
         match read {
             Some(extracted) => {
@@ -138,7 +152,10 @@ pub(crate) fn import_document(
     bytes: Vec<u8>,
     kind: DocumentKind,
 ) -> ApiResult<DocumentView> {
-    let extracted = crate::documents::extract(&bytes, kind)?;
+    // **The road that ends in a bench says so** — paper 119. This is the one
+    // place an extraction becomes text that will be scanned, protected and may
+    // leave the machine, so this is where a reading we cannot trust is refused.
+    let extracted = crate::documents::extract(&bytes, kind, crate::documents::WhatFor::Protecting)?;
     // The file's bytes are dropped here, at the end of this call. They were never
     // written anywhere, and the text lives only inside the session's Secret.
     with_session(session.id, |s| {
@@ -215,7 +232,12 @@ pub(crate) fn returning_document(session: SessionId) -> ApiResult<crate::api::Re
 /// door reads it, and a bench that never joined a conversation carries a
 /// random namespace no token of a z-pdf can match anyway.
 pub(crate) fn read_a_document_that_came_back(bytes: Vec<u8>, kind: DocumentKind) -> ApiResult<crate::api::ReturnedDocument> {
-    let extracted = crate::documents::extract(&bytes, kind)?;
+    // **And this one says it is only reading** — paper 119, named here at the
+    // call rather than left out of a check it would have to remember. Nothing
+    // on this road is scanned, protected or sent (the door's own doc comment
+    // says so), so a file whose order is a drawing's is a reading a person can
+    // see is wrong — not a secret leaving in text nobody could read.
+    let extracted = crate::documents::extract(&bytes, kind, crate::documents::WhatFor::ReadingItBack)?;
     // The file's bytes are dropped at the end of this call, and the text with
     // them: nothing is written anywhere (G15), and no session holds either.
     Ok(with_core(|core| {

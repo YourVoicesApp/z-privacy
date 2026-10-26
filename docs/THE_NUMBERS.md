@@ -229,6 +229,39 @@ are what the pack is measured against.
 | the Arabic pack (115) | **19** | 6 |
 | and 117 item 5, the courtesy phrases | **19** | **5** |
 
+### 4.0b · The same letter inside a PDF (papers 118 and 119, 26 October 2026)
+
+Five fixtures of our own making — AR-1 set in DejaVu by a writer that does what
+a word processor does (Type0, `/Identity-H`, the font embedded, a `/ToUnicode`
+CMap). They are **not in this tree**: 1.6 MB of embedded font for one
+measurement, kept with their sha256 at
+`~/work-now/zprivacy-arabic-pdf-fixtures/`, and
+`z_core/tests/a_text_read_backwards_is_refused.rs` reads them when they are on
+the machine and says so when they are not.
+
+| the fixture | before paper 119 | after it |
+|---|---|---|
+| Arabic text layer, **logical** order | imported · 19 auto · 5 waiting — the same as `.txt` | unchanged, and **never refused** |
+| Arabic + English + digits, logical order | imported · 8 auto · 2 waiting | unchanged |
+| the same letter in **display** order | **imported, not refused** · 4 marks · 1 auto · 3 waiting · **none of its 8 people** · and an e-mail **protected backwards** (`as.iramola-batkam@iramola.fesuoy`) | **refused by name**: `TextInDisplayForms { percent: 96 }` |
+| `/Identity-H` with no `/ToUnicode` | refused: `UnreadableStructure` | unchanged |
+| one page, image only | refused: `ScannedPdfNoTextLayer` | unchanged |
+
+**The signal, and both its numbers are measurements.** The share of a text's
+Arabic standing in Unicode's compatibility blocks (`U+FB50–FDFF`,
+`U+FE70–FEFF`): 0% for the letter as `.txt`, 0% for the logical PDF, 0% for the
+mixed one, **96%** for the display-order one, and 0.2% for a page that uses
+«ﷺ» and a lam-alef — so the threshold (**33%**) is a line through empty space,
+and a floor of **8** Arabic characters keeps a page holding one ligature from
+being judged on a share of nothing. A reversed Arabic name inside an English
+letter carries fifteen, which is what the floor had to sit below.
+
+**What the 80% readable gate could never have caught**, and this is not a fault
+in that gate: the reversed text measures **100% readable** by
+`readable_percent`/`decoded`, correctly — presentation forms are honest Unicode
+letters and a reversal is not a decoding failure. That meter asks «did these
+bytes become text», never «is this text what was written».
+
 What moved, by name — `z_core/tests/the_arabic_pack.rs` asserts every one of
 them rather than the counts alone:
 
@@ -299,6 +332,14 @@ as they are. **On this build no Arabic rule can match a word in an Arabic
 PDF**, however good the rule; plain-text input (`.txt`, pasted text) is in
 logical order and unaffected — AR-1 is `.txt`, which is why its e-mails and
 IBAN were found.
+
+> **That sentence was measured again on 26 October 2026 and is too wide**
+> (papers 118 and 119, §4.0b above): what cannot be matched is a PDF whose
+> producer hands the text over in **display order**, which is what this book's
+> does. A PDF that hands it over in logical order is read exactly as well as
+> `.txt` — 19 auto · 5 waiting on AR-1 — and since 119 the display-order kind
+> is refused by name rather than half-read. The true sentence names the
+> producer, not the language.
 
 ### 4.3 · The owner's demo: «our own lists work» — a list of the book's characters
 

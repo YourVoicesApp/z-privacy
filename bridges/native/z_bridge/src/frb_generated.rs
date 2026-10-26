@@ -4090,6 +4090,9 @@ const _: fn() = || {
             let _: u32 = millis;
         }
         crate::api::mirrors::Refusal::EmptyDocument => {}
+        crate::api::mirrors::Refusal::TextInDisplayForms { percent } => {
+            let _: u32 = percent;
+        }
     }
     match None::<crate::api::mirrors::ReportSubject>.unwrap() {
         crate::api::mirrors::ReportSubject::Imported { session } => {
@@ -6110,6 +6113,10 @@ impl SseDecode for crate::api::mirrors::Refusal {
             }
             11 => {
                 return crate::api::mirrors::Refusal::EmptyDocument;
+            }
+            12 => {
+                let mut var_percent = <u32>::sse_decode(deserializer);
+                return crate::api::mirrors::Refusal::TextInDisplayForms { percent: var_percent };
             }
             _ => {
                 unimplemented!("");
@@ -8216,6 +8223,9 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::Refusal> 
                 [10.into_dart(), millis.into_into_dart().into_dart()].into_dart()
             }
             crate::api::mirrors::Refusal::EmptyDocument => [11.into_dart()].into_dart(),
+            crate::api::mirrors::Refusal::TextInDisplayForms { percent } => {
+                [12.into_dart(), percent.into_into_dart().into_dart()].into_dart()
+            }
             _ => {
                 unimplemented!("");
             }
@@ -10402,6 +10412,10 @@ impl SseEncode for crate::api::mirrors::Refusal {
             }
             crate::api::mirrors::Refusal::EmptyDocument => {
                 <i32>::sse_encode(11, serializer);
+            }
+            crate::api::mirrors::Refusal::TextInDisplayForms { percent } => {
+                <i32>::sse_encode(12, serializer);
+                <u32>::sse_encode(percent, serializer);
             }
             _ => {
                 unimplemented!("");

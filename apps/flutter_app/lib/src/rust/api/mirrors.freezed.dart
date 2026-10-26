@@ -2955,7 +2955,7 @@ extension RefusalPatterns on Refusal {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( Refusal_ScannedPdfNoTextLayer value)?  scannedPdfNoTextLayer,TResult Function( Refusal_EncryptedPdf value)?  encryptedPdf,TResult Function( Refusal_UnsupportedEncoding value)?  unsupportedEncoding,TResult Function( Refusal_UnreadableStructure value)?  unreadableStructure,TResult Function( Refusal_MalformedDocument value)?  malformedDocument,TResult Function( Refusal_DocumentTooLarge value)?  documentTooLarge,TResult Function( Refusal_TooManyPages value)?  tooManyPages,TResult Function( Refusal_TextTooLarge value)?  textTooLarge,TResult Function( Refusal_CompressionBomb value)?  compressionBomb,TResult Function( Refusal_TooManyParts value)?  tooManyParts,TResult Function( Refusal_TookTooLong value)?  tookTooLong,TResult Function( Refusal_EmptyDocument value)?  emptyDocument,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( Refusal_ScannedPdfNoTextLayer value)?  scannedPdfNoTextLayer,TResult Function( Refusal_EncryptedPdf value)?  encryptedPdf,TResult Function( Refusal_UnsupportedEncoding value)?  unsupportedEncoding,TResult Function( Refusal_UnreadableStructure value)?  unreadableStructure,TResult Function( Refusal_MalformedDocument value)?  malformedDocument,TResult Function( Refusal_DocumentTooLarge value)?  documentTooLarge,TResult Function( Refusal_TooManyPages value)?  tooManyPages,TResult Function( Refusal_TextTooLarge value)?  textTooLarge,TResult Function( Refusal_CompressionBomb value)?  compressionBomb,TResult Function( Refusal_TooManyParts value)?  tooManyParts,TResult Function( Refusal_TookTooLong value)?  tookTooLong,TResult Function( Refusal_EmptyDocument value)?  emptyDocument,TResult Function( Refusal_TextInDisplayForms value)?  textInDisplayForms,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case Refusal_ScannedPdfNoTextLayer() when scannedPdfNoTextLayer != null:
@@ -2970,7 +2970,8 @@ return textTooLarge(_that);case Refusal_CompressionBomb() when compressionBomb !
 return compressionBomb(_that);case Refusal_TooManyParts() when tooManyParts != null:
 return tooManyParts(_that);case Refusal_TookTooLong() when tookTooLong != null:
 return tookTooLong(_that);case Refusal_EmptyDocument() when emptyDocument != null:
-return emptyDocument(_that);case _:
+return emptyDocument(_that);case Refusal_TextInDisplayForms() when textInDisplayForms != null:
+return textInDisplayForms(_that);case _:
   return orElse();
 
 }
@@ -2988,7 +2989,7 @@ return emptyDocument(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( Refusal_ScannedPdfNoTextLayer value)  scannedPdfNoTextLayer,required TResult Function( Refusal_EncryptedPdf value)  encryptedPdf,required TResult Function( Refusal_UnsupportedEncoding value)  unsupportedEncoding,required TResult Function( Refusal_UnreadableStructure value)  unreadableStructure,required TResult Function( Refusal_MalformedDocument value)  malformedDocument,required TResult Function( Refusal_DocumentTooLarge value)  documentTooLarge,required TResult Function( Refusal_TooManyPages value)  tooManyPages,required TResult Function( Refusal_TextTooLarge value)  textTooLarge,required TResult Function( Refusal_CompressionBomb value)  compressionBomb,required TResult Function( Refusal_TooManyParts value)  tooManyParts,required TResult Function( Refusal_TookTooLong value)  tookTooLong,required TResult Function( Refusal_EmptyDocument value)  emptyDocument,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( Refusal_ScannedPdfNoTextLayer value)  scannedPdfNoTextLayer,required TResult Function( Refusal_EncryptedPdf value)  encryptedPdf,required TResult Function( Refusal_UnsupportedEncoding value)  unsupportedEncoding,required TResult Function( Refusal_UnreadableStructure value)  unreadableStructure,required TResult Function( Refusal_MalformedDocument value)  malformedDocument,required TResult Function( Refusal_DocumentTooLarge value)  documentTooLarge,required TResult Function( Refusal_TooManyPages value)  tooManyPages,required TResult Function( Refusal_TextTooLarge value)  textTooLarge,required TResult Function( Refusal_CompressionBomb value)  compressionBomb,required TResult Function( Refusal_TooManyParts value)  tooManyParts,required TResult Function( Refusal_TookTooLong value)  tookTooLong,required TResult Function( Refusal_EmptyDocument value)  emptyDocument,required TResult Function( Refusal_TextInDisplayForms value)  textInDisplayForms,}){
 final _that = this;
 switch (_that) {
 case Refusal_ScannedPdfNoTextLayer():
@@ -3003,7 +3004,8 @@ return textTooLarge(_that);case Refusal_CompressionBomb():
 return compressionBomb(_that);case Refusal_TooManyParts():
 return tooManyParts(_that);case Refusal_TookTooLong():
 return tookTooLong(_that);case Refusal_EmptyDocument():
-return emptyDocument(_that);}
+return emptyDocument(_that);case Refusal_TextInDisplayForms():
+return textInDisplayForms(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
 ///
@@ -3017,7 +3019,7 @@ return emptyDocument(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( Refusal_ScannedPdfNoTextLayer value)?  scannedPdfNoTextLayer,TResult? Function( Refusal_EncryptedPdf value)?  encryptedPdf,TResult? Function( Refusal_UnsupportedEncoding value)?  unsupportedEncoding,TResult? Function( Refusal_UnreadableStructure value)?  unreadableStructure,TResult? Function( Refusal_MalformedDocument value)?  malformedDocument,TResult? Function( Refusal_DocumentTooLarge value)?  documentTooLarge,TResult? Function( Refusal_TooManyPages value)?  tooManyPages,TResult? Function( Refusal_TextTooLarge value)?  textTooLarge,TResult? Function( Refusal_CompressionBomb value)?  compressionBomb,TResult? Function( Refusal_TooManyParts value)?  tooManyParts,TResult? Function( Refusal_TookTooLong value)?  tookTooLong,TResult? Function( Refusal_EmptyDocument value)?  emptyDocument,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( Refusal_ScannedPdfNoTextLayer value)?  scannedPdfNoTextLayer,TResult? Function( Refusal_EncryptedPdf value)?  encryptedPdf,TResult? Function( Refusal_UnsupportedEncoding value)?  unsupportedEncoding,TResult? Function( Refusal_UnreadableStructure value)?  unreadableStructure,TResult? Function( Refusal_MalformedDocument value)?  malformedDocument,TResult? Function( Refusal_DocumentTooLarge value)?  documentTooLarge,TResult? Function( Refusal_TooManyPages value)?  tooManyPages,TResult? Function( Refusal_TextTooLarge value)?  textTooLarge,TResult? Function( Refusal_CompressionBomb value)?  compressionBomb,TResult? Function( Refusal_TooManyParts value)?  tooManyParts,TResult? Function( Refusal_TookTooLong value)?  tookTooLong,TResult? Function( Refusal_EmptyDocument value)?  emptyDocument,TResult? Function( Refusal_TextInDisplayForms value)?  textInDisplayForms,}){
 final _that = this;
 switch (_that) {
 case Refusal_ScannedPdfNoTextLayer() when scannedPdfNoTextLayer != null:
@@ -3032,7 +3034,8 @@ return textTooLarge(_that);case Refusal_CompressionBomb() when compressionBomb !
 return compressionBomb(_that);case Refusal_TooManyParts() when tooManyParts != null:
 return tooManyParts(_that);case Refusal_TookTooLong() when tookTooLong != null:
 return tookTooLong(_that);case Refusal_EmptyDocument() when emptyDocument != null:
-return emptyDocument(_that);case _:
+return emptyDocument(_that);case Refusal_TextInDisplayForms() when textInDisplayForms != null:
+return textInDisplayForms(_that);case _:
   return null;
 
 }
@@ -3049,7 +3052,7 @@ return emptyDocument(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( int pages)?  scannedPdfNoTextLayer,TResult Function()?  encryptedPdf,TResult Function( int page,  int readablePercent)?  unsupportedEncoding,TResult Function( int page)?  unreadableStructure,TResult Function()?  malformedDocument,TResult Function( int mib,  int limitMib)?  documentTooLarge,TResult Function( int pages,  int limit)?  tooManyPages,TResult Function( int limitMib)?  textTooLarge,TResult Function( int ratio)?  compressionBomb,TResult Function( int parts,  int limit)?  tooManyParts,TResult Function( int millis)?  tookTooLong,TResult Function()?  emptyDocument,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( int pages)?  scannedPdfNoTextLayer,TResult Function()?  encryptedPdf,TResult Function( int page,  int readablePercent)?  unsupportedEncoding,TResult Function( int page)?  unreadableStructure,TResult Function()?  malformedDocument,TResult Function( int mib,  int limitMib)?  documentTooLarge,TResult Function( int pages,  int limit)?  tooManyPages,TResult Function( int limitMib)?  textTooLarge,TResult Function( int ratio)?  compressionBomb,TResult Function( int parts,  int limit)?  tooManyParts,TResult Function( int millis)?  tookTooLong,TResult Function()?  emptyDocument,TResult Function( int percent)?  textInDisplayForms,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case Refusal_ScannedPdfNoTextLayer() when scannedPdfNoTextLayer != null:
 return scannedPdfNoTextLayer(_that.pages);case Refusal_EncryptedPdf() when encryptedPdf != null:
@@ -3063,7 +3066,8 @@ return textTooLarge(_that.limitMib);case Refusal_CompressionBomb() when compress
 return compressionBomb(_that.ratio);case Refusal_TooManyParts() when tooManyParts != null:
 return tooManyParts(_that.parts,_that.limit);case Refusal_TookTooLong() when tookTooLong != null:
 return tookTooLong(_that.millis);case Refusal_EmptyDocument() when emptyDocument != null:
-return emptyDocument();case _:
+return emptyDocument();case Refusal_TextInDisplayForms() when textInDisplayForms != null:
+return textInDisplayForms(_that.percent);case _:
   return orElse();
 
 }
@@ -3081,7 +3085,7 @@ return emptyDocument();case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( int pages)  scannedPdfNoTextLayer,required TResult Function()  encryptedPdf,required TResult Function( int page,  int readablePercent)  unsupportedEncoding,required TResult Function( int page)  unreadableStructure,required TResult Function()  malformedDocument,required TResult Function( int mib,  int limitMib)  documentTooLarge,required TResult Function( int pages,  int limit)  tooManyPages,required TResult Function( int limitMib)  textTooLarge,required TResult Function( int ratio)  compressionBomb,required TResult Function( int parts,  int limit)  tooManyParts,required TResult Function( int millis)  tookTooLong,required TResult Function()  emptyDocument,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( int pages)  scannedPdfNoTextLayer,required TResult Function()  encryptedPdf,required TResult Function( int page,  int readablePercent)  unsupportedEncoding,required TResult Function( int page)  unreadableStructure,required TResult Function()  malformedDocument,required TResult Function( int mib,  int limitMib)  documentTooLarge,required TResult Function( int pages,  int limit)  tooManyPages,required TResult Function( int limitMib)  textTooLarge,required TResult Function( int ratio)  compressionBomb,required TResult Function( int parts,  int limit)  tooManyParts,required TResult Function( int millis)  tookTooLong,required TResult Function()  emptyDocument,required TResult Function( int percent)  textInDisplayForms,}) {final _that = this;
 switch (_that) {
 case Refusal_ScannedPdfNoTextLayer():
 return scannedPdfNoTextLayer(_that.pages);case Refusal_EncryptedPdf():
@@ -3095,7 +3099,8 @@ return textTooLarge(_that.limitMib);case Refusal_CompressionBomb():
 return compressionBomb(_that.ratio);case Refusal_TooManyParts():
 return tooManyParts(_that.parts,_that.limit);case Refusal_TookTooLong():
 return tookTooLong(_that.millis);case Refusal_EmptyDocument():
-return emptyDocument();}
+return emptyDocument();case Refusal_TextInDisplayForms():
+return textInDisplayForms(_that.percent);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -3109,7 +3114,7 @@ return emptyDocument();}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( int pages)?  scannedPdfNoTextLayer,TResult? Function()?  encryptedPdf,TResult? Function( int page,  int readablePercent)?  unsupportedEncoding,TResult? Function( int page)?  unreadableStructure,TResult? Function()?  malformedDocument,TResult? Function( int mib,  int limitMib)?  documentTooLarge,TResult? Function( int pages,  int limit)?  tooManyPages,TResult? Function( int limitMib)?  textTooLarge,TResult? Function( int ratio)?  compressionBomb,TResult? Function( int parts,  int limit)?  tooManyParts,TResult? Function( int millis)?  tookTooLong,TResult? Function()?  emptyDocument,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( int pages)?  scannedPdfNoTextLayer,TResult? Function()?  encryptedPdf,TResult? Function( int page,  int readablePercent)?  unsupportedEncoding,TResult? Function( int page)?  unreadableStructure,TResult? Function()?  malformedDocument,TResult? Function( int mib,  int limitMib)?  documentTooLarge,TResult? Function( int pages,  int limit)?  tooManyPages,TResult? Function( int limitMib)?  textTooLarge,TResult? Function( int ratio)?  compressionBomb,TResult? Function( int parts,  int limit)?  tooManyParts,TResult? Function( int millis)?  tookTooLong,TResult? Function()?  emptyDocument,TResult? Function( int percent)?  textInDisplayForms,}) {final _that = this;
 switch (_that) {
 case Refusal_ScannedPdfNoTextLayer() when scannedPdfNoTextLayer != null:
 return scannedPdfNoTextLayer(_that.pages);case Refusal_EncryptedPdf() when encryptedPdf != null:
@@ -3123,7 +3128,8 @@ return textTooLarge(_that.limitMib);case Refusal_CompressionBomb() when compress
 return compressionBomb(_that.ratio);case Refusal_TooManyParts() when tooManyParts != null:
 return tooManyParts(_that.parts,_that.limit);case Refusal_TookTooLong() when tookTooLong != null:
 return tookTooLong(_that.millis);case Refusal_EmptyDocument() when emptyDocument != null:
-return emptyDocument();case _:
+return emptyDocument();case Refusal_TextInDisplayForms() when textInDisplayForms != null:
+return textInDisplayForms(_that.percent);case _:
   return null;
 
 }
@@ -3828,6 +3834,72 @@ String toString() {
 
 
 
+
+/// @nodoc
+
+
+class Refusal_TextInDisplayForms extends Refusal {
+  const Refusal_TextInDisplayForms({required this.percent}): super._();
+  
+
+ final  int percent;
+
+/// Create a copy of Refusal
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$Refusal_TextInDisplayFormsCopyWith<Refusal_TextInDisplayForms> get copyWith => _$Refusal_TextInDisplayFormsCopyWithImpl<Refusal_TextInDisplayForms>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Refusal_TextInDisplayForms&&(identical(other.percent, percent) || other.percent == percent));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,percent);
+
+@override
+String toString() {
+  return 'Refusal.textInDisplayForms(percent: $percent)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $Refusal_TextInDisplayFormsCopyWith<$Res> implements $RefusalCopyWith<$Res> {
+  factory $Refusal_TextInDisplayFormsCopyWith(Refusal_TextInDisplayForms value, $Res Function(Refusal_TextInDisplayForms) _then) = _$Refusal_TextInDisplayFormsCopyWithImpl;
+@useResult
+$Res call({
+ int percent
+});
+
+
+
+
+}
+/// @nodoc
+class _$Refusal_TextInDisplayFormsCopyWithImpl<$Res>
+    implements $Refusal_TextInDisplayFormsCopyWith<$Res> {
+  _$Refusal_TextInDisplayFormsCopyWithImpl(this._self, this._then);
+
+  final Refusal_TextInDisplayForms _self;
+  final $Res Function(Refusal_TextInDisplayForms) _then;
+
+/// Create a copy of Refusal
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? percent = null,}) {
+  return _then(Refusal_TextInDisplayForms(
+percent: null == percent ? _self.percent : percent // ignore: cast_nullable_to_non_nullable
+as int,
+  ));
+}
+
+
+}
 
 /// @nodoc
 mixin _$ReportSubject {

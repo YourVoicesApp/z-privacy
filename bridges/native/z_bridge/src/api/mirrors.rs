@@ -760,6 +760,25 @@ pub enum _Refusal {
     TookTooLong { millis: u32 },
     /// Empty, or nothing but whitespace: there is nothing to protect.
     EmptyDocument,
+    /// **The letters are the shapes a layout engine drew, so the order we read
+    /// is the drawing's** — paper 119, the owner's rule of 26 October 2026:
+    /// when Z cannot trust that the extracted text is what was written, it does
+    /// not present a successful protection as though the text had been read
+    /// correctly.
+    ///
+    /// `percent` is how much of the document's Arabic stands in Unicode's
+    /// compatibility blocks (`U+FB50–FDFF`, `U+FE70–FEFF`) — a block nothing
+    /// writes in on purpose. Measured on the owner's own kind of letter, such a
+    /// page comes out with its words and its digits **reversed**: «2026-04471»
+    /// as «17440-6202», an e-mail address as «as.iramola-batkam@iramola.fesuoy»
+    /// — which the scanner then protected, so a token stood for a string nobody
+    /// wrote while the real address was nowhere in the text at all.
+    ///
+    /// **It is not «Arabic» and not «right to left» that is refused**, and the
+    /// difference is measured: the same letter written in logical order is read
+    /// exactly as well as plain text, 19 values protected and 5 waiting, and it
+    /// is not refused.
+    TextInDisplayForms { percent: u32 },
 }
 
 #[frb(mirror(TaughtNameRow))]

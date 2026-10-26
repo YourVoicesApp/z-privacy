@@ -56,7 +56,7 @@ final _everyError = <ApiError>[
 /// Every shape the two nested enums take, because a reason inside an error is
 /// still a reason a person reads.
 ///
-/// **All twelve, and counted** (17 October, from two sides at once: e2's
+/// **All thirteen, and counted** (17 October, from two sides at once: e2's
 /// reading of the attacker's B3-4 and this round's خ5). Five of them were
 /// listed here and the other seven — every limit the reader has — were not, so
 /// the screen could answer «This file could not be opened safely» to a bomb,
@@ -80,6 +80,11 @@ final _everyRefusal = <Refusal>[
   const Refusal.tooManyParts(parts: 521, limit: 512),
   const Refusal.tookTooLong(millis: 20000),
   const Refusal.emptyDocument(),
+  // **The thirteenth, paper 119**: a text whose Arabic is the display forms a
+  // layout program draws, so what was read is the drawing's order — the words
+  // and the numbers backwards. 96% is the share measured on the display-order
+  // fixture of paper 118; the same letter written forwards measures 0%.
+  const Refusal.textInDisplayForms(percent: 96),
 ];
 
 /// **All nine of the network's own** — ن15, the same lesson as the twelve
@@ -126,8 +131,8 @@ void main() {
   });
 
   test('every refusal inside an error has a human sentence', () {
-    expect(_everyRefusal.length, 12,
-        reason: 'the contract has 12 Refusal variants');
+    expect(_everyRefusal.length, 13,
+        reason: 'the contract has 13 Refusal variants');
     for (final r in _everyRefusal) {
       final e = ApiError.documentRefused(reason: r, detail: 'x');
       _readsAsHuman(humanMessage(e), r.runtimeType.toString());

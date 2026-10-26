@@ -546,6 +546,17 @@ String _document(Refusal reason, String detail) => switch (reason) {
     sentences.refusalUnsupportedEncoding(readablePercent, page),
   Refusal_UnreadableStructure(:final page) =>
     sentences.refusalUnreadableStructure(page),
+  // **Paper 119, and the switch above is why this arm exists at all**: the
+  // contract gained a thirteenth refusal and this file would not compile until
+  // somebody wrote its sentence, which is what «no `_ =>`» buys.
+  //
+  // The share is passed on, as `UnsupportedEncoding`'s is: a person reading
+  // «96% of this document's Arabic» can tell it from a document with one
+  // ligature in it, and the sentence then says the two things they can act on —
+  // what went wrong, and that a Word file or plain text does not go wrong that
+  // way.
+  Refusal_TextInDisplayForms(:final percent) =>
+    sentences.refusalTextInDisplayForms(percent),
   // **The limits, said with their numbers** — e2's reading of the attacker's
   // B3-4 and this round's خ5 and ن16, both on 17 October, landing on the same
   // seven refusals from two sides. The core names every one of them and says

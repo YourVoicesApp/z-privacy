@@ -55,6 +55,7 @@
   "refusalScannedPages": "Den här PDF-filen är {pages} sidor med bilder utan text i, så ingenting kunde läsas.",
   "refusalUnsupportedEncoding": "Bara {readablePercent}% av sidan {page} gick att omvandla till tecken, därför avvisas det här dokumentet i stället för att läsas till hälften. Öppna det och spara det som text, eller klistra in texten.",
   "refusalUnreadableStructure": "Sidan {page} är uppbyggd på ett sätt som den här versionen inte kan läsa.",
+  "refusalTextInDisplayForms": "{percent}% av arabiskan i den här texten står i de visningsformer som ett layoutprogram ritar, så det Z läste står i den ordning det ritades och inte i den ordning det skrevs — ord och siffror kommer ut baklänges. Z skyddar inte en text som det har läst baklänges: ett namn som lästs baklänges är ett namn det inte kan skydda. En Word-fil eller en ren textfil läses i den ordning den skrevs.",
   "refusalDocumentTooLarge": "Den här filen är omkring {mib} MiB, och Z Privacy öppnar dokument upp till {limitMib} MiB.",
   "refusalTooManyPages": "Det här dokumentet har {pages} sidor, och Z Privacy öppnar upp till {limit} i ett dokument.",
   "refusalTextTooLarge": "Uppackad är en del av den här filen större än {limitMib} MiB — mer än Z Privacy läser i ett dokument, därför importerades ingenting av den.",

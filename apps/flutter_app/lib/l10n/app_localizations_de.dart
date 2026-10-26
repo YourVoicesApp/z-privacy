@@ -239,6 +239,11 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String refusalTextInDisplayForms(int percent) {
+    return '$percent% des Arabischen in diesem Text steht in den Anzeigeformen, die ein Layoutprogramm zeichnet — was Z gelesen hat, steht also in der Reihenfolge der Zeichnung und nicht in der, in der es geschrieben wurde: Wörter und Zahlen kommen rückwärts heraus. Z schützt keinen Text, den es rückwärts gelesen hat: ein rückwärts gelesener Name ist ein Name, den es nicht schützen kann. Eine Word-Datei oder eine reine Textdatei wird in der Reihenfolge gelesen, in der sie geschrieben wurde.';
+  }
+
+  @override
   String refusalDocumentTooLarge(int mib, int limitMib) {
     return 'Diese Datei ist etwa $mib MiB groß, und Z Privacy öffnet Dokumente bis $limitMib MiB.';
   }

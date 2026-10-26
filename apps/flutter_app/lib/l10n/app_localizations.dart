@@ -432,6 +432,12 @@ abstract class AppLocalizations {
   /// **'Page {page} is built in a way this build cannot read.'**
   String refusalUnreadableStructure(int page);
 
+  /// Why a document was refused: its Arabic stands in Unicode's compatibility blocks (U+FB50–FDFF, U+FE70–FEFF), which a layout engine emits once it has chosen each letter's shape — and an engine that chose the shapes chose the order, so the extracted text is the drawing's order and comes out reversed. Paper 119, the owner's rule of 26 October 2026. The number is the share, measured over the whole document; the two sides of it were 0.2% and 96% on the five fixtures of paper 118.
+  ///
+  /// In en, this message translates to:
+  /// **'{percent}% of this text\'s Arabic is written in the display forms a layout program draws, so what Z read is in the order it was drawn and not the order it was written — the words and the numbers come out backwards. Z will not protect a text it has read backwards: a name read backwards is a name it cannot protect. A Word file or a plain-text file is read in the order it was written.'**
+  String refusalTextInDisplayForms(int percent);
+
   /// A file over the one-document limit, with both numbers the core's.
   ///
   /// In en, this message translates to:

@@ -110,6 +110,27 @@ Future<void> settle(WidgetTester tester, {int rounds = 8}) async {
 Future<String> readBack(Uint8List bytes) async =>
     (await readView(bytes)).text.replaceAll(RegExp(r'\s+'), ' ');
 
+/// **The same file, through the door that only reads** — paper 119.
+///
+/// `readBack` above goes in by `importDocument`, which is the road to a bench:
+/// since 119 a text whose Arabic is the display forms a layout program draws is
+/// refused there, because what was extracted is the order it was **drawn** in
+/// and protecting a reversal would be worse than refusing it. Our own writer
+/// shapes its Arabic — that is what the guards below assert, and it is the same
+/// fact seen from the other side — so an Arabic z-pdf of ours is exactly such a
+/// text and the import door now says so.
+///
+/// The product's own door for our own file is `read_a_document_that_came_back`,
+/// which scans nothing, protects nothing and sends nothing, and is exempt by
+/// name at its call. So the Arabic guards read through it, and they measure
+/// what they always measured: that the page was shaped, that no base letter
+/// escaped the bidi pass, and that a Latin island inside an Arabic line comes
+/// back whole and in its own order.
+Future<String> readBackThroughItsOwnDoor(Uint8List bytes) async {
+  final seen = await z.readADocumentThatCameBack(bytes: bytes, kind: DocumentKind.pdf);
+  return seen.restored.map((s) => s.text).join().replaceAll(RegExp(r'\s+'), ' ');
+}
+
 /// The whole view, when the page count is the thing being asked about.
 Future<DocumentView> readView(Uint8List bytes) async {
   final session = await z.openSession(profileId: null, packId: 'de');
@@ -416,7 +437,7 @@ void main() {
         sha256: _zeroes,
       ),
     );
-    final back = await readBack(bytes);
+    final back = await readBackThroughItsOwnDoor(bytes);
     expect(shaped.hasMatch(back), isTrue,
         reason: 'no Arabic presentation form in the file, so nothing was shaped');
     expect(unshaped.hasMatch(back), isFalse,
@@ -436,7 +457,7 @@ void main() {
         sha256: _zeroes,
       ),
     );
-    final back = await readBack(bytes);
+    final back = await readBackThroughItsOwnDoor(bytes);
     // **The part that goes wrong quietly.** A token or an amount swept up in
     // the reversal comes out backwards and restores as nothing, while the page
     // still looks like Arabic to anyone who cannot read it.
@@ -483,7 +504,7 @@ void main() {
         sha256: _zeroes,
       ),
     );
-    final back = await readBack(bytes);
+    final back = await readBackThroughItsOwnDoor(bytes);
     expect(shaped.hasMatch(back), isTrue, reason: 'the Arabic line was not shaped');
     expect(unshaped.hasMatch(back), isFalse, reason: 'the Arabic line is mirrored');
     expect(back.indexOf('Sehr'), lessThan(back.indexOf('Mit freundlichen')),
@@ -567,12 +588,18 @@ void main() {
         sha256: digest,
       ),
     );
-    final view = await readView(bytes);
-    expect(view.pages, greaterThan(1), reason: '120 Arabic lines came out as one page');
-    final stamps = digest.allMatches(view.text.replaceAll(RegExp(r'\s+'), '')).length;
-    expect(stamps, view.pages, reason: 'the footer is on $stamps of ${view.pages} pages');
-    expect(shaped.hasMatch(view.text), isTrue, reason: 'the pages are not shaped');
-    expect(unshaped.hasMatch(view.text), isFalse, reason: 'the pages are mirrored');
+    // **Counted by the footer rather than by the page count** — paper 119. The
+    // page count comes from `importDocument`, which no longer takes a shaped
+    // Arabic page (and our own writer shapes its Arabic, which is what the
+    // guards above assert). The footer stands once per page, so counting it
+    // says the same thing: more than one footer is more than one page, and the
+    // claim «a long Arabic document pages itself» is kept whole.
+    final back = await readBackThroughItsOwnDoor(bytes);
+    final stamps = digest.allMatches(back.replaceAll(RegExp(r'\s+'), '')).length;
+    expect(stamps, greaterThan(1),
+        reason: '120 Arabic lines came out as one page: $stamps footer(s)');
+    expect(shaped.hasMatch(back), isTrue, reason: 'the pages are not shaped');
+    expect(unshaped.hasMatch(back), isFalse, reason: 'the pages are mirrored');
   });
 
   // The bidi library decides the base direction for itself, by the same
@@ -619,12 +646,32 @@ void main() {
     final written = arabicOut.listSync().whereType<File>().toList();
     expect(written, hasLength(1));
     late final String back;
-    await tester.runAsync(() async => back = await readBack(await written.single.readAsBytes()));
+    // Through the door that only reads (119): the file we just wrote is a
+    // shaped Arabic page, which the import door no longer takes for
+    // protection — and the two guards below are what say it is shaped.
+    await tester.runAsync(
+        () async => back = await readBackThroughItsOwnDoor(await written.single.readAsBytes()));
     expect(shaped.hasMatch(back), isTrue, reason: 'the saved file is not shaped');
     expect(unshaped.hasMatch(back), isFalse, reason: 'the saved file is mirrored');
-    // And the promise of O still holds on an Arabic document.
-    expect(back.contains('DE89370400440532013000'), isFalse,
-        reason: 'the IBAN is readable in the PDF');
+    // **And the promise of O still holds on an Arabic document** — said the
+    // other way round, because the door that reads it is the door that puts
+    // names back (119). What the file holds is a token; what the door hands
+    // over is the value in its place, marked `Piece.restored`. So the claim is
+    // measured where it is now visible: the IBAN exists in the reading **only**
+    // as a value the door restored, which is the same fact as «the file does
+    // not hold it in the clear» and is stronger than a search of the text — the
+    // search would also pass on a file that never held the value at all.
+    late final ReturnedDocument seen;
+    await tester.runAsync(() async => seen = await z.readADocumentThatCameBack(
+        bytes: await written.single.readAsBytes(), kind: DocumentKind.pdf));
+    final inTheClear = seen.restored
+        .where((p) => p.piece != Piece.restored && p.text.contains('DE89370400440532013000'));
+    expect(inTheClear, isEmpty, reason: 'the IBAN stands in the PDF as itself');
+    expect(
+        seen.restored.any(
+            (p) => p.piece == Piece.restored && p.text.contains('DE89370400440532013000')),
+        isTrue,
+        reason: 'the IBAN was not in the file as a token the vault could put back');
   });
 
   test('the stated folder is the core\'s answer, and this is that answer here', () async {
