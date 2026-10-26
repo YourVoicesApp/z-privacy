@@ -86,11 +86,11 @@ measured one request, one door or one path, the answer says so in those words.
 
 ## Q5 · What is the difference between anonymisation and pseudonymisation?
 
-**Answer.** Pseudonymisation replaces identifying values with stand-ins while a mapping that can reverse it still exists somewhere; the data can remain personal data (Art. 4(5)). Data counts as anonymous only where the person can no longer be identified by any means reasonably likely to be used — by anyone, not only by you — and then the GDPR no longer applies to it (Recital 26). Z Privacy does the first: the mapping is your vault, on your machine. And a text with every name removed can still be about one identifiable person — a single-patient clinic letter is the standard example.
+**Answer.** Pseudonymisation replaces identifying values with stand-ins while a mapping that can reverse it still exists somewhere; the data can remain personal data (Art. 4(5)). Data counts as anonymous only where the person can no longer be identified by means reasonably likely to be used — a standard that takes account of what others might reasonably do, and not only of what you would do — and then the GDPR no longer applies to it (Recital 26). Z Privacy does the first: the mapping is your vault, on your machine. And a text with every name removed can still be about one identifiable person — a single-patient clinic letter is the standard example.
 
 **Evidence.** GDPR Art. 4(5) and Recital 26, in the Recital's own terms; «What we do not claim · Anonymisation», which uses that same example.
 
-**Changed.** «Anonymisation means nobody can get back to the person» was too absolute and is not the legal test. The test is identification by means **reasonably likely to be used**, and the sentence now says that in the Recital's own words.
+**Changed.** «Anonymisation means nobody can get back to the person» was too absolute and is not the legal test. The test is identification by means **reasonably likely to be used**, and the sentence now says that in the Recital's own words. **Revision 3:** «by anyone, not only by you» is gone. It could be read as a test over every imaginable means by every imaginable party, which is the absolute the Recital was written to avoid. The reasonable-likelihood standard governs the whole sentence, other people included, and the clause now sits inside it rather than beside it.
 
 ## Q6 · How can an accountant use AI without exposing clients' financial data?
 
@@ -144,11 +144,11 @@ measured one request, one door or one path, the answer says so in those words.
 
 ## Q12 · What does the AI actually receive?
 
-**Answer.** Three things are worth separating. **What Z Privacy sends** is one request to the address you configured: the model's name, your protected text, and — inside the app, from the second question on — the exchange before it, in the protected form it left in. The request carries the credential you gave for that service and nothing else of yours. **What the provider can observe anyway**, as with any program that connects to it, is your network address, the time, how large the request was and how often you ask. **And what we measured**, exactly: one request recorded byte for byte against a server on this machine, asserting that the body's content is the protected payload character for character and that no original value and no vault value appears in the body, the headers or the URL. That is a measurement of one request's content, not a proof that no other program or path exists.
+**Answer.** Three things are worth separating. **What Z Privacy sends** is one request to the address you configured: the model's name, your protected text, and — inside the app, from the second question on — the exchange before it, in the protected form it left in. That protected text is the document and question as you approved them, so whatever the scan did not find and you did not mark is in it, and the earlier exchange carries whatever it carried. The request also carries the credential you gave for that service. **What the provider can observe anyway**, as with any program that connects to it, is your network address, the time, how large the request was and how often you ask. **And what we measured**, exactly: one request recorded byte for byte against a server on this machine, asserting that the body's content is the protected payload character for character and that no original value and no vault value appears in the body, the headers or the URL. That is a measurement of one request's content, not a proof that no other program or path exists.
 
 **Evidence.** `C-01` (`z_core/tests/wire_capture.rs`) for the last part, in its own words; the body's three fields are built in one place — `model`, `messages`, `stream` in `z_core/src/providers/openai.rs`, with Anthropic's own shape beside it; the headers are `content-type` plus the provider's own authorisation (`authorization: Bearer …`, or `x-api-key` and `anthropic-version` in `z_core/src/providers/anthropic.rs`); `C-13` (`z_core/tests/the_chat_remembers.rs`) for the one added exchange; `C-04` is **unproven** and that is why the last sentence is there.
 
-**Changed.** This is the answer he called the most important, and it was the most overstated. Three faults. (a) «Nothing else from your machine goes» claimed a property of the machine from a test of one request body — `C-04`, the claim that nothing goes out before you connect a provider, is marked **unproven** in our own file for exactly this reason. (b) The old envelope list mixed what is *sent* with what is *observable*: the model's name is a field we fill, your address and the timing are properties of making a connection at all, and «the provider's address» is where the request goes rather than something we tell them. (c) The test's scope is now stated literally instead of being offered as the proof of a general claim.
+**Changed.** This is the answer he called the most important, and it was the most overstated. Three faults. (a) «Nothing else from your machine goes» claimed a property of the machine from a test of one request body — `C-04`, the claim that nothing goes out before you connect a provider, is marked **unproven** in our own file for exactly this reason. (b) The old envelope list mixed what is *sent* with what is *observable*: the model's name is a field we fill, your address and the timing are properties of making a connection at all, and «the provider's address» is where the request goes rather than something we tell them. (c) The test's scope is now stated literally instead of being offered as the proof of a general claim. **Revision 3:** «the credential … and nothing else of yours» is deleted — a fourth absolute hiding inside a sentence about a credential. A request carries whatever the protected text carries, including values the scan did not find and the person did not mark, and the earlier exchange carries whatever it carried. The answer says that now, which is what the three-way split was for.
 
 ## Q13 · How do the real names come back into the answer?
 
@@ -160,11 +160,11 @@ measured one request, one door or one path, the answer says so in those words.
 
 ## Q14 · Does Z Privacy see or store my documents?
 
-**Answer.** There is no Z Privacy account, no Z Privacy server and no analytics — the only address this program speaks to is the provider you configured, with the credential you gave it. On your own machine it writes a known set of files and no others: the encrypted vault, one encrypted file per session, a lock beside them, and a settings file that never holds your work — plus the two documents you ask for by name, a protected copy and a restored plain PDF. The document in the preview is kept in its session's own encrypted file until it leaves by one of the doors that take text out, and leaving takes the copy with it. A file being written exists briefly under a second name beside the finished one, in the same folder, and is renamed into place; nothing is written to the system's temporary directory, and no log file is written at all.
+**Answer.** There is no Z Privacy account, no Z Privacy server and no analytics: the source carries one network client and one send path, the interface cannot open a socket at all, and no Z Privacy address appears anywhere in it — so the only address this program is built to speak to is the provider you configured, with the credential you gave it. On your own machine, **in this build and as read from its source code rather than watched on a running installation**, it writes a known set of files and no others: the encrypted vault, one encrypted file per session, a lock beside them, and a settings file that never holds your work — plus the two documents you ask for by name, a protected copy and a restored plain PDF. The document in the preview is kept in its session's own encrypted file until it leaves by one of the doors that take text out, and leaving takes the copy with it. By that same reading of the source: a file being written exists briefly under a second name beside the finished one, in the same folder, and is renamed into place; nothing is written to the system's temporary directory, and no log file is written at all.
 
 **Evidence.** `C-03` (gates `G1`, `G5`, `G16`); the four classes the core writes are counted from the source by gate `G15`/`G15b` — the vault, the session files, the writer's lock, and `config.rs`'s settings file, the one that is not encrypted (`z_core/tests/zcfg_leak.rs`); the two the Dart side writes when a person names them are in `C-06`'s limit, with `apps/flutter_app/test/the_restored_text_is_saved_as_a_plain_pdf_test.dart`; the preview's own copy and its removal at each door are `z_core/tests/the_preview_keeps_what_it_holds.rs` and gate `G36`'s census. **Checked for this answer, because he asked for every save path:** the core carries no `println!`, no `eprintln!` and no logging crate outside its tests, so there is no log file; the only console line in the whole app prints the core's version at startup (`apps/flutter_app/lib/main.dart`). The system temporary directory is touched only inside `#[cfg(test)]` blocks — a write in the product goes to `temp_path()` in `z_core/src/secure_file.rs`, which is the destination's own path with another extension, inside the folder that `secure_dir` has already narrowed, and is then renamed into place. Every line in the core that touches the filesystem at all carries a `G15-ok` comment above it so the exemptions can be counted, which is what gate `G15` counts.
 
-**Changed.** «What you have sent is not kept here at all» was an absolute built on one test about the preview copy. He asked for every save path, so the answer now lists the file classes the gates actually count — including the settings file, which is not encrypted, and the two files a person asks for, one of which holds values in the clear — and the absolute sentence is replaced by what is measured: the preview's copy is taken out at each door.
+**Changed.** «What you have sent is not kept here at all» was an absolute built on one test about the preview copy. He asked for every save path, so the answer now lists the file classes the gates actually count — including the settings file, which is not encrypted, and the two files a person asks for, one of which holds values in the clear — and the absolute sentence is replaced by what is measured: the preview's copy is taken out at each door. **Revision 3:** the first sentence no longer says «the only address this program speaks to», which is a statement about a running program resting on checks that read a tree — the same gap that keeps `C-04` marked unproven. It now names what those checks actually establish and says «is built to speak to». And the file list, the temporary-file sentence and the no-log sentence are all governed by one stated kind of evidence — **read from the source, not watched on a running installation**. Reading every write path in a tree and running the program with something watching the disk are different measurements, and three sentences here rest on the first. Nothing else in the answer is weakened.
 
 ## Q15 · Where are my names kept, and how are they protected?
 
@@ -200,21 +200,23 @@ measured one request, one door or one path, the answer says so in those words.
 
 ## Q19 · What does Z Privacy detect automatically, and what must I mark myself?
 
-**Answer.** Automatically: what its rules describe. IBANs and BICs in any language, and per language set e-mail addresses, telephone numbers, tax and social-insurance numbers, customer, contract and employee references, dates of birth, people, companies and addresses — plus every value you have taught it, matched wherever it appears. Anything it is unsure of becomes a suggestion that waits for your word, and the law «nothing leaves while a suggestion is unanswered» is asked of every door that takes text out of the app: sending to a model, copying the protected text, copying the chat, and saving a protected PDF. Those doors are not a list somebody keeps up to date — they are counted from what the functions do, so a new one is caught by the count rather than remembered. What the scanner still misses is written down rather than left to be found: a typographic ligature, a date of birth written out in words, and a payment card from a network whose prefix is not in the published table.
+**Answer.** Automatically: what its rules describe. The IBAN and BIC rules are not tied to a language pack, so they do not depend on which language a document is in; the language sets add e-mail addresses, telephone numbers, tax and social-insurance numbers, customer, contract and employee references, dates of birth, people, companies and addresses — and every value you have taught it is matched wherever it appears. All of that depends on two things upstream of any rule: that the text reached the scanner as it reads on the page, and that the value is written in a form the rules describe. Anything it is unsure of becomes a suggestion that waits for your word, and the law «nothing leaves while a suggestion is unanswered» is asked of every door that takes text out of the app: sending to a model, copying the protected text, copying the chat, and saving a protected PDF. Those doors are not a list somebody keeps up to date — they are counted from what the functions do, so a new one is caught by the count rather than remembered. What the scanner still misses is written down rather than left to be found: a typographic ligature, a date of birth written out in words, and a payment card from a network whose prefix is not in the published table.
 
 **Evidence.** `C-11` (`z_core/tests/nothing_leaves_while_a_word_waits.rs`); the doors are a census read from the source by gate `G36`, and gate `G28` asks the waiting law of every door that census finds, so the two cannot disagree about how many doors there are; the kinds come from `z_core/src/scanner/sets/` (`world.rs`: Iban, Bic; `de.rs`, `en.rs`, `sv.rs`); the three misses are «What we do not claim · Detection of everything», each with its own named test.
 
-**Changed.** «There is no send anyway, not in a menu and not in a hidden flag» is gone. It generalised from four measured doors to the whole product. What replaces it is stronger as evidence and weaker as a slogan: the doors are named, and the fact that worth knowing is that they are **counted from the source** rather than listed by hand. Five sentences, by his approval.
+**Changed.** «There is no send anyway, not in a menu and not in a hidden flag» is gone. It generalised from four measured doors to the whole product. What replaces it is stronger as evidence and weaker as a slogan: the doors are named, and the fact that worth knowing is that they are **counted from the source** rather than listed by hand. Five sentences, by his approval. **Revision 3:** «IBANs and BICs in any language» read as a guarantee over every representation of them, which is not what the rule set is. What is true is narrower and more useful: those two rules are **not tied to a language pack**. And the sentence that follows names the two things every rule depends on before it can fire — the text arriving as it reads, and the value being written in a described form. After the Arabic-PDF finding, the first of those is not a theoretical caveat.
 
 **Note.** The four doors as the census finds them today: the model request, «Copy Protected», «Copy the chat» and «Save as PDF». The count has moved before — rule 62 removed one, rule 65 added another — which is the argument for counting rather than listing.
 
 ## Q20 · Which file types and languages does it support?
 
-**Answer.** Files: plain text (`.txt`, `.md`, `.csv`), Word documents (`.docx`) and PDFs. A PDF with no text layer — a photograph of a document — is refused by name rather than guessed at, and so is an encrypted one. Detection has four language packs today — English, German, Swedish and Arabic — beside rule sets that are not bound to a language, and the interface itself speaks those four. **Arabic inside a PDF does not arrive readable yet**: for Arabic, use `.txt` or `.docx` until that is fixed.
+**Answer.** Files: plain text (`.txt`, `.md`, `.csv`), Word documents (`.docx`) and PDFs. A PDF with no text layer — a photograph of a document — is refused by name rather than guessed at, and so is an encrypted one. Detection has four language packs today — English, German, Swedish and Arabic — beside rule sets that are not bound to a language, and the interface itself speaks those four.
 
-**Evidence.** `_kinds` in `apps/flutter_app/lib/screens/shell.dart`; the named refusals are the `Refusal` enum in `z_core/src/api.rs`; the packs are `z_core/src/scanner/packs/{ar,de,en,sv}.rs` and the sets `z_core/src/scanner/sets/`; the interface languages are the four `app_*.arb` files.
+**Evidence.** `_kinds` in `apps/flutter_app/lib/screens/shell.dart`; the named refusals are the `Refusal` enum in `z_core/src/api.rs`; the packs are `z_core/src/scanner/packs/{ar,de,en,sv}.rs` and the sets `z_core/src/scanner/sets/`; the interface languages are the four `app_*.arb` files. Everything above is true at this commit and is not what blocks the answer.
 
-**NOT PUBLISHABLE YET:** **Still blocked, by the owner's decision, until ed measures it on a fixture — never the owner's own book.** The clause is believed true and its number is stale: `docs/THE_NUMBERS.md` §4.3 measured 0 of 461 taught names at `08b04aa`. At this commit the evidence is by absence — `z_core/src/documents/pdf.rs` contains no step that converts Arabic presentation forms to letters or recovers logical order, and paper 038-C is still WAITING. Two things close it: (a) the measurement repeated at the build the page describes, and (b) the question nobody has answered — **is such a PDF refused by name, or imported with text that looks readable and matches nothing?** `UnsupportedEncoding` measures a readable percent per page and glyph codes may well score as readable. If it imports silently, the sentence for this page is a warning and the finding is a defect report, not a footnote.
+**Changed.** The Arabic-PDF clause is **deleted**, not revised. Revision 2 said «Arabic inside a PDF does not arrive readable yet», and ed's measurement makes that wrong in both directions: an Arabic PDF stored in **reading order reads exactly like the same text as `.txt`**, so the sentence condemned a format that mostly works — while one stored in **visual order imports silently** and is then scanned wrong, which the sentence was far too mild about. A wrong warning on a page whose argument is «check us» is worse than a missing one.
+
+**NOT PUBLISHABLE YET:** **this whole answer waits for paper 119**, by the owner's decision. It cannot publish without an Arabic-PDF clause — omitting a known limit from the one question that asks «which file types and languages?» would be a silence a reader could act on — and the clause cannot be written until 119 ships, because what is left after the fix is what it has to describe. Until then the warning lives where somebody is about to download the build: the «known limit» card on the three download pages, bound as `a-known-limit-arabic-pdf` (branch `fix/the-arabic-pdf-warning`, `229512a`). When 119 ships, that card is **replaced** by an exact description of the remaining limit and this answer is written from the same measurement, so the two cannot drift apart.
 
 ## Q21 · Is Z Privacy free?
 
@@ -226,19 +228,19 @@ measured one request, one door or one path, the answer says so in those words.
 
 ## Q22 · Is it open source, and can companies use it?
 
-**Answer.** Yes — Apache License 2.0, with the source repository linked from this site. Use it as you like, in a company or alone, and ask nobody; what the licence asks for is set out in its own terms. Because this project ships a `NOTICE` file, a derivative work has to carry the attribution notices that file contains — «Z Privacy, Copyright 2026 Faruk AB (Sweden, org.nr 559473-3494)» with the project and source addresses — in one of the places Apache 2.0 §4(d) allows: the work's own NOTICE file, its documentation, or a display the work itself generates. That is attribution carried forward, not an advertisement you owe us.
+**Answer.** Yes — Apache License 2.0, with the source repository linked from this site. Use it as you like, in a company or alone, and ask nobody. This project ships a `NOTICE` file, and §4(d) of the licence says what a distributed derivative work must do with the notices such a file contains; the licence and the file are both published here, and they are the text that governs rather than anything said on this page. It is attribution carried forward, not an advertisement you owe us.
 
 **Evidence.** `LICENSE`; `NOTICE`, quoted from its own first two lines; Apache-2.0 §4(d), which lists exactly those three places and says the notices are «for informational purposes only»; the «Source and licence» block on `site/en/index.html`.
 
-**Changed.** Two things. The quoted attribution now matches `NOTICE` as it actually reads, with the company's registered details, instead of the shortened form revision 1 used. And «a product built on this code says so where it lists what it is built on» is replaced by the licence's own three places and the words «not an advertisement you owe us» — his point being that §4(d) preserves attribution and does not impose promotion.
+**Changed.** Two things. The quoted attribution now matches `NOTICE` as it actually reads, with the company's registered details, instead of the shortened form revision 1 used. And «a product built on this code says so where it lists what it is built on» is replaced by the licence's own three places and the words «not an advertisement you owe us» — his point being that §4(d) preserves attribution and does not impose promotion. **Revision 3:** the legal explanation is shortened again. Listing the three places and quoting the attribution line made a FAQ answer into a reading of the clause, and a reading can be wrong in a way the text it summarises is not. The answer now points at `LICENSE` and `NOTICE` and says plainly that those govern — which is both shorter and the only thing we are in a position to assert.
 
 ## Q23 · How can I check Z Privacy's claims myself?
 
-**Answer.** `docs/CLAIMS.md` lists every claim with the same four lines each: the sentence we actually show, what it does **not** cover, the test or gate that proves it, and the command you run yourself. It is worth knowing what those two kinds of proof are: a **test** runs this product's code and measures what it does, while a **gate** reads the source and measures its shape — that there is one network client, that the interface cannot open a socket, that every door obeys a law. A shape check shows the code cannot be a certain thing; it is not a recording of the program running, and no number of them adds up to a network capture, an installation or a security audit — which is why some claims in that file carry the word «unproven» rather than being removed from it.
+**Answer.** `docs/CLAIMS.md` lists every claim with the same four lines each: the sentence we actually show, what it does **not** cover, the test or gate that proves it, and the command you run yourself. It is worth knowing what those two kinds of proof are: a **test** runs this product's code and measures what it does, while a **gate** reads the source and measures its shape — that there is one network client, that the interface cannot open a socket, that every door obeys a law. A shape check shows that the code satisfies the constraint it checks; it is not a recording of the program running, and no number of them adds up to a network capture, an installation or a security audit — which is why some claims in that file carry the word «unproven» rather than being removed from it.
 
 **Evidence.** `C-16`; `docs/CLAIMS.md`'s own «What a proof is made of» paragraph, from which the second and third sentences are taken; gate `G56` refuses a section missing one of its four lines or naming a path, gate, test or sentence key that does not exist; `C-04` and `C-15` are the two claims carrying «unproven» today.
 
-**Changed.** «`bash scripts/gates.sh` runs the whole set and prints how many checks ran and how many failed» is gone. A count of checks is not evidence of security, and quoting it invites the reader to treat it as one. What replaces it is the distinction that actually matters to somebody auditing us — test against shape check — and the plain statement of what shape checks cannot do.
+**Changed.** «`bash scripts/gates.sh` runs the whole set and prints how many checks ran and how many failed» is gone. A count of checks is not evidence of security, and quoting it invites the reader to treat it as one. What replaces it is the distinction that actually matters to somebody auditing us — test against shape check — and the plain statement of what shape checks cannot do. **Revision 3:** «shows the code **cannot be** a certain thing» became «satisfies the constraint it checks». The first claims impossibility; a text check over a tree establishes that the constraint it looked for holds, which is a smaller statement and the true one. One sentence changed, nothing else.
 
 ## Q24 · Which operating systems does it run on, and why does Windows warn me?
 
@@ -291,6 +293,56 @@ rather than discovered later, so it is written here.
 measurement against a fixture. The second half of that question — refused by
 name, or imported as readable-looking text that matches nothing — may be a
 defect report rather than a FAQ sentence.
+
+## The consistency test of the promises — what it is, and what it found
+
+His check, from reading all 25: an answer that says **always**, **never**,
+**nothing leaves** or anything of that shape claims every case, and a test
+that measured one request, one door or one build does not cover every case.
+`scripts/check_the_absolutes.py` is that check, run over this file and over
+the FAQ pages once they exist.
+
+**It is a register, not a cleverer scan.** It finds the absolute words
+mechanically and then refuses any it has not been told about. Each one has to
+be written down once with a verdict: the claim, test or gate that covers it as
+stated; or **qualified**, meaning the sentence carries its own limit in the
+same breath; or **not ours**, meaning the absolute is about the law, about
+somebody else's product or about the world, so no test of ours could cover it
+and none is claimed. Nothing passes for being obviously fine. The cost is a
+line in a table; what it buys is that a *new* absolute cannot enter quietly,
+and that softening a sentence reds the check instead of silently leaving the
+register claiming it was examined.
+
+**Today: 40 absolutes across 21 of the 25 answers.** 25 carry a named proof,
+8 are qualified in their own sentence, 7 are not about Z Privacy at all.
+
+**And it found three things while it was being built**, which is the argument
+for building it:
+
+1. **Q14 said «the only address this program speaks to is the provider you
+   configured».** That is a statement about a running program resting on
+   checks that read a tree — the exact gap that keeps `C-04` marked unproven
+   in `docs/CLAIMS.md`. The sentence now names what those checks establish and
+   says **«is built to speak to»**. This is the one substantive correction of
+   revision 3 that nobody asked for; the register asked for it.
+2. **Q16 asserts the same absolute twice** — once in our words and once inside
+   the shipped sentence it quotes. Both are registered, because a quotation is
+   still something this page says, and a translator working from the English
+   will meet both.
+3. **The checker's own first matcher was wrong in the way this file is about.**
+   It asked whether a registered phrase was anywhere in the answer, so one
+   entry could answer for a different absolute — Q21's «nothing to subscribe
+   to» covered «costs nothing at all», and the second was then reported as
+   having disappeared. A register that can be satisfied by the wrong line is
+   not a register. Hits are bound by position now.
+
+**For translation, which is the next place this earns its keep:** eight of the
+forty are safe *only* because of the words around them. A translator who
+tightens «it says nothing about what other programs on your computer do» or
+«only as strong as the passphrase you choose» for readability removes the
+limit and leaves the absolute. Running this over the German and Arabic pages
+needs its own register per language, and that is a real piece of work rather
+than a flag to flip — named here so it is planned rather than discovered.
 
 ## The order from here, as he set it
 
