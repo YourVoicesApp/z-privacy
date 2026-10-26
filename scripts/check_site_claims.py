@@ -1042,6 +1042,14 @@ THE_HONEST_SENTENCES = (
     ('the-claims-review-report', 'the outside model’s report belongs beside the download'),
     ('every-release-is-listed',
      'this page offers one build, and the releases page keeps the rest findable'),
+    # Temporary, and it says so in its own text: paper 119 is the fix, and
+    # when it ships this line is replaced by an exact description of what is
+    # left rather than deleted. It is bound here on the day it is written
+    # because a warning that exists in one language and not the others is
+    # worse than no warning — the reader who needs it most is the one
+    # reading the Arabic page.
+    ('a-known-limit-arabic-pdf',
+     'an Arabic PDF stored in visual order imports silently and is scanned wrong — ed measured 0 of 8 people on the published build'),
 )
 
 # The owner's approved beta line, in the three languages it is approved in. It
