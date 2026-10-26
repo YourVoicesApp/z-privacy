@@ -30,6 +30,16 @@ It reads `docs/faq-review.md` today and the published FAQ pages when they
 exist: the same absolutes have to survive translation, and a translator who
 drops a qualifier is exactly the accident this guards against.
 
+**What passing means, and what it does not** — the owner, 27 October 2026,
+adopting this as a publishing gate. It is an **editorial** gate. Green means
+every absolute on the page has been found and classified, and that no new one
+arrived unnoticed. It does **not** mean the evidence named beside each one is
+sufficient, and it is not a security certificate: whether `C-11` really covers
+the sentence that cites it is the job of the tests and of the engineering
+review, and this script cannot and does not ask it. A register that was
+mistaken for a proof would be worse than no register, so the distinction is
+written here rather than left to be inferred from a green line.
+
   python3 scripts/check_the_absolutes.py        # the exit status is the verdict
 """
 import io
