@@ -247,7 +247,7 @@ MIRROR_DE = {
  'q10-says-nothing-about': "über das, was andere Programme auf Ihrem Rechner tun, sagt sie nichts",
  'q11-nothing-leaves-while': "nichts geht hinaus, solange ein Vorschlag unbeantwortet ist",
  'q12-proof-other-program': "kein Beweis, dass kein anderes Programm und kein anderer Weg existiert",
- 'q13-every-token-chat': u"Innerhalb der Anwendung wird die Antwort wiederhergestellt, während sie eintrifft; haben Sie die Frage selbst zu einem Modell getragen, holt «Antwort hinzufügen» den Text zurück, und jedes Kennzeichen, das dieser Verlauf getragen hat, wird wieder zu seinem Namen.",
+ 'q13-every-token-chat': u"Innerhalb der Anwendung wird die Antwort wiederhergestellt, während sie eintrifft; haben Sie die Frage selbst zu einem Modell getragen, holt «Eine Antwort hinzufügen» den Text zurück, und jedes Kennzeichen, das dieser Verlauf getragen hat, wird wieder zu seinem Namen.",
  'q14-interface-cannot-open': "die Oberfläche kann überhaupt keinen Socket öffnen, und nirgends in ihm steht eine Z-Privacy-Adresse — die einzige Adresse also, für die dieses Programm gebaut ist",
  'q14-settings-file-never': u"Auf Ihrem eigenen Rechner schreibt es, **in diesem Build und aus seinem Quelltext gelesen, nicht an einer laufenden Installation beobachtet**, einen bekannten Satz von Dateien und keine anderen: den verschlüsselten Tresor, eine verschlüsselte Datei je Sitzung, eine Sperre daneben und eine Einstellungsdatei, die niemals Ihre Arbeit enthält — dazu die zwei Dokumente, die Sie ausdrücklich verlangen, eine geschützte Kopie und ein wiederhergestelltes einfaches PDF.",
  'q14-nothing-written-system': "in das temporäre Verzeichnis des Systems wird nichts geschrieben",
@@ -259,7 +259,7 @@ MIRROR_DE = {
  'q16-nothing-our-side': "nichts auf unserer Seite könnte den Tresor ohne die Passphrase wiederherstellen",
  'q16-nobody-holds-copy': "Niemand hat eine Kopie davon",
  'q16-passphrase-never-leaves': "die Passphrase verlässt dieses Gerät nie",
- 'q16-nothing-our-side-2': "nichts auf unserer Seite könnte den Tresor ohne sie wiederherstellen",
+ 'q16-nothing-our-side-2': u"Niemand hat eine Kopie davon, und es gibt kein Zurücksetzen — die Passphrase verlässt dieses Gerät nie, und auf unserer Seite könnte nichts den Tresor ohne sie wiederherstellen.»",
  'q17-every-connection-made': u"Jede Verbindung wird an einer Adresse hergestellt, die Sie ändern können, und ein Modell auf Ihrem eigenen Rechner braucht überhaupt keinen Schlüssel.",
  'q18-who-agreed-nothing': "die mit Ihrem Anbieter nichts vereinbart haben",
  'q19-every-value-you': u"Die Regeln für IBAN und BIC sind an kein Sprachpaket gebunden, hängen also nicht davon ab, in welcher Sprache ein Dokument ist; die Sprachsätze fügen E-Mail-Adressen, Telefonnummern, Steuer- und Sozialversicherungsnummern, Kunden-, Vertrags- und Personalnummern, Geburtsdaten, Personen, Firmen und Adressen hinzu — und jeder Wert, den Sie ihm beigebracht haben, wird überall dort erkannt, wo er vorkommt.",
@@ -301,16 +301,16 @@ MIRROR_AR = {
  'q12-proof-other-program': u"لا برهانٌ على أنّه لا يوجد برنامجٌ آخرُ ولا طريقٌ آخر",
  'q13-every-token-chat': u"داخل التطبيق يُستعاد الجوابُ وهو يصل؛ وإن حملتَ السؤالَ إلى نموذجٍ بنفسك فإنّ «أضِف جواباً» تُعيد النصَّ، وكلُّ رمزٍ حمله ذلك الحوار يعود إلى اسمه.",
  'q14-interface-cannot-open': u"لا حساب في Z Privacy، ولا خادم لZ Privacy، ولا تحليلات: الشيفرةُ تحمل عميلَ شبكةٍ واحداً وطريقَ إرسالٍ واحداً، والواجهةُ لا تستطيع فتح مقبسٍ أصلاً، ولا يظهر فيها عنوانٌ لZ Privacy في أيّ موضع — فالعنوانُ الوحيد الذي بُني هذا البرنامج ليتحدّث إليه هو المزوّد الذي أعددتَه، ببيان الاعتماد الذي أعطيتَه.",
- 'q14-settings-file-never': u"وعلى جهازك أنت، **في هذا البناء، ومقروءاً من شيفرته لا مُراقَباً على تثبيتٍ يعمل**، يكتب مجموعةً معروفةً من الملفّات ولا يكتب غيرها: الخزنةَ المعمّاة، وملفّاً معمّى لكلّ جلسة، وقفلاً بجانبها، وملفَّ إعداداتٍ لا يحمل عملَك أبداً — ومعها الوثيقتان اللتان تطلبهما باسمهما: نسخةٌ محميّة، وملفُّ PDF عاديٌّ مُستعاد.",
+ 'q14-settings-file-never': u"وعلى جهازك أنت، **في هذا البناء، ومقروءاً من شيفرته لا مُراقَباً على تثبيتٍ يعمل**، يكتب مجموعةً معروفةً من الملفّات ولا يكتب غيرها: الخزنةَ المشفّرة، وملفّاً مشفّراً لكلّ جلسة، وقفلاً بجانبها، وملفَّ إعداداتٍ لا يحمل عملَك أبداً — ومعها الوثيقتان اللتان تطلبهما باسمهما: نسخةٌ محميّة، وملفُّ PDF عاديٌّ مُستعاد.",
  'q14-nothing-written-system': u"ولا يُكتب شيءٌ في المجلّد المؤقّت للنظام",
  'q15-passphrase-never-leaves': u"بعبارة مرورٍ لا تغادر الجهاز أبداً",
  'q15-finds-none': u"فلا يجد منها شيئاً",
- 'q15-only-as-strong': u"والتعميةُ ليست أقوى من عبارة المرور التي تختارها",
+ 'q15-only-as-strong': u"والتشفيرُ ليس أقوى من عبارة المرور التي تختارها، والخزنةُ المفتوحة يقرؤها كلُّ ما يعمل باسمك على ذلك الجهاز: نحن نحمي ملفّاً ساكناً، لا جهازاً اختُرق أصلاً.",
  'q15-refuses-write-if': u"ويرفض القلبُ الكتابةَ إن لم يستطع ذلك",
  'q16-vault-cannot-be': u"لا تُفتَح الخزنة",
  'q16-nothing-our-side': u"ولا شيءَ في جهتنا يستطيع استرجاع الخزنة بغير عبارة المرور",
- 'q16-nobody-holds-copy': u"لا أحد يملك نسخةً من هذه",
- 'q16-passphrase-never-leaves': u"عبارةُ المرور لا تغادر هذا الجهاز أبداً",
+ 'q16-nobody-holds-copy': u"لا أحد يحمل نسخةً من هذه، ولا توجد إعادةُ ضبط — فعبارةُ المرور لا تغادر هذا الجهاز، ولا شيء في جهتنا يستطيع استرجاع الخزنة بدونها.»",
+ 'q16-passphrase-never-leaves': u"لا أحد يحمل نسخةً من هذه، ولا توجد إعادةُ ضبط — فعبارةُ المرور لا تغادر هذا الجهاز، ولا شيء في جهتنا يستطيع استرجاع الخزنة بدونها.»",
  'q16-nothing-our-side-2': u"ولا شيء في جهتنا يستطيع استرجاع الخزنة بدونها",
  'q17-every-connection-made': u"وكلُّ اتّصالٍ يُجرى عند عنوانٍ تستطيع تغييره، والنموذجُ على جهازك لا يحتاج مفتاحاً أصلاً.",
  'q18-who-agreed-nothing': u"ولم يتّفقوا مع مزوّدك على شيء",
@@ -324,7 +324,7 @@ MIRROR_AR = {
  'q23-lists-every-claim': u"يُحصي `docs/CLAIMS.md` كلَّ ادّعاءٍ بالأسطر الأربعة نفسِها: الجملةُ التي نعرضها فعلاً، وما **لا** يغطّيه، والاختبارُ أو البوّابةُ التي تثبته، والأمرُ الذي تشغّله بنفسك.",
  'q23-interface-cannot-open': u"وأنّ الواجهة لا تستطيع فتح مقبس",
  'q23-every-door-obeys': u"وأنّ كلّ بابٍ يخضع لقانون",
- 'q24-nothing-has-signed': u"وعلى ويندوز يعرض أوّلُ تشغيلٍ صفحةً زرقاء «حمى ويندوز جهازك»، لأنّ هذا المثبِّت لم يوقّعه شيء: ومعنى تلك الصفحة أنّ ويندوز لا يملك أساساً ليعدّ الملفّ موثوقاً، لا أنّه فحصه فوجده سليماً أو غيرَ سليم.",
+ 'q24-nothing-has-signed': u"وعلى ويندوز يعرض أوّلُ تشغيلٍ صفحةً زرقاء — <span dir=\"ltr\">«Windows protected your PC»</span> —، لأنّ هذا المثبِّت لم يوقّعه شيء: ومعنى تلك الصفحة أنّ ويندوز لا يملك أساساً ليعدّ الملفّ موثوقاً، لا أنّه فحصه فوجده سليماً أو غيرَ سليم.",
  'q24-says-nothing-about': u"ولا تقول شيئاً عمّن نشر الملفّ",
  'q25-nothing-collected-site': u"ولا يُجمَع شيءٌ في هذا الموقع",
  'q2-z-privacy-changes': u"وZ Privacy لا يغيّر واحداً منهما؛ ما يغيّره هو ما في النصّ الذي ترسله.",
@@ -333,7 +333,7 @@ MIRROR_AR = {
  'q8-whether-process-with': u"والبياناتُ الصحّيّة فئةٌ خاصّةٌ بالمادّة ٩، ولبيانات الموظّفين التزاماتُها؛ وقرارُ معالجتها بنموذجٍ خارجيٍّ أصلاً هو لمسؤول المعالجة لا لأداة.",
  'q10-local-model-needs': u"يتحدّث Z Privacy إلى أيّ خادمٍ يجيب طلباً متوافقاً مع OpenAI، ومنها خادمٌ على جهازك أنت — llama.cpp أو Ollama أو LM Studio — والنموذجُ المحلّيّ لا يحتاج مفتاحاً أصلاً.",
  'q14-log-file-written': u"وبالقراءة نفسِها للشيفرة: الملفُّ وهو يُكتَب يوجد لحظةً باسمٍ ثانٍ بجانب الملفّ التامّ، في المجلّد نفسِه، ثمّ يُعاد تسميتُه في موضعه؛ ولا يُكتب شيءٌ في المجلّد المؤقّت للنظام، ولا يُكتب ملفُّ سجلٍّ البتّة.",
- 'q16-recovery-mechanism-any': u"وهذا البناءُ ليس فيه أيُّ آليّة استرجاع: لا إعادةَ تعيين، ولا إيداعَ لدى أحد، ولا مفتاحَ ثانياً، ولا نسخةً محفوظةً في أيّ مكان، ولا شيءَ في جهتنا يستطيع استرجاع الخزنة بغير عبارة المرور.",
+ 'q16-recovery-mechanism-any': u"وهذا البناءُ ليس فيه أيُّ آليّة استرجاع: لا إعادةَ ضبط، ولا إيداعَ لدى أحد، ولا مفتاحَ ثانياً، ولا نسخةً محفوظةً في أيّ مكان، ولا شيءَ في جهتنا يستطيع استرجاع الخزنة بغير عبارة المرور.",
  'q17-service-answers-neither': u"وخمسةٌ من الستّة تخرج بصيغة الطلب نفسِها `chat/completions`، ولAnthropic صيغتُها؛ فالخدمةُ التي لا تجيب إحدى الصيغتين لا يصل إليها هذا البناء مهما كان حقلُ العنوان مفتوحاً.",
  'q17-model-your-own': u"وكلُّ اتّصالٍ يُجرى عند عنوانٍ تستطيع تغييره، والنموذجُ على جهازك لا يحتاج مفتاحاً أصلاً.",
 }
@@ -365,6 +365,18 @@ STRONG = {
 # A strong word in a translation that no English id accounts for, and why it
 # is not a promise. Each one was looked at; none passes for being obvious.
 EXTRA = {'DE': {}, 'AR': {}}
+
+# (language, id) -> what is weaker, and who owns the debt. Printed as a
+# NOTE on every run: the mirror is present, so the gate is green, and the
+# gate being green is not the same as the sentence being as strong.
+WEAKER = {
+    ('AR', 'q16-passphrase-never-leaves'):
+        "the English says «never leaves this device» and the shipped "
+        "Arabic sentence says «\u0644\u0627 \u062a\u063a\u0627\u062f\u0631 \u0647\u0630\u0627 \u0627\u0644\u062c\u0647\u0627\u0632» with no «\u0623\u0628\u062f\u0627\u064b». "
+        "The FAQ quotes the app and may not strengthen a quotation, so "
+        "this is an APP-side meaning debt for after the pause — the "
+        "lead's list, not this page's (key thereIsNoWayBack).",
+}
 
 DRAFT = pathlib.Path('docs/faq-translation-draft.md')
 
@@ -429,6 +441,10 @@ def the_other_languages(ids):
         if not bad:
             print('  PASS   %s carries all %d English absolutes and invents none'
                   % (tag, len(table)))
+        for (lang, ident_), why in sorted(WEAKER.items()):
+            if lang == tag:
+                print('  NOTE   %s «%s» is carried but weaker — %s'
+                      % (tag, ident_, why))
     return bad
 
 

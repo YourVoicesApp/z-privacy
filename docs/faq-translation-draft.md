@@ -1,9 +1,10 @@
 # 118 · The FAQ in three languages — translation draft
 
-**Draft, not final.** The owner, 27 October 2026: the English editorial review
-is complete for 24 answers and **Q20 waits for paper 119**, so nothing here is
-final until that answer exists. Drafting German and Arabic in parallel is his
-order; publishing any of it before the English is complete is not.
+**Draft, not final.** 26 October 2026. The English is complete for all 25: Q20
+was written from paper 119's own measurement once 119 shipped, and the
+corrective release is live. What is not final is **this** — the German and the
+Arabic wait for the meaning check, and the Arabic waits for the owner, who
+reads it.
 
 **This is a translation, not a rewrite.** No answer is reworded, no feature is
 added, and nothing is polished for marketing. Where the English is awkward
@@ -69,7 +70,7 @@ English one means is a judgement, and for Arabic the owner is the reader.
 
 **AR (draft).** <div dir="rtl" lang="ar">
 
-تستبدل بكلّ قيمةٍ رمزاً قبل أن يغادر النصُّ، وتُعيد القيم الحقيقيّة حين يعود الجواب. وهذا في Z Privacy هو الطريق كلُّه — إدخال، فحص، مراجعة، حماية، اختيار من يُجيب، الذكاء الاصطناعيّ، استعادة — وقبل أن يُرسَل شيءٌ تُعرَض عليك بالضبط ما سيغادر جهازك. والرابطُ من الرمز إلى القيمة يسكن في خزنتك ولا مكان سواها، فلا يستطيع عكسَه إلّا جهازُك. وليس هذا هو عدمَ القابليّة للربط: فما يبقى من الوثيقة قد يدلّ على شخصٍ بمحتواه وحده (انظر «التعميةُ أم الترميز» و«هل يجعلني Z مجهولاً عند المزوّد»).
+تستبدل بكلّ قيمةٍ رمزاً قبل أن يغادر النصُّ، وتُعيد القيم الحقيقيّة حين يعود الجواب. وهذا في Z Privacy هو الطريق كلُّه — إدخال، فحص، مراجعة، حماية، اختيار من يُجيب، الذكاء الاصطناعيّ، استعادة — وقبل أن يُرسَل شيءٌ يُعرَض عليك بالضبط ما سيغادر جهازك. والرابطُ من الرمز إلى القيمة يسكن في خزنتك ولا مكان سواها، فلا يستطيع عكسَه إلّا جهازُك. وليس هذا هو عدمَ القابليّة للربط: فما يبقى من الوثيقة قد يدلّ على شخصٍ بمحتواه وحده (انظر «إخفاءُ الهويّة أم الترميز» و«هل يجعلني Z مجهولاً عند المزوّد»).
 
 </div>
 
@@ -83,7 +84,7 @@ English one means is a judgement, and for Arabic the owner is the reader.
 
 **AR (draft).** <div dir="rtl" lang="ar">
 
-ثلاثةُ أشياءَ منفصلة، ولا يُغني واحدٌ منها عن الآخر. **تقليلُ البيانات** (المادّة ٥/١/ج) يسأل: هل يحتاج النموذجُ هذه القيمةَ أصلاً؟ وهذا هو السؤالُ الذي تُعين فيه أداةٌ مثل Z Privacy. و**التزاماتُك القانونيّة** — أساسٌ قانونيّ، وسجلّاتُك، وعقودُ المعالجة لديك، والنقلُ إلى الخارج — هي التزاماتُك، ولا تغيّرها أداة. و**ما يفعله Z Privacy** هو استبدالُ قيمٍ في النصّ الذي ترسله، وهذا ترميزٌ لا تعمية: فهو بنفسه لا يجعل البياناتِ مجهولةً بحكم اللائحة، وقد يبقى النصُّ بياناتٍ شخصيّةً تبعاً لما بقي فيه (المادّة ٤/٥ والحيثيّة ٢٦). وهذه معلومةٌ لا استشارةٌ قانونيّة؛ والقرارُ لمسؤول المعالجة عندك أو لمسؤول حماية البيانات.
+ثلاثةُ أشياءَ منفصلة، ولا يُغني واحدٌ منها عن الآخر. **تقليلُ البيانات** (المادّة ٥/١/ج) يسأل: هل يحتاج النموذجُ هذه القيمةَ أصلاً؟ وهذا هو السؤالُ الذي تُعين فيه أداةٌ مثل Z Privacy. و**التزاماتُك القانونيّة** — أساسٌ قانونيّ، وسجلّاتُك، وعقودُ المعالجة لديك، والنقلُ إلى الخارج — هي التزاماتُك، ولا تغيّرها أداة. و**ما يفعله Z Privacy** هو استبدالُ قيمٍ في النصّ الذي ترسله، وهذا ترميزٌ لا إخفاءٌ للهويّة: فهو بنفسه لا يجعل البياناتِ مجهولةً بحكم اللائحة، وقد يبقى النصُّ بياناتٍ شخصيّةً تبعاً لما بقي فيه (المادّة ٤/٥ والحيثيّة ٢٦). وهذه معلومةٌ لا استشارةٌ قانونيّة؛ والقرارُ لمسؤول المعالجة عندك أو لمسؤول حماية البيانات.
 
 </div>
 
@@ -97,7 +98,7 @@ English one means is a judgement, and for Arabic the owner is the reader.
 
 **AR (draft).** <div dir="rtl" lang="ar">
 
-الترميزُ يستبدل بالقيم المعرِّفة بدائلَ مع بقاء رابطٍ في مكانٍ ما يمكن أن يعكسه؛ وقد تبقى البياناتُ شخصيّة (المادّة ٤/٥). ولا تُعدّ البياناتُ مجهولةً إلّا حيث لم يعد يمكن التعرّفُ على الشخص بوسائلَ يُرجَّح في المعتاد أن تُستعمل — وهو معيارٌ يأخذ في الحسبان ما قد يفعله غيرُك على نحوٍ معقول، لا ما تفعله أنت وحدك — وعندها لا تسري عليها اللائحة (الحيثيّة ٢٦). وZ Privacy يفعل الأوّل: الرابطُ هو خزنتُك، على جهازك. ونصٌّ أُزيل منه كلُّ اسمٍ قد يظلّ عن شخصٍ يمكن التعرّفُ عليه — ورسالةُ عيادةٍ عن مريضةٍ واحدة هي المثالُ المعتاد.
+الترميزُ بأسماءٍ مستعارة يستبدل بالقيم المعرِّفة بدائلَ مع بقاء رابطٍ في مكانٍ ما يمكن أن يعكسه؛ وقد تبقى البياناتُ شخصيّة (المادّة ٤/٥). ولا تُعدّ البياناتُ مجهولةً إلّا حيث لم يعد يمكن التعرّفُ على الشخص بوسائلَ يُرجَّح في المعتاد أن تُستعمل — وهو معيارٌ يأخذ في الحسبان ما قد يفعله غيرُك على نحوٍ معقول، لا ما تفعله أنت وحدك — وعندها لا تسري عليها اللائحة (الحيثيّة ٢٦). وZ Privacy يفعل الأوّل: الرابطُ هو خزنتُك، على جهازك. ونصٌّ أُزيل منه كلُّ اسمٍ قد يظلّ عن شخصٍ يمكن التعرّفُ عليه — ورسالةُ عيادةٍ عن مريضةٍ واحدة هي المثالُ المعتاد.
 
 </div>
 
@@ -205,7 +206,7 @@ English one means is a judgement, and for Arabic the owner is the reader.
 
 **EN (approved).** On your machine, out of your vault. Inside the app the answer is restored as it arrives; if you carried the question to a model yourself, «Add an answer» brings the text back and every token that chat has carried turns back into its name. A protected PDF has its own door: «z-pdf» in Settings reads such a file back into its names and says which session each one came from. A token whose key this vault does not hold stays as text, and the app says so rather than guessing.
 
-**DE (draft).** Auf Ihrem Rechner, aus Ihrem Tresor. Innerhalb der Anwendung wird die Antwort wiederhergestellt, während sie eintrifft; haben Sie die Frage selbst zu einem Modell getragen, holt «Antwort hinzufügen» den Text zurück, und jedes Kennzeichen, das dieser Verlauf getragen hat, wird wieder zu seinem Namen. Ein geschütztes PDF hat seine eigene Tür: «z-pdf» in den Einstellungen liest eine solche Datei in ihre Namen zurück und sagt, aus welcher Sitzung jeder Name stammt. Ein Kennzeichen, dessen Schlüssel dieser Tresor nicht hat, bleibt Text, und die Anwendung sagt das, statt zu raten.
+**DE (draft).** Auf Ihrem Rechner, aus Ihrem Tresor. Innerhalb der Anwendung wird die Antwort wiederhergestellt, während sie eintrifft; haben Sie die Frage selbst zu einem Modell getragen, holt «Eine Antwort hinzufügen» den Text zurück, und jedes Kennzeichen, das dieser Verlauf getragen hat, wird wieder zu seinem Namen. Ein geschütztes PDF hat seine eigene Tür: «z-pdf» in den Einstellungen liest eine solche Datei in ihre Namen zurück und sagt, aus welcher Sitzung jeder Name stammt. Ein Kennzeichen, dessen Schlüssel dieser Tresor nicht hat, bleibt Text, und die Anwendung sagt das, statt zu raten.
 
 **AR (draft).** <div dir="rtl" lang="ar">
 
@@ -223,7 +224,7 @@ English one means is a judgement, and for Arabic the owner is the reader.
 
 **AR (draft).** <div dir="rtl" lang="ar">
 
-لا حساب في Z Privacy، ولا خادم لZ Privacy، ولا تحليلات: الشيفرةُ تحمل عميلَ شبكةٍ واحداً وطريقَ إرسالٍ واحداً، والواجهةُ لا تستطيع فتح مقبسٍ أصلاً، ولا يظهر فيها عنوانٌ لZ Privacy في أيّ موضع — فالعنوانُ الوحيد الذي بُني هذا البرنامج ليتحدّث إليه هو المزوّد الذي أعددتَه، ببيان الاعتماد الذي أعطيتَه. وعلى جهازك أنت، **في هذا البناء، ومقروءاً من شيفرته لا مُراقَباً على تثبيتٍ يعمل**، يكتب مجموعةً معروفةً من الملفّات ولا يكتب غيرها: الخزنةَ المعمّاة، وملفّاً معمّى لكلّ جلسة، وقفلاً بجانبها، وملفَّ إعداداتٍ لا يحمل عملَك أبداً — ومعها الوثيقتان اللتان تطلبهما باسمهما: نسخةٌ محميّة، وملفُّ PDF عاديٌّ مُستعاد. والوثيقةُ التي في المعاينة تبقى في ملفّ جلستها المعمّى حتّى تخرج من بابٍ من الأبواب التي تُخرج النصّ، وخروجُها يأخذ النسخةَ معه. وبالقراءة نفسِها للشيفرة: الملفُّ وهو يُكتَب يوجد لحظةً باسمٍ ثانٍ بجانب الملفّ التامّ، في المجلّد نفسِه، ثمّ يُعاد تسميتُه في موضعه؛ ولا يُكتب شيءٌ في المجلّد المؤقّت للنظام، ولا يُكتب ملفُّ سجلٍّ البتّة.
+لا حساب في Z Privacy، ولا خادم لZ Privacy، ولا تحليلات: الشيفرةُ تحمل عميلَ شبكةٍ واحداً وطريقَ إرسالٍ واحداً، والواجهةُ لا تستطيع فتح مقبسٍ أصلاً، ولا يظهر فيها عنوانٌ لZ Privacy في أيّ موضع — فالعنوانُ الوحيد الذي بُني هذا البرنامج ليتحدّث إليه هو المزوّد الذي أعددتَه، ببيان الاعتماد الذي أعطيتَه. وعلى جهازك أنت، **في هذا البناء، ومقروءاً من شيفرته لا مُراقَباً على تثبيتٍ يعمل**، يكتب مجموعةً معروفةً من الملفّات ولا يكتب غيرها: الخزنةَ المشفّرة، وملفّاً مشفّراً لكلّ جلسة، وقفلاً بجانبها، وملفَّ إعداداتٍ لا يحمل عملَك أبداً — ومعها الوثيقتان اللتان تطلبهما باسمهما: نسخةٌ محميّة، وملفُّ PDF عاديٌّ مُستعاد. والوثيقةُ التي في المعاينة تبقى في ملفّ جلستها المشفّر حتّى تخرج من بابٍ من الأبواب التي تُخرج النصّ، وخروجُها يأخذ النسخةَ معه. وبالقراءة نفسِها للشيفرة: الملفُّ وهو يُكتَب يوجد لحظةً باسمٍ ثانٍ بجانب الملفّ التامّ، في المجلّد نفسِه، ثمّ يُعاد تسميتُه في موضعه؛ ولا يُكتب شيءٌ في المجلّد المؤقّت للنظام، ولا يُكتب ملفُّ سجلٍّ البتّة.
 
 </div>
 
@@ -237,7 +238,7 @@ English one means is a judgement, and for Arabic the owner is the reader.
 
 **AR (draft).** <div dir="rtl" lang="ar">
 
-في ملفّ خزنةٍ معمّى واحدٍ على جهازك، بلوكٌ لكلّ قيمةٍ محميّة، يُفتَح بعبارة مرورٍ لا تغادر الجهاز أبداً — واختبارٌ يبحث في الملفّ المكتوب عن الأسماء التي عُلِّمها فلا يجد منها شيئاً. والتعميةُ ليست أقوى من عبارة المرور التي تختارها، والخزنةُ المفتوحة يقرؤها كلُّ ما يعمل باسمك على ذلك الجهاز: نحن نحمي ملفّاً ساكناً، لا جهازاً سقط أصلاً. وعلى لينكس يُضيَّق المجلّد عليك وحدك، ويرفض القلبُ الكتابةَ إن لم يستطع ذلك؛ وعلى ويندوز المجلّدُ هو ما تجعله صلاحيّاتُ ذلك الجهاز.
+في ملفّ خزنةٍ مشفّرٍ واحد على جهازك، بلوكٌ لكلّ قيمةٍ محميّة، يُفتَح بعبارة مرورٍ لا تغادر الجهاز أبداً — واختبارٌ يبحث في الملفّ المكتوب عن الأسماء التي عُلِّمها فلا يجد منها شيئاً. والتشفيرُ ليس أقوى من عبارة المرور التي تختارها، والخزنةُ المفتوحة يقرؤها كلُّ ما يعمل باسمك على ذلك الجهاز: نحن نحمي ملفّاً ساكناً، لا جهازاً اختُرق أصلاً. وعلى لينكس يُضيَّق المجلّد عليك وحدك، ويرفض القلبُ الكتابةَ إن لم يستطع ذلك؛ وعلى ويندوز المجلّدُ هو ما تجعله صلاحيّاتُ ذلك الجهاز.
 
 </div>
 
@@ -247,11 +248,11 @@ English one means is a judgement, and for Arabic the owner is the reader.
 
 **EN (approved).** The vault cannot be opened — not by you and not by us. This build has no recovery mechanism of any kind: no reset, no escrow, no second key and no copy held anywhere, and nothing on our side could recover the vault without the passphrase. The app says so before you set one: «There is no way back. Nobody holds a copy of this, and no reset exists — the passphrase never leaves this device and nothing on our side could recover the vault without it.»
 
-**DE (draft).** Der Tresor lässt sich nicht öffnen — weder von Ihnen noch von uns. Dieser Build hat keinerlei Wiederherstellungsmechanismus: kein Zurücksetzen, keine Hinterlegung, keinen zweiten Schlüssel und keine irgendwo aufbewahrte Kopie, und nichts auf unserer Seite könnte den Tresor ohne die Passphrase wiederherstellen. Die Anwendung sagt das, bevor Sie eine festlegen: «Es gibt keinen Weg zurück. Niemand hat eine Kopie davon, und ein Zurücksetzen gibt es nicht — die Passphrase verlässt dieses Gerät nie, und nichts auf unserer Seite könnte den Tresor ohne sie wiederherstellen.»
+**DE (draft).** Der Tresor lässt sich nicht öffnen — weder von Ihnen noch von uns. Dieser Build hat keinerlei Wiederherstellungsmechanismus: kein Zurücksetzen, keine Hinterlegung, keinen zweiten Schlüssel und keine irgendwo aufbewahrte Kopie, und nichts auf unserer Seite könnte den Tresor ohne die Passphrase wiederherstellen. Die Anwendung sagt das, bevor Sie eine festlegen: «Es gibt keinen Weg zurück. Niemand hat eine Kopie davon, und es gibt kein Zurücksetzen — die Passphrase verlässt dieses Gerät nie, und auf unserer Seite könnte nichts den Tresor ohne sie wiederherstellen.»
 
 **AR (draft).** <div dir="rtl" lang="ar">
 
-لا تُفتَح الخزنة — لا منك ولا منّا. وهذا البناءُ ليس فيه أيُّ آليّة استرجاع: لا إعادةَ تعيين، ولا إيداعَ لدى أحد، ولا مفتاحَ ثانياً، ولا نسخةً محفوظةً في أيّ مكان، ولا شيءَ في جهتنا يستطيع استرجاع الخزنة بغير عبارة المرور. ويقول التطبيقُ ذلك قبل أن تضع واحدة: «لا طريق للعودة. لا أحد يملك نسخةً من هذه، ولا توجد إعادةُ تعيين — عبارةُ المرور لا تغادر هذا الجهاز أبداً، ولا شيء في جهتنا يستطيع استرجاع الخزنة بدونها.»
+لا تُفتَح الخزنة — لا منك ولا منّا. وهذا البناءُ ليس فيه أيُّ آليّة استرجاع: لا إعادةَ ضبط، ولا إيداعَ لدى أحد، ولا مفتاحَ ثانياً، ولا نسخةً محفوظةً في أيّ مكان، ولا شيءَ في جهتنا يستطيع استرجاع الخزنة بغير عبارة المرور. ويقول التطبيقُ ذلك قبل أن تضع واحدة: «لا طريقَ للعودة. لا أحد يحمل نسخةً من هذه، ولا توجد إعادةُ ضبط — فعبارةُ المرور لا تغادر هذا الجهاز، ولا شيء في جهتنا يستطيع استرجاع الخزنة بدونها.»
 
 </div>
 
@@ -307,7 +308,7 @@ English one means is a judgement, and for Arabic the owner is the reader.
 
 **AR (draft).** <div dir="rtl" lang="ar">
 
-الملفّات: النصّ العاديّ (`.txt` و`.md` و`.csv`)، ووثائق Word (`.docx`)، وملفّات PDF. وملفّ PDF بلا طبقة نصّ — صورةٌ لوثيقة — يُرفض باسمِه لا يُخمّن، وكذلك الملفّ المعمّى. وللكشف اليوم أربعُ حزم لغويّة — الإنجليزيّة والألمانيّة والسويديّة والعربيّة — إلى جانب مجموعات قواعدَ غيرِ مرتبطةٍ بلغة، والواجهةُ نفسُها تتكلّم هذه الأربع. والعربيّة داخل ملفّ PDF حالةٌ قائمةٌ بذاتِها: فالملفّ الذي يحمل نصَّه بأشكال العرض التي رسمها برنامجُ التنسيق يُرفض باسمِه، لأنّ الترتيبَ المقروء سيكون ترتيبَ الرسم وتخرج الكلماتُ مقلوبةً، وتُوجَّه إلى `.docx` أو `.txt`؛ أمّا ملفّ PDF عربيٌّ له طبقةُ نصٍّ سليمةٌ بترتيبٍ منطقيّ فلا يُرفض لهذا السبب، وفي الحالات المختبَرة يُقرأ كما يُقرأ النصُّ نفسُه نصّاً عاديّاً — وقد يُرفض مثلُ هذا الملفّ لسببٍ آخر، كأن يكون معمّىً أو بلا طبقةِ نصٍّ صالحة. ويبقى هناك حدّان: ملفٌّ مرسومٌ مقلوباً ومع ذلك يحمل حروفاً عاديّةً لا يلتقطُه هذا، وملفّ PDF محميّ كتبه Z Privacy نفسُه بالعربيّة لم يعد يُمكن إدخالُه وثيقةً لتُحمى.
+الملفّات: النصّ العاديّ (`.txt` و`.md` و`.csv`)، ووثائق Word (`.docx`)، وملفّات PDF. وملفّ PDF بلا طبقة نصّ — صورةٌ لوثيقة — يُرفض باسمِه لا يُخمّن، وكذلك الملفّ المشفّر. وللكشف اليوم أربعُ حزم لغويّة — الإنجليزيّة والألمانيّة والسويديّة والعربيّة — إلى جانب مجموعات قواعدَ غيرِ مرتبطةٍ بلغة، والواجهةُ نفسُها تتكلّم هذه الأربع. والعربيّة داخل ملفّ PDF حالةٌ قائمةٌ بذاتِها: فالملفّ الذي يحمل نصَّه بأشكال العرض التي رسمها برنامجُ التنسيق يُرفض باسمِه، لأنّ الترتيبَ المقروء سيكون ترتيبَ الرسم وتخرج الكلماتُ مقلوبةً، وتُوجَّه إلى `.docx` أو `.txt`؛ أمّا ملفّ PDF عربيٌّ له طبقةُ نصٍّ سليمةٌ بترتيبٍ منطقيّ فلا يُرفض لهذا السبب، وفي الحالات المختبَرة يُقرأ كما يُقرأ النصُّ نفسُه نصّاً عاديّاً — وقد يُرفض مثلُ هذا الملفّ لسببٍ آخر، كأن يكون مشفّراً أو بلا طبقةِ نصٍّ صالحة. ويبقى هناك حدّان: ملفٌّ مرسومٌ مقلوباً ومع ذلك يحمل حروفاً عاديّةً لا يلتقطُه هذا، وملفّ PDF محميّ كتبه Z Privacy نفسُه بالعربيّة لم يعد يُمكن إدخالُه وثيقةً لتُحمى.
 
 </div>
 
@@ -363,7 +364,7 @@ English one means is a judgement, and for Arabic the owner is the reader.
 
 **AR (draft).** <div dir="rtl" lang="ar">
 
-لينكس x86_64 بواجهة GTK3، وويندوز ١٠ أو ١١ على x86_64؛ وماك أو إس وiOS وأندرويد غيرُ مبنيّة. وعلى ويندوز يعرض أوّلُ تشغيلٍ صفحةً زرقاء «حمى ويندوز جهازك»، لأنّ هذا المثبِّت لم يوقّعه شيء: ومعنى تلك الصفحة أنّ ويندوز لا يملك أساساً ليعدّ الملفّ موثوقاً، لا أنّه فحصه فوجده سليماً أو غيرَ سليم. وبصمةُ SHA-256 المطبوعةُ في صفحة التنزيل تقول لك إنّ الملفّ الذي بين يديك هو الملفُّ الذي تصفه تلك البصمة، بشرط أن تكون البصمةُ نفسُها من مصدرٍ تثق به — ولا تقول شيئاً عمّن نشر الملفّ، ولو اختُرق الموقعُ الذي يقدّم الاثنين لتغيّرا معاً. وهي ليست بديلاً عن توقيع، وفِقرةُ صفحة التنزيل نفسُها تقول كيف تبدو الشاشة وكيف يُمضى منها.
+لينكس x86_64 بواجهة GTK3، وويندوز ١٠ أو ١١ على x86_64؛ وماك أو إس وiOS وأندرويد غيرُ مبنيّة. وعلى ويندوز يعرض أوّلُ تشغيلٍ صفحةً زرقاء — <span dir="ltr">«Windows protected your PC»</span> —، لأنّ هذا المثبِّت لم يوقّعه شيء: ومعنى تلك الصفحة أنّ ويندوز لا يملك أساساً ليعدّ الملفّ موثوقاً، لا أنّه فحصه فوجده سليماً أو غيرَ سليم. وبصمةُ SHA-256 المطبوعةُ في صفحة التنزيل تقول لك إنّ الملفّ الذي بين يديك هو الملفُّ الذي تصفه تلك البصمة، بشرط أن تكون البصمةُ نفسُها من مصدرٍ تثق به — ولا تقول شيئاً عمّن نشر الملفّ، ولو اختُرق الموقعُ الذي يقدّم الاثنين لتغيّرا معاً. وهي ليست بديلاً عن توقيع، وفِقرةُ صفحة التنزيل نفسُها تقول كيف تبدو الشاشة وكيف يُمضى منها.
 
 </div>
 
@@ -387,14 +388,21 @@ Faruk AB، شركةُ مساهمةٍ (Aktiebolag) في السويد. رقمُ ا
 
 ## What is still owed before any of this publishes
 
-1. **Q20**, from paper 119's measurement, in all three languages, written the
-   same day as the download card so the two cannot drift.
-2. **A per-language absolutes register.** `scripts/check_the_absolutes.py`
-   holds one for English today; German and Arabic need their own, because the
-   absolute words are different words and the qualifier that saves one is in a
-   different place in the sentence.
-3. **The semantic review**, which no script does: the German read by somebody
-   who reads German, and the Arabic by the owner.
+1. **The semantic review**, which no script does: the German read by somebody
+   who reads German, and the Arabic by the owner. `docs/faq-meaning-check.md`
+   is where it happens.
+2. **The pages themselves** — `/en/faq/`, `/de/faq/`, `/ar/faq/`, linked from
+   the home page and the guide, bound to the site gates, with `FAQPage`
+   JSON-LD matching the visible text exactly.
+
+**Done since this file was first written:** Q20, from paper 119's own
+measurement and in all three languages, written the same day as the download
+card so the two cannot drift; the per-language register, built as a mirror
+check in `scripts/check_the_absolutes.py` (49 absolutes, German carries all 49
+and invents none, Arabic likewise); and
+`scripts/check_the_quoted_app_text.py`, which reads every sentence this page
+quotes from the application out of the `.arb` by key, per language, so a later
+app wording cannot leave the FAQ misquoting a screen.
 
 *Branch `feat/the-questions-before-the-name`. No page, no engine change, no
 app feature.*

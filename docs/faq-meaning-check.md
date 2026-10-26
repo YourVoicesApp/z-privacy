@@ -25,6 +25,14 @@ language — the ones the script matches, so if one of them is reworded for
 flow the script reds and this page is where the decision gets made. A tick in
 your own hand is the whole of what is asked.
 
+**One divergence is known and is not yours to fix.** The Arabic Q16 quotes
+the application, and the shipped Arabic sentence (`thereIsNoWayBack`) says
+«لا تغادر هذا الجهاز» where the English says «never leaves this device».
+The FAQ may not strengthen a quotation, so the Arabic page will carry the
+app's own, slightly weaker, words. It is an **app-side** meaning debt for
+after the pause, and `scripts/check_the_absolutes.py` prints it as a NOTE on
+every run so nobody mistakes a green line for an equal sentence.
+
 ---
 
 ## Q1 · Is it safe to paste client documents into ChatGPT?
@@ -80,7 +88,7 @@ your own hand is the whole of what is asked.
 
 **AR.** <div dir="rtl" lang="ar">
 
-تستبدل بكلّ قيمةٍ رمزاً قبل أن يغادر النصُّ، وتُعيد القيم الحقيقيّة حين يعود الجواب. وهذا في Z Privacy هو الطريق كلُّه — إدخال، فحص، مراجعة، حماية، اختيار من يُجيب، الذكاء الاصطناعيّ، استعادة — وقبل أن يُرسَل شيءٌ تُعرَض عليك بالضبط ما سيغادر جهازك. والرابطُ من الرمز إلى القيمة يسكن في خزنتك ولا مكان سواها، فلا يستطيع عكسَه إلّا جهازُك. وليس هذا هو عدمَ القابليّة للربط: فما يبقى من الوثيقة قد يدلّ على شخصٍ بمحتواه وحده (انظر «التعميةُ أم الترميز» و«هل يجعلني Z مجهولاً عند المزوّد»).
+تستبدل بكلّ قيمةٍ رمزاً قبل أن يغادر النصُّ، وتُعيد القيم الحقيقيّة حين يعود الجواب. وهذا في Z Privacy هو الطريق كلُّه — إدخال، فحص، مراجعة، حماية، اختيار من يُجيب، الذكاء الاصطناعيّ، استعادة — وقبل أن يُرسَل شيءٌ يُعرَض عليك بالضبط ما سيغادر جهازك. والرابطُ من الرمز إلى القيمة يسكن في خزنتك ولا مكان سواها، فلا يستطيع عكسَه إلّا جهازُك. وليس هذا هو عدمَ القابليّة للربط: فما يبقى من الوثيقة قد يدلّ على شخصٍ بمحتواه وحده (انظر «إخفاءُ الهويّة أم الترميز» و«هل يجعلني Z مجهولاً عند المزوّد»).
 
 </div>
 
@@ -103,7 +111,7 @@ your own hand is the whole of what is asked.
 
 **AR.** <div dir="rtl" lang="ar">
 
-ثلاثةُ أشياءَ منفصلة، ولا يُغني واحدٌ منها عن الآخر. **تقليلُ البيانات** (المادّة ٥/١/ج) يسأل: هل يحتاج النموذجُ هذه القيمةَ أصلاً؟ وهذا هو السؤالُ الذي تُعين فيه أداةٌ مثل Z Privacy. و**التزاماتُك القانونيّة** — أساسٌ قانونيّ، وسجلّاتُك، وعقودُ المعالجة لديك، والنقلُ إلى الخارج — هي التزاماتُك، ولا تغيّرها أداة. و**ما يفعله Z Privacy** هو استبدالُ قيمٍ في النصّ الذي ترسله، وهذا ترميزٌ لا تعمية: فهو بنفسه لا يجعل البياناتِ مجهولةً بحكم اللائحة، وقد يبقى النصُّ بياناتٍ شخصيّةً تبعاً لما بقي فيه (المادّة ٤/٥ والحيثيّة ٢٦). وهذه معلومةٌ لا استشارةٌ قانونيّة؛ والقرارُ لمسؤول المعالجة عندك أو لمسؤول حماية البيانات.
+ثلاثةُ أشياءَ منفصلة، ولا يُغني واحدٌ منها عن الآخر. **تقليلُ البيانات** (المادّة ٥/١/ج) يسأل: هل يحتاج النموذجُ هذه القيمةَ أصلاً؟ وهذا هو السؤالُ الذي تُعين فيه أداةٌ مثل Z Privacy. و**التزاماتُك القانونيّة** — أساسٌ قانونيّ، وسجلّاتُك، وعقودُ المعالجة لديك، والنقلُ إلى الخارج — هي التزاماتُك، ولا تغيّرها أداة. و**ما يفعله Z Privacy** هو استبدالُ قيمٍ في النصّ الذي ترسله، وهذا ترميزٌ لا إخفاءٌ للهويّة: فهو بنفسه لا يجعل البياناتِ مجهولةً بحكم اللائحة، وقد يبقى النصُّ بياناتٍ شخصيّةً تبعاً لما بقي فيه (المادّة ٤/٥ والحيثيّة ٢٦). وهذه معلومةٌ لا استشارةٌ قانونيّة؛ والقرارُ لمسؤول المعالجة عندك أو لمسؤول حماية البيانات.
 
 </div>
 
@@ -130,7 +138,7 @@ your own hand is the whole of what is asked.
 
 **AR.** <div dir="rtl" lang="ar">
 
-الترميزُ يستبدل بالقيم المعرِّفة بدائلَ مع بقاء رابطٍ في مكانٍ ما يمكن أن يعكسه؛ وقد تبقى البياناتُ شخصيّة (المادّة ٤/٥). ولا تُعدّ البياناتُ مجهولةً إلّا حيث لم يعد يمكن التعرّفُ على الشخص بوسائلَ يُرجَّح في المعتاد أن تُستعمل — وهو معيارٌ يأخذ في الحسبان ما قد يفعله غيرُك على نحوٍ معقول، لا ما تفعله أنت وحدك — وعندها لا تسري عليها اللائحة (الحيثيّة ٢٦). وZ Privacy يفعل الأوّل: الرابطُ هو خزنتُك، على جهازك. ونصٌّ أُزيل منه كلُّ اسمٍ قد يظلّ عن شخصٍ يمكن التعرّفُ عليه — ورسالةُ عيادةٍ عن مريضةٍ واحدة هي المثالُ المعتاد.
+الترميزُ بأسماءٍ مستعارة يستبدل بالقيم المعرِّفة بدائلَ مع بقاء رابطٍ في مكانٍ ما يمكن أن يعكسه؛ وقد تبقى البياناتُ شخصيّة (المادّة ٤/٥). ولا تُعدّ البياناتُ مجهولةً إلّا حيث لم يعد يمكن التعرّفُ على الشخص بوسائلَ يُرجَّح في المعتاد أن تُستعمل — وهو معيارٌ يأخذ في الحسبان ما قد يفعله غيرُك على نحوٍ معقول، لا ما تفعله أنت وحدك — وعندها لا تسري عليها اللائحة (الحيثيّة ٢٦). وZ Privacy يفعل الأوّل: الرابطُ هو خزنتُك، على جهازك. ونصٌّ أُزيل منه كلُّ اسمٍ قد يظلّ عن شخصٍ يمكن التعرّفُ عليه — ورسالةُ عيادةٍ عن مريضةٍ واحدة هي المثالُ المعتاد.
 
 </div>
 
@@ -326,7 +334,7 @@ your own hand is the whole of what is asked.
 
 **EN.** On your machine, out of your vault. Inside the app the answer is restored as it arrives; if you carried the question to a model yourself, «Add an answer» brings the text back and every token that chat has carried turns back into its name. A protected PDF has its own door: «z-pdf» in Settings reads such a file back into its names and says which session each one came from. A token whose key this vault does not hold stays as text, and the app says so rather than guessing.
 
-**DE.** Auf Ihrem Rechner, aus Ihrem Tresor. Innerhalb der Anwendung wird die Antwort wiederhergestellt, während sie eintrifft; haben Sie die Frage selbst zu einem Modell getragen, holt «Antwort hinzufügen» den Text zurück, und jedes Kennzeichen, das dieser Verlauf getragen hat, wird wieder zu seinem Namen. Ein geschütztes PDF hat seine eigene Tür: «z-pdf» in den Einstellungen liest eine solche Datei in ihre Namen zurück und sagt, aus welcher Sitzung jeder Name stammt. Ein Kennzeichen, dessen Schlüssel dieser Tresor nicht hat, bleibt Text, und die Anwendung sagt das, statt zu raten.
+**DE.** Auf Ihrem Rechner, aus Ihrem Tresor. Innerhalb der Anwendung wird die Antwort wiederhergestellt, während sie eintrifft; haben Sie die Frage selbst zu einem Modell getragen, holt «Eine Antwort hinzufügen» den Text zurück, und jedes Kennzeichen, das dieser Verlauf getragen hat, wird wieder zu seinem Namen. Ein geschütztes PDF hat seine eigene Tür: «z-pdf» in den Einstellungen liest eine solche Datei in ihre Namen zurück und sagt, aus welcher Sitzung jeder Name stammt. Ein Kennzeichen, dessen Schlüssel dieser Tresor nicht hat, bleibt Text, und die Anwendung sagt das, statt zu raten.
 
 **AR.** <div dir="rtl" lang="ar">
 
@@ -338,7 +346,7 @@ your own hand is the whole of what is asked.
 
 - `q13-every-token-chat`
   - EN — every token that chat has carried turns back into its name
-  - DE — Innerhalb der Anwendung wird die Antwort wiederhergestellt, während sie eintrifft; haben Sie die Frage selbst zu einem Modell getragen, holt «Antwort hinzufügen» den Text zurück, und jedes Kennzeichen, das dieser Verlauf getragen hat, wird wieder zu seinem Namen.
+  - DE — Innerhalb der Anwendung wird die Antwort wiederhergestellt, während sie eintrifft; haben Sie die Frage selbst zu einem Modell getragen, holt «Eine Antwort hinzufügen» den Text zurück, und jedes Kennzeichen, das dieser Verlauf getragen hat, wird wieder zu seinem Namen.
   - AR — <span dir="rtl" lang="ar">داخل التطبيق يُستعاد الجوابُ وهو يصل؛ وإن حملتَ السؤالَ إلى نموذجٍ بنفسك فإنّ «أضِف جواباً» تُعيد النصَّ، وكلُّ رمزٍ حمله ذلك الحوار يعود إلى اسمه.</span>
 
 **الحكم · verdict.** العربيّ □ مطابقٌ   □ يحتاج تعديلاً — الألمانيّ □ مطابقٌ   □ يحتاج تعديلاً
@@ -353,7 +361,7 @@ your own hand is the whole of what is asked.
 
 **AR.** <div dir="rtl" lang="ar">
 
-لا حساب في Z Privacy، ولا خادم لZ Privacy، ولا تحليلات: الشيفرةُ تحمل عميلَ شبكةٍ واحداً وطريقَ إرسالٍ واحداً، والواجهةُ لا تستطيع فتح مقبسٍ أصلاً، ولا يظهر فيها عنوانٌ لZ Privacy في أيّ موضع — فالعنوانُ الوحيد الذي بُني هذا البرنامج ليتحدّث إليه هو المزوّد الذي أعددتَه، ببيان الاعتماد الذي أعطيتَه. وعلى جهازك أنت، **في هذا البناء، ومقروءاً من شيفرته لا مُراقَباً على تثبيتٍ يعمل**، يكتب مجموعةً معروفةً من الملفّات ولا يكتب غيرها: الخزنةَ المعمّاة، وملفّاً معمّى لكلّ جلسة، وقفلاً بجانبها، وملفَّ إعداداتٍ لا يحمل عملَك أبداً — ومعها الوثيقتان اللتان تطلبهما باسمهما: نسخةٌ محميّة، وملفُّ PDF عاديٌّ مُستعاد. والوثيقةُ التي في المعاينة تبقى في ملفّ جلستها المعمّى حتّى تخرج من بابٍ من الأبواب التي تُخرج النصّ، وخروجُها يأخذ النسخةَ معه. وبالقراءة نفسِها للشيفرة: الملفُّ وهو يُكتَب يوجد لحظةً باسمٍ ثانٍ بجانب الملفّ التامّ، في المجلّد نفسِه، ثمّ يُعاد تسميتُه في موضعه؛ ولا يُكتب شيءٌ في المجلّد المؤقّت للنظام، ولا يُكتب ملفُّ سجلٍّ البتّة.
+لا حساب في Z Privacy، ولا خادم لZ Privacy، ولا تحليلات: الشيفرةُ تحمل عميلَ شبكةٍ واحداً وطريقَ إرسالٍ واحداً، والواجهةُ لا تستطيع فتح مقبسٍ أصلاً، ولا يظهر فيها عنوانٌ لZ Privacy في أيّ موضع — فالعنوانُ الوحيد الذي بُني هذا البرنامج ليتحدّث إليه هو المزوّد الذي أعددتَه، ببيان الاعتماد الذي أعطيتَه. وعلى جهازك أنت، **في هذا البناء، ومقروءاً من شيفرته لا مُراقَباً على تثبيتٍ يعمل**، يكتب مجموعةً معروفةً من الملفّات ولا يكتب غيرها: الخزنةَ المشفّرة، وملفّاً مشفّراً لكلّ جلسة، وقفلاً بجانبها، وملفَّ إعداداتٍ لا يحمل عملَك أبداً — ومعها الوثيقتان اللتان تطلبهما باسمهما: نسخةٌ محميّة، وملفُّ PDF عاديٌّ مُستعاد. والوثيقةُ التي في المعاينة تبقى في ملفّ جلستها المشفّر حتّى تخرج من بابٍ من الأبواب التي تُخرج النصّ، وخروجُها يأخذ النسخةَ معه. وبالقراءة نفسِها للشيفرة: الملفُّ وهو يُكتَب يوجد لحظةً باسمٍ ثانٍ بجانب الملفّ التامّ، في المجلّد نفسِه، ثمّ يُعاد تسميتُه في موضعه؛ ولا يُكتب شيءٌ في المجلّد المؤقّت للنظام، ولا يُكتب ملفُّ سجلٍّ البتّة.
 
 </div>
 
@@ -366,7 +374,7 @@ your own hand is the whole of what is asked.
 - `q14-settings-file-never`
   - EN — a settings file that never holds your work
   - DE — Auf Ihrem eigenen Rechner schreibt es, **in diesem Build und aus seinem Quelltext gelesen, nicht an einer laufenden Installation beobachtet**, einen bekannten Satz von Dateien und keine anderen: den verschlüsselten Tresor, eine verschlüsselte Datei je Sitzung, eine Sperre daneben und eine Einstellungsdatei, die niemals Ihre Arbeit enthält — dazu die zwei Dokumente, die Sie ausdrücklich verlangen, eine geschützte Kopie und ein wiederhergestelltes einfaches PDF.
-  - AR — <span dir="rtl" lang="ar">وعلى جهازك أنت، **في هذا البناء، ومقروءاً من شيفرته لا مُراقَباً على تثبيتٍ يعمل**، يكتب مجموعةً معروفةً من الملفّات ولا يكتب غيرها: الخزنةَ المعمّاة، وملفّاً معمّى لكلّ جلسة، وقفلاً بجانبها، وملفَّ إعداداتٍ لا يحمل عملَك أبداً — ومعها الوثيقتان اللتان تطلبهما باسمهما: نسخةٌ محميّة، وملفُّ PDF عاديٌّ مُستعاد.</span>
+  - AR — <span dir="rtl" lang="ar">وعلى جهازك أنت، **في هذا البناء، ومقروءاً من شيفرته لا مُراقَباً على تثبيتٍ يعمل**، يكتب مجموعةً معروفةً من الملفّات ولا يكتب غيرها: الخزنةَ المشفّرة، وملفّاً مشفّراً لكلّ جلسة، وقفلاً بجانبها، وملفَّ إعداداتٍ لا يحمل عملَك أبداً — ومعها الوثيقتان اللتان تطلبهما باسمهما: نسخةٌ محميّة، وملفُّ PDF عاديٌّ مُستعاد.</span>
 - `q14-nothing-written-system`
   - EN — nothing is written to the system's temporary directory
   - DE — in das temporäre Verzeichnis des Systems wird nichts geschrieben
@@ -388,7 +396,7 @@ your own hand is the whole of what is asked.
 
 **AR.** <div dir="rtl" lang="ar">
 
-في ملفّ خزنةٍ معمّى واحدٍ على جهازك، بلوكٌ لكلّ قيمةٍ محميّة، يُفتَح بعبارة مرورٍ لا تغادر الجهاز أبداً — واختبارٌ يبحث في الملفّ المكتوب عن الأسماء التي عُلِّمها فلا يجد منها شيئاً. والتعميةُ ليست أقوى من عبارة المرور التي تختارها، والخزنةُ المفتوحة يقرؤها كلُّ ما يعمل باسمك على ذلك الجهاز: نحن نحمي ملفّاً ساكناً، لا جهازاً سقط أصلاً. وعلى لينكس يُضيَّق المجلّد عليك وحدك، ويرفض القلبُ الكتابةَ إن لم يستطع ذلك؛ وعلى ويندوز المجلّدُ هو ما تجعله صلاحيّاتُ ذلك الجهاز.
+في ملفّ خزنةٍ مشفّرٍ واحد على جهازك، بلوكٌ لكلّ قيمةٍ محميّة، يُفتَح بعبارة مرورٍ لا تغادر الجهاز أبداً — واختبارٌ يبحث في الملفّ المكتوب عن الأسماء التي عُلِّمها فلا يجد منها شيئاً. والتشفيرُ ليس أقوى من عبارة المرور التي تختارها، والخزنةُ المفتوحة يقرؤها كلُّ ما يعمل باسمك على ذلك الجهاز: نحن نحمي ملفّاً ساكناً، لا جهازاً اختُرق أصلاً. وعلى لينكس يُضيَّق المجلّد عليك وحدك، ويرفض القلبُ الكتابةَ إن لم يستطع ذلك؛ وعلى ويندوز المجلّدُ هو ما تجعله صلاحيّاتُ ذلك الجهاز.
 
 </div>
 
@@ -405,7 +413,7 @@ your own hand is the whole of what is asked.
 - `q15-only-as-strong`
   - EN — only as strong as the passphrase you choose
   - DE — Die Verschlüsselung ist nur so stark wie die Passphrase, die Sie wählen
-  - AR — <span dir="rtl" lang="ar">والتعميةُ ليست أقوى من عبارة المرور التي تختارها</span>
+  - AR — <span dir="rtl" lang="ar">والتشفيرُ ليس أقوى من عبارة المرور التي تختارها، والخزنةُ المفتوحة يقرؤها كلُّ ما يعمل باسمك على ذلك الجهاز: نحن نحمي ملفّاً ساكناً، لا جهازاً اختُرق أصلاً.</span>
 - `q15-refuses-write-if`
   - EN — refuses to write if it cannot be
   - DE — der Kern weigert sich zu schreiben, wenn das nicht möglich ist
@@ -419,11 +427,11 @@ your own hand is the whole of what is asked.
 
 **EN.** The vault cannot be opened — not by you and not by us. This build has no recovery mechanism of any kind: no reset, no escrow, no second key and no copy held anywhere, and nothing on our side could recover the vault without the passphrase. The app says so before you set one: «There is no way back. Nobody holds a copy of this, and no reset exists — the passphrase never leaves this device and nothing on our side could recover the vault without it.»
 
-**DE.** Der Tresor lässt sich nicht öffnen — weder von Ihnen noch von uns. Dieser Build hat keinerlei Wiederherstellungsmechanismus: kein Zurücksetzen, keine Hinterlegung, keinen zweiten Schlüssel und keine irgendwo aufbewahrte Kopie, und nichts auf unserer Seite könnte den Tresor ohne die Passphrase wiederherstellen. Die Anwendung sagt das, bevor Sie eine festlegen: «Es gibt keinen Weg zurück. Niemand hat eine Kopie davon, und ein Zurücksetzen gibt es nicht — die Passphrase verlässt dieses Gerät nie, und nichts auf unserer Seite könnte den Tresor ohne sie wiederherstellen.»
+**DE.** Der Tresor lässt sich nicht öffnen — weder von Ihnen noch von uns. Dieser Build hat keinerlei Wiederherstellungsmechanismus: kein Zurücksetzen, keine Hinterlegung, keinen zweiten Schlüssel und keine irgendwo aufbewahrte Kopie, und nichts auf unserer Seite könnte den Tresor ohne die Passphrase wiederherstellen. Die Anwendung sagt das, bevor Sie eine festlegen: «Es gibt keinen Weg zurück. Niemand hat eine Kopie davon, und es gibt kein Zurücksetzen — die Passphrase verlässt dieses Gerät nie, und auf unserer Seite könnte nichts den Tresor ohne sie wiederherstellen.»
 
 **AR.** <div dir="rtl" lang="ar">
 
-لا تُفتَح الخزنة — لا منك ولا منّا. وهذا البناءُ ليس فيه أيُّ آليّة استرجاع: لا إعادةَ تعيين، ولا إيداعَ لدى أحد، ولا مفتاحَ ثانياً، ولا نسخةً محفوظةً في أيّ مكان، ولا شيءَ في جهتنا يستطيع استرجاع الخزنة بغير عبارة المرور. ويقول التطبيقُ ذلك قبل أن تضع واحدة: «لا طريق للعودة. لا أحد يملك نسخةً من هذه، ولا توجد إعادةُ تعيين — عبارةُ المرور لا تغادر هذا الجهاز أبداً، ولا شيء في جهتنا يستطيع استرجاع الخزنة بدونها.»
+لا تُفتَح الخزنة — لا منك ولا منّا. وهذا البناءُ ليس فيه أيُّ آليّة استرجاع: لا إعادةَ ضبط، ولا إيداعَ لدى أحد، ولا مفتاحَ ثانياً، ولا نسخةً محفوظةً في أيّ مكان، ولا شيءَ في جهتنا يستطيع استرجاع الخزنة بغير عبارة المرور. ويقول التطبيقُ ذلك قبل أن تضع واحدة: «لا طريقَ للعودة. لا أحد يحمل نسخةً من هذه، ولا توجد إعادةُ ضبط — فعبارةُ المرور لا تغادر هذا الجهاز، ولا شيء في جهتنا يستطيع استرجاع الخزنة بدونها.»
 
 </div>
 
@@ -436,7 +444,7 @@ your own hand is the whole of what is asked.
 - `q16-recovery-mechanism-any`
   - EN — no recovery mechanism of any kind
   - DE — Dieser Build hat keinerlei Wiederherstellungsmechanismus: kein Zurücksetzen, keine Hinterlegung, keinen zweiten Schlüssel und keine irgendwo aufbewahrte Kopie, und nichts auf unserer Seite könnte den Tresor ohne die Passphrase wiederherstellen.
-  - AR — <span dir="rtl" lang="ar">وهذا البناءُ ليس فيه أيُّ آليّة استرجاع: لا إعادةَ تعيين، ولا إيداعَ لدى أحد، ولا مفتاحَ ثانياً، ولا نسخةً محفوظةً في أيّ مكان، ولا شيءَ في جهتنا يستطيع استرجاع الخزنة بغير عبارة المرور.</span>
+  - AR — <span dir="rtl" lang="ar">وهذا البناءُ ليس فيه أيُّ آليّة استرجاع: لا إعادةَ ضبط، ولا إيداعَ لدى أحد، ولا مفتاحَ ثانياً، ولا نسخةً محفوظةً في أيّ مكان، ولا شيءَ في جهتنا يستطيع استرجاع الخزنة بغير عبارة المرور.</span>
 - `q16-nothing-our-side`
   - EN — and nothing on our side could recover the vault without the passphrase
   - DE — nichts auf unserer Seite könnte den Tresor ohne die Passphrase wiederherstellen
@@ -444,14 +452,14 @@ your own hand is the whole of what is asked.
 - `q16-nobody-holds-copy`
   - EN — Nobody holds a copy of this
   - DE — Niemand hat eine Kopie davon
-  - AR — <span dir="rtl" lang="ar">لا أحد يملك نسخةً من هذه</span>
-- `q16-passphrase-never-leaves`
+  - AR — <span dir="rtl" lang="ar">لا أحد يحمل نسخةً من هذه، ولا توجد إعادةُ ضبط — فعبارةُ المرور لا تغادر هذا الجهاز، ولا شيء في جهتنا يستطيع استرجاع الخزنة بدونها.»</span>
+- `q16-passphrase-never-leaves`  — **carried but weaker in Arabic, see the head of this file**
   - EN — the passphrase never leaves this device
   - DE — die Passphrase verlässt dieses Gerät nie
-  - AR — <span dir="rtl" lang="ar">عبارةُ المرور لا تغادر هذا الجهاز أبداً</span>
+  - AR — <span dir="rtl" lang="ar">لا أحد يحمل نسخةً من هذه، ولا توجد إعادةُ ضبط — فعبارةُ المرور لا تغادر هذا الجهاز، ولا شيء في جهتنا يستطيع استرجاع الخزنة بدونها.»</span>
 - `q16-nothing-our-side-2`
   - EN — and nothing on our side could recover the vault without it
-  - DE — nichts auf unserer Seite könnte den Tresor ohne sie wiederherstellen
+  - DE — Niemand hat eine Kopie davon, und es gibt kein Zurücksetzen — die Passphrase verlässt dieses Gerät nie, und auf unserer Seite könnte nichts den Tresor ohne sie wiederherstellen.»
   - AR — <span dir="rtl" lang="ar">ولا شيء في جهتنا يستطيع استرجاع الخزنة بدونها</span>
 
 **الحكم · verdict.** العربيّ □ مطابقٌ   □ يحتاج تعديلاً — الألمانيّ □ مطابقٌ   □ يحتاج تعديلاً
@@ -555,7 +563,7 @@ your own hand is the whole of what is asked.
 
 **AR.** <div dir="rtl" lang="ar">
 
-الملفّات: النصّ العاديّ (`.txt` و`.md` و`.csv`)، ووثائق Word (`.docx`)، وملفّات PDF. وملفّ PDF بلا طبقة نصّ — صورةٌ لوثيقة — يُرفض باسمِه لا يُخمّن، وكذلك الملفّ المعمّى. وللكشف اليوم أربعُ حزم لغويّة — الإنجليزيّة والألمانيّة والسويديّة والعربيّة — إلى جانب مجموعات قواعدَ غيرِ مرتبطةٍ بلغة، والواجهةُ نفسُها تتكلّم هذه الأربع. والعربيّة داخل ملفّ PDF حالةٌ قائمةٌ بذاتِها: فالملفّ الذي يحمل نصَّه بأشكال العرض التي رسمها برنامجُ التنسيق يُرفض باسمِه، لأنّ الترتيبَ المقروء سيكون ترتيبَ الرسم وتخرج الكلماتُ مقلوبةً، وتُوجَّه إلى `.docx` أو `.txt`؛ أمّا ملفّ PDF عربيٌّ له طبقةُ نصٍّ سليمةٌ بترتيبٍ منطقيّ فلا يُرفض لهذا السبب، وفي الحالات المختبَرة يُقرأ كما يُقرأ النصُّ نفسُه نصّاً عاديّاً — وقد يُرفض مثلُ هذا الملفّ لسببٍ آخر، كأن يكون معمّىً أو بلا طبقةِ نصٍّ صالحة. ويبقى هناك حدّان: ملفٌّ مرسومٌ مقلوباً ومع ذلك يحمل حروفاً عاديّةً لا يلتقطُه هذا، وملفّ PDF محميّ كتبه Z Privacy نفسُه بالعربيّة لم يعد يُمكن إدخالُه وثيقةً لتُحمى.
+الملفّات: النصّ العاديّ (`.txt` و`.md` و`.csv`)، ووثائق Word (`.docx`)، وملفّات PDF. وملفّ PDF بلا طبقة نصّ — صورةٌ لوثيقة — يُرفض باسمِه لا يُخمّن، وكذلك الملفّ المشفّر. وللكشف اليوم أربعُ حزم لغويّة — الإنجليزيّة والألمانيّة والسويديّة والعربيّة — إلى جانب مجموعات قواعدَ غيرِ مرتبطةٍ بلغة، والواجهةُ نفسُها تتكلّم هذه الأربع. والعربيّة داخل ملفّ PDF حالةٌ قائمةٌ بذاتِها: فالملفّ الذي يحمل نصَّه بأشكال العرض التي رسمها برنامجُ التنسيق يُرفض باسمِه، لأنّ الترتيبَ المقروء سيكون ترتيبَ الرسم وتخرج الكلماتُ مقلوبةً، وتُوجَّه إلى `.docx` أو `.txt`؛ أمّا ملفّ PDF عربيٌّ له طبقةُ نصٍّ سليمةٌ بترتيبٍ منطقيّ فلا يُرفض لهذا السبب، وفي الحالات المختبَرة يُقرأ كما يُقرأ النصُّ نفسُه نصّاً عاديّاً — وقد يُرفض مثلُ هذا الملفّ لسببٍ آخر، كأن يكون مشفّراً أو بلا طبقةِ نصٍّ صالحة. ويبقى هناك حدّان: ملفٌّ مرسومٌ مقلوباً ومع ذلك يحمل حروفاً عاديّةً لا يلتقطُه هذا، وملفّ PDF محميّ كتبه Z Privacy نفسُه بالعربيّة لم يعد يُمكن إدخالُه وثيقةً لتُحمى.
 
 </div>
 
@@ -652,7 +660,7 @@ your own hand is the whole of what is asked.
 
 **AR.** <div dir="rtl" lang="ar">
 
-لينكس x86_64 بواجهة GTK3، وويندوز ١٠ أو ١١ على x86_64؛ وماك أو إس وiOS وأندرويد غيرُ مبنيّة. وعلى ويندوز يعرض أوّلُ تشغيلٍ صفحةً زرقاء «حمى ويندوز جهازك»، لأنّ هذا المثبِّت لم يوقّعه شيء: ومعنى تلك الصفحة أنّ ويندوز لا يملك أساساً ليعدّ الملفّ موثوقاً، لا أنّه فحصه فوجده سليماً أو غيرَ سليم. وبصمةُ SHA-256 المطبوعةُ في صفحة التنزيل تقول لك إنّ الملفّ الذي بين يديك هو الملفُّ الذي تصفه تلك البصمة، بشرط أن تكون البصمةُ نفسُها من مصدرٍ تثق به — ولا تقول شيئاً عمّن نشر الملفّ، ولو اختُرق الموقعُ الذي يقدّم الاثنين لتغيّرا معاً. وهي ليست بديلاً عن توقيع، وفِقرةُ صفحة التنزيل نفسُها تقول كيف تبدو الشاشة وكيف يُمضى منها.
+لينكس x86_64 بواجهة GTK3، وويندوز ١٠ أو ١١ على x86_64؛ وماك أو إس وiOS وأندرويد غيرُ مبنيّة. وعلى ويندوز يعرض أوّلُ تشغيلٍ صفحةً زرقاء — <span dir="ltr">«Windows protected your PC»</span> —، لأنّ هذا المثبِّت لم يوقّعه شيء: ومعنى تلك الصفحة أنّ ويندوز لا يملك أساساً ليعدّ الملفّ موثوقاً، لا أنّه فحصه فوجده سليماً أو غيرَ سليم. وبصمةُ SHA-256 المطبوعةُ في صفحة التنزيل تقول لك إنّ الملفّ الذي بين يديك هو الملفُّ الذي تصفه تلك البصمة، بشرط أن تكون البصمةُ نفسُها من مصدرٍ تثق به — ولا تقول شيئاً عمّن نشر الملفّ، ولو اختُرق الموقعُ الذي يقدّم الاثنين لتغيّرا معاً. وهي ليست بديلاً عن توقيع، وفِقرةُ صفحة التنزيل نفسُها تقول كيف تبدو الشاشة وكيف يُمضى منها.
 
 </div>
 
@@ -661,7 +669,7 @@ your own hand is the whole of what is asked.
 - `q24-nothing-has-signed`
   - EN — nothing has signed this installer
   - DE — Unter Windows zeigt der erste Start eine blaue Seite «Der Computer wurde durch Windows geschützt», weil dieses Installationsprogramm von nichts signiert ist: Diese Seite bedeutet, dass Windows keine Grundlage hat, die Datei als vertrauenswürdig zu behandeln, und nicht, dass es sie geprüft und für sicher oder unsicher befunden hätte.
-  - AR — <span dir="rtl" lang="ar">وعلى ويندوز يعرض أوّلُ تشغيلٍ صفحةً زرقاء «حمى ويندوز جهازك»، لأنّ هذا المثبِّت لم يوقّعه شيء: ومعنى تلك الصفحة أنّ ويندوز لا يملك أساساً ليعدّ الملفّ موثوقاً، لا أنّه فحصه فوجده سليماً أو غيرَ سليم.</span>
+  - AR — <span dir="rtl" lang="ar">وعلى ويندوز يعرض أوّلُ تشغيلٍ صفحةً زرقاء — <span dir="ltr">«Windows protected your PC»</span> —، لأنّ هذا المثبِّت لم يوقّعه شيء: ومعنى تلك الصفحة أنّ ويندوز لا يملك أساساً ليعدّ الملفّ موثوقاً، لا أنّه فحصه فوجده سليماً أو غيرَ سليم.</span>
 - `q24-says-nothing-about`
   - EN — it says nothing about who published the file
   - DE — Über den Herausgeber der Datei sagt er nichts
@@ -718,5 +726,14 @@ English rather than in a translation:
    and the check refused every one of them. They are taken from the draft's
    own bytes now.
 
-**What it still does not do:** it sees words. Everything on this page above
-this line is the part no script reaches.
+**And a second gate since this file was first written.**
+`python3 scripts/check_the_quoted_app_text.py` reads every sentence this
+page quotes from the application out of `apps/flutter_app/lib/l10n/app_<lang>.arb`
+**by key, per language**, and reds on a mismatch. Three quotations had
+already drifted — the Arabic «there is no way back» by four words, the
+German by a word order, the German «Eine Antwort hinzufügen» by its first
+word — and each was a sentence a reader could have opened the app and
+caught us on. It is pinned: changing one word of a quoted label reds it.
+
+**What it still does not do:** both gates see words. Everything on this
+page above this line is the part no script reaches.
