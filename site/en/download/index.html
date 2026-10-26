@@ -92,6 +92,11 @@
     <pre dir="ltr"><code>certutil -hashfile zprivacy-v1-windows-x86_64-setup.exe SHA256</code></pre>
   </section>
 
+  <section class="card soft" aria-labelledby="h-arabic-pdf">
+    <h2 id="h-arabic-pdf">A known limit, until the fix is released</h2>
+    <p class="honest" data-fact="a-known-limit-arabic-pdf">Some Arabic PDFs store their text in visual order. Z Privacy imports such a file without saying anything, and the text arrives reversed — so the scan finds little or nothing in it, and a value it does protect may be the wrong one. Until the fix is released, use TXT or DOCX for Arabic documents that carry anything sensitive. An Arabic PDF whose text is stored in reading order is read correctly.</p>
+  </section>
+
   <section class="card soft" aria-labelledby="h-smartscreen">
     <h2 id="h-smartscreen">What Windows will say, and why</h2>
     <p class="honest" data-fact="windows-will-warn-you">Nothing has signed this installer. A file your browser downloads is marked as having come from the internet, so the first time you start it Windows shows a blue page — «Windows protected your PC» — instead of the installer. That page is about the missing signature and about nothing else: it says Windows does not recognise who published the file, not that it found anything wrong inside it.</p>
