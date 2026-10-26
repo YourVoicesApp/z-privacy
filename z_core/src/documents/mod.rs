@@ -288,8 +288,125 @@ pub(crate) fn refuse(reason: Refusal, detail: String) -> ApiError {
     ApiError::DocumentRefused { reason, detail }
 }
 
+/// **Why a document is being read** — paper 119, and the one argument that
+/// makes the boundary of the next function nameable.
+///
+/// The owner's rule, 26 October 2026: «عندما لا يستطيع Z الوثوقَ بأمانة النصّ
+/// المستخرج، لا يعرض نجاحَ الحماية كأن النصّ قُرئ صحيحاً» — when Z cannot trust
+/// that the extracted text is what was written, it does not present a
+/// successful protection as though the text had been read correctly.
+///
+/// That rule is about **protection**, so the check belongs to the road that
+/// ends in a bench and not to reading a file back into its own names: the
+/// z-pdf door scans nothing, protects nothing and sends nothing, and a file it
+/// cannot read faithfully is a reading a person can see is wrong, not a secret
+/// slipping out in text nobody checked. So the two roads say which they are,
+/// **here, at the call**, and a third road has to choose — which is the whole
+/// reason this is an argument and not a flag somebody could forget to pass.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum WhatFor {
+    /// The text will be scanned, protected, and may leave this machine.
+    Protecting,
+    /// The text is being read back into the names it already carries — the
+    /// z-pdf door (`ops::read_a_document_that_came_back`).
+    ReadingItBack,
+}
+
+/// **How much of a document's Arabic may be written in the display blocks** —
+/// paper 119, and both numbers below are measurements rather than opinions.
+///
+/// Unicode's Arabic Presentation Forms (`U+FB50–FDFF`, `U+FE70–FEFF`) are a
+/// **compatibility** block: they exist so that text from older encodings can be
+/// round-tripped, and nothing writes in them on purpose. A layout engine emits
+/// them because it has already chosen each letter's shape — and an engine that
+/// has chosen the shapes has also chosen the **order**, which is the order the
+/// line is drawn in and not the order it was written in. That is why this share
+/// is the signal: it does not say «this is Arabic» and it does not say «this is
+/// right to left» — neither of those is a fault. It says the text we are
+/// holding came out of a drawing, and a drawing's order is its own.
+///
+/// **Measured on the five fixtures of paper 118** (kept, with their numbers, at
+/// `~/work-now/zprivacy-arabic-pdf-fixtures/`):
+///
+/// ```text
+///     the letter as .txt                    934 Arabic chars ·   0 shaped ·  0%
+///     the same letter, logical-order PDF    934 ·   0 ·  0%
+///     the mixed Arabic/English/digits PDF    69 ·   0 ·  0%
+///     the same letter, display-order PDF    934 · 897 · 96%
+///     a page using «ﷺ» and a lam-alef       964 ·   2 ·  0%  (0.2%)
+/// ```
+///
+/// So the two sides are **0.2% and 96%**, and a third of a page is a line
+/// drawn through the empty space between them: it cannot be reached by the
+/// handful of ligatures real Arabic writing does use — «ﷺ», a lam-alef — and it
+/// is reached by every page that came out of a shaper.
+const DISPLAY_FORM_SHARE: usize = 33;
+
+/// **And a share means nothing over three letters.** A page holding one Arabic
+/// word, and that word «ﷺ», is 100% display forms and perfectly honest. Eight
+/// is the floor, measured the other way: a *reversed* Arabic name inside an
+/// English letter — «Mr Tarek — ﻁﺍﺭﻕ ﺍﻝﺭﻱﺡﺍﻥﻱ» — carries fifteen, so the floor
+/// has to sit well below that or the one shape this is most likely to meet in
+/// the owner's post escapes it.
+const ENOUGH_ARABIC_TO_JUDGE: usize = 8;
+
+/// **The one check between a text and a bench** — paper 119.
+///
+/// **Two roads reach a bench, and both are closed with this one function.** The
+/// first is a file (`extract` under [`WhatFor::Protecting`]); the second is the
+/// box a person types or **pastes** into (`ops::import_text`, which reads its
+/// text through `txt::extract` and never through `extract`). The second had to
+/// be closed in the same breath as the first, and the measurement says why: the
+/// refusal below tells a person their document was read backwards, and the
+/// shortest thing they can then do is open it in a viewer and paste the text —
+/// which is the same reversed text, arriving by the one road nothing checked.
+/// Closing one road and advertising the other would have been worse than
+/// closing neither.
+///
+/// Typed Arabic is never touched by it: a keyboard writes `U+06xx`, and the
+/// display blocks are what a **drawing** is made of.
+///
+/// What it refuses is
+/// not «Arabic» and not «right to left»: it is a document whose letters are the
+/// shapes a layout engine chose, which means the order we extracted is the
+/// order of the drawing. Measured on the owner's own kind of letter: the digits
+/// come out reversed («2026-04471» as «17440-6202»), an e-mail address comes
+/// out as «as.iramola-batkam@iramola.fesuoy» — **and was protected**, so a
+/// token stood for a string nobody wrote while the real address was nowhere in
+/// the text and could be neither protected nor restored. That false calm is the
+/// thing this refusal exists to refuse.
+pub(crate) fn the_order_cannot_be_trusted(text: &str) -> Option<u32> {
+    let arabic = |c: char| {
+        matches!(c,
+            '\u{0600}'..='\u{06FF}' | '\u{0750}'..='\u{077F}' | '\u{08A0}'..='\u{08FF}'
+            | '\u{FB50}'..='\u{FDFF}' | '\u{FE70}'..='\u{FEFF}')
+    };
+    let drawn = |c: char| matches!(c, '\u{FB50}'..='\u{FDFF}' | '\u{FE70}'..='\u{FEFF}');
+    let total = text.chars().filter(|c| arabic(*c)).count();
+    if total < ENOUGH_ARABIC_TO_JUDGE {
+        return None;
+    }
+    let shaped = text.chars().filter(|c| drawn(*c)).count();
+    let percent = shaped.saturating_mul(100) / total;
+    (percent >= DISPLAY_FORM_SHARE).then_some(percent as u32)
+}
+
+/// **The refusal's own words, written once** — both roads say the same thing,
+/// because it is the same fault and the same answer: a file saved as Word or as
+/// plain text is read in the order it was written.
+pub(crate) fn the_sentence(percent: u32) -> String {
+    format!(
+        "{percent}% of this text's Arabic is written in the display forms a layout engine \
+         draws, so what was read is in the order it was drawn and not the order it was \
+         written — the words and the digits come out reversed. It is refused rather than \
+         half-read: a name read backwards cannot be protected, and protecting the reversal \
+         would be worse than refusing it. A Word file or a plain-text file is read in the \
+         order it was written"
+    )
+}
+
 /// Read a document of `kind` from bytes. The only entry point.
-pub(crate) fn extract(bytes: &[u8], kind: DocumentKind) -> ApiResult<Extracted> {
+pub(crate) fn extract(bytes: &[u8], kind: DocumentKind, what_for: WhatFor) -> ApiResult<Extracted> {
     if bytes.len() > limits::FILE_BYTES {
         return Err(refuse(
             Refusal::DocumentTooLarge {
@@ -333,6 +450,18 @@ pub(crate) fn extract(bytes: &[u8], kind: DocumentKind) -> ApiResult<Extracted> 
             format!("{} pages is past the limit of {}", extracted.pages, limits::PAGES),
         ));
     }
+    // **The last thing before the text is handed over, and only on the road to
+    // a bench** — paper 119. Here rather than inside `pdf::extract`, because
+    // the rule is about what may be protected and the same reader serves the
+    // door that only reads a file back.
+    if what_for == WhatFor::Protecting {
+        if let Some(percent) = the_order_cannot_be_trusted(&extracted.text) {
+            return Err(refuse(
+                Refusal::TextInDisplayForms { percent },
+                the_sentence(percent),
+            ));
+        }
+    }
     Ok(extracted)
 }
 
@@ -370,7 +499,7 @@ mod tests {
     fn a_file_past_the_size_limit_is_refused_by_name() {
         // **One byte past it** — the independent attacker's own fixture (ن16).
         let big = vec![b'a'; limits::FILE_BYTES + 1];
-        match extract(&big, DocumentKind::Txt) {
+        match extract(&big, DocumentKind::Txt, WhatFor::Protecting) {
             Err(ApiError::DocumentRefused { reason, detail }) => {
                 let Refusal::DocumentTooLarge { mib, limit_mib } = reason else {
                     panic!("expected DocumentTooLarge, got {reason:?}")

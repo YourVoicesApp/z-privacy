@@ -239,6 +239,11 @@ class AppLocalizationsSv extends AppLocalizations {
   }
 
   @override
+  String refusalTextInDisplayForms(int percent) {
+    return '$percent% av arabiskan i den här texten står i de visningsformer som ett layoutprogram ritar, så det Z läste står i den ordning det ritades och inte i den ordning det skrevs — ord och siffror kommer ut baklänges. Z skyddar inte en text som det har läst baklänges: ett namn som lästs baklänges är ett namn det inte kan skydda. En Word-fil eller en ren textfil läses i den ordning den skrevs.';
+  }
+
+  @override
   String refusalDocumentTooLarge(int mib, int limitMib) {
     return 'Den här filen är omkring $mib MiB, och Z Privacy öppnar dokument upp till $limitMib MiB.';
   }

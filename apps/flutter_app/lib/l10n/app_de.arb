@@ -55,6 +55,7 @@
   "refusalScannedPages": "Diese PDF-Datei besteht aus {pages} Seiten mit Bildern ohne Text, es konnte deshalb nichts gelesen werden.",
   "refusalUnsupportedEncoding": "Nur {readablePercent}% von Seite {page} ließen sich in Zeichen umwandeln, dieses Dokument wird deshalb abgelehnt statt halb gelesen. Öffnen Sie es und speichern Sie es als Text, oder fügen Sie den Text hier ein.",
   "refusalUnreadableStructure": "Seite {page} ist so aufgebaut, dass diese Version sie nicht lesen kann.",
+  "refusalTextInDisplayForms": "{percent}% des Arabischen in diesem Text steht in den Anzeigeformen, die ein Layoutprogramm zeichnet — was Z gelesen hat, steht also in der Reihenfolge der Zeichnung und nicht in der, in der es geschrieben wurde: Wörter und Zahlen kommen rückwärts heraus. Z schützt keinen Text, den es rückwärts gelesen hat: ein rückwärts gelesener Name ist ein Name, den es nicht schützen kann. Eine Word-Datei oder eine reine Textdatei wird in der Reihenfolge gelesen, in der sie geschrieben wurde.",
   "refusalDocumentTooLarge": "Diese Datei ist etwa {mib} MiB groß, und Z Privacy öffnet Dokumente bis {limitMib} MiB.",
   "refusalTooManyPages": "Dieses Dokument hat {pages} Seiten, und Z Privacy öffnet bis zu {limit} in einem Dokument.",
   "refusalTextTooLarge": "Entpackt ist ein Teil dieser Datei größer als {limitMib} MiB — mehr als Z Privacy in einem Dokument liest, es wurde deshalb nichts davon importiert.",

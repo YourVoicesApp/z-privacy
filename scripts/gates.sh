@@ -2590,6 +2590,40 @@ fi
 # What is still measured, above: every `SendSheet` in the app is built by the one
 # hand in `send_sheet.dart`, and that hand opens the preview side first.
 
+# ---------------------------------------------------------------- G73
+# **A text Z read backwards never reaches a bench** — paper 119, the owner's
+# rule of 26 October 2026: «عندما لا يستطيع Z الوثوقَ بأمانة النصّ المستخرج، لا
+# يعرض نجاحَ الحماية كأن النصّ قُرئ صحيحاً».
+#
+# **Two roads reach a bench and the check is one function**, which is the whole
+# of what this gate holds. The first road is a file: `documents::extract`, whose
+# one argument says what the reading is **for**, so a third caller has to choose
+# and a caller that chooses `Protecting` gets the check. The second is the box a
+# person types or pastes into, which reads its text through `txt::extract` and
+# never through `extract` — it was found by reading rather than by a red, and it
+# had to be closed in the same breath: the refusal tells a person their document
+# was read backwards, and the shortest thing they can do next is open it in a
+# viewer and paste, which is the same reversed text by the one road nothing
+# checked.
+#
+# So three things are counted: the check is written **once**, every reading for
+# protection is spelled at its call, and the one road that is exempt says so by
+# name rather than by omission.
+G73_WRITTEN=$(grep -c '^pub(crate) fn the_order_cannot_be_trusted(' z_core/src/documents/mod.rs 2>/dev/null || echo 0)
+G73_FOR=$(grep -rn 'documents::extract(' z_core/src --include='*.rs' \
+          | grep -vE ':[0-9]+:[[:space:]]*(//|///)' \
+          | grep -oE 'WhatFor::[A-Za-z]+' | sort | tr '\n' ' ' | sed 's/ $//')
+G73_READERS=$(grep -rn 'the_order_cannot_be_trusted(' z_core/src --include='*.rs' \
+              | grep -vE ':[0-9]+:[[:space:]]*(//|///)' | grep -v 'fn the_order_cannot_be_trusted' \
+              | wc -l | tr -d ' ')
+if [ "$G73_WRITTEN" = "1" ] \
+   && [ "$G73_FOR" = "WhatFor::Protecting WhatFor::ReadingItBack" ] \
+   && [ "$G73_READERS" = "2" ]; then
+  pass "G73 one check for the order of a text, read by the two roads to a bench, and the door that only reads a file back says so at its call"
+else
+  fail "G73 the check is written $G73_WRITTEN time(s), read from $G73_READERS place(s), and the readings for protection are «$G73_FOR» — expected one, two, and «WhatFor::Protecting WhatFor::ReadingItBack»"
+fi
+
 # ---------------------------------------------------------------- G37
 # **The session is born at its first document, and nowhere else** — rule 55,
 # the owner's answer of 16 October 2026: «المحادثة لا علاقة بالوثائق… ولكن عند
@@ -4853,6 +4887,11 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          every_language_the_interface_speaks_names_its_own_sessions \
          a_language_the_glass_does_not_speak_falls_back_to_the_source \
          the_name_stays_as_it_was_written_when_the_language_moves \
+         a_file_read_backwards_is_refused_by_name \
+         a_paste_read_backwards_is_refused_too \
+         the_same_letter_written_forwards_is_read_as_well_as_ever \
+         the_signal_reads_both_sides \
+         the_five_fixtures_read_as_this_paper_says \
          the_door_back_brings_a_taught_value_back_after_the_bench_is_gone \
          the_door_back_reads_a_pdf_and_a_text_file_the_same_way \
          the_door_back_leaves_the_bench_and_the_vault_untouched \

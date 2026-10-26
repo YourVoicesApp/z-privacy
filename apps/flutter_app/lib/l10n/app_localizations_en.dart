@@ -238,6 +238,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String refusalTextInDisplayForms(int percent) {
+    return '$percent% of this text\'s Arabic is written in the display forms a layout program draws, so what Z read is in the order it was drawn and not the order it was written — the words and the numbers come out backwards. Z will not protect a text it has read backwards: a name read backwards is a name it cannot protect. A Word file or a plain-text file is read in the order it was written.';
+  }
+
+  @override
   String refusalDocumentTooLarge(int mib, int limitMib) {
     return 'This file is about $mib MiB, and Z Privacy opens documents up to $limitMib MiB.';
   }

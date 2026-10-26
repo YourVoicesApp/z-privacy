@@ -64,7 +64,7 @@ German, Swedish and Arabic: the Swedish words were written on 23 October 2026
 and the Arabic words on 25 October 2026, and the first screen offers both
 because the gates measure that their sentences are not the English ones —
 **neither has been read by a native speaker yet**, and that review is a round
-of its own. The Arabic is measured the same way as the Swedish: 695 of 701
+of its own. The Arabic is measured the same way as the Swedish: 696 of 702
 values say something other than the English, and the six that do not are names
 and product spellings the law allows in every language. **Arabic is the first
 language here that is read right to left**, so choosing it mirrors every
