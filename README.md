@@ -21,10 +21,10 @@ https://z-privacy.com/en/download/, or from this repository's
 
 | File | SHA-256 |
 |---|---|
-| `zprivacy-v1-linux-x86_64.tar.gz` — Linux x86_64 (GTK3) | `b180bc49898fb1aa7f49b449ee756ab72cbaf16682a488f10bc27893b361ffe6` |
-| `zprivacy-v1-windows-x86_64-setup.exe` — Windows 10/11 x86_64 | `ba56b81b7484ae233274fdea00630ddc50f2d802d8ff017d54768119fcfc46d9` |
+| `zprivacy-v1-linux-x86_64.tar.gz` — Linux x86_64 (GTK3) | `baaca7a4efa84bb9386f96f78d5620a81706c9dc4dc18dd5309309891d07432c` |
+| `zprivacy-v1-windows-x86_64-setup.exe` — Windows 10/11 x86_64 | `906d9adfd299a5bc8f16fbef97b46fb80bdf80c7a9331753bb8bd94c8ff709ee` |
 
-Both were built from `4920398`. The Windows installer is not signed yet, so
+Both were built from `50270fd`. The Windows installer is not signed yet, so
 Windows shows «Windows protected your PC» the first time: «More info», then
 «Run anyway». The fingerprint is what says the file is ours.
 
@@ -74,7 +74,7 @@ interface's. The detection packs are German, English, Swedish and Arabic.
 Windows is built from git by `.github/workflows/windows-core.yml`, by hand from
 the Actions tab. The core's tests, the nine storage contracts, the one-writer
 measurement and the whole Dart suite run there, and the job writes a zip, an
-installer and an MSIX. The published installer comes from run 40207163367, on
+installer and an MSIX. The published installer comes from run 40319351680, on
 the same commit as the Linux archive. The MSIX is not distributed: it does not
 yet carry every file the installer does, and the workflow says so. What is
 still Linux's alone is `docs/MEASURED_ON_LINUX.txt`, the numbers every gate run

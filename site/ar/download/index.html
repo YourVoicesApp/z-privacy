@@ -56,9 +56,9 @@
     <p class="dlt" lang="en" dir="ltr">Z Privacy V1 — Linux x86_64</p>
     <p class="file" dir="ltr"><a href="/download/zprivacy-v1-linux-x86_64.tar.gz">zprivacy-v1-linux-x86_64.tar.gz</a></p>
     <p class="shalab" dir="ltr">SHA-256</p>
-    <p class="sha" dir="ltr" data-of="zprivacy-v1-linux-x86_64.tar.gz">b180bc49898fb1aa7f49b449ee756ab72cbaf16682a488f10bc27893b361ffe6</p>
+    <p class="sha" dir="ltr" data-of="zprivacy-v1-linux-x86_64.tar.gz">baaca7a4efa84bb9386f96f78d5620a81706c9dc4dc18dd5309309891d07432c</p>
     <p class="shalab" dir="ltr">البناء</p>
-    <p class="sha" dir="ltr" data-built-from="zprivacy-v1-linux-x86_64.tar.gz">4920398</p>
+    <p class="sha" dir="ltr" data-built-from="zprivacy-v1-linux-x86_64.tar.gz">50270fd</p>
     <p class="note" data-fact="the-linux-bundle">سطحُ مكتب لينكس x86_64 مع GTK3. لا شيءَ يُركَّب: الحزمةُ تحمل ما تحتاجه معها. فُكَّها حيث تشاء وشغِّل <code>zprivacy</code> من داخلها.</p>
     <p class="note" data-fact="verify-it-on-linux">سطرٌ واحدٌ يتحقّق منها. قارِنْ ما يطبعه بالبصمةِ أعلاه:</p>
     <pre dir="ltr"><code>sha256sum zprivacy-v1-linux-x86_64.tar.gz</code></pre>
@@ -69,17 +69,17 @@
     <p class="dlt" lang="en" dir="ltr">Z Privacy V1 — Windows x86_64</p>
     <p class="file" dir="ltr"><a href="/download/zprivacy-v1-windows-x86_64-setup.exe">zprivacy-v1-windows-x86_64-setup.exe</a></p>
     <p class="shalab" dir="ltr">SHA-256</p>
-    <p class="sha" dir="ltr" data-of="zprivacy-v1-windows-x86_64-setup.exe">ba56b81b7484ae233274fdea00630ddc50f2d802d8ff017d54768119fcfc46d9</p>
+    <p class="sha" dir="ltr" data-of="zprivacy-v1-windows-x86_64-setup.exe">906d9adfd299a5bc8f16fbef97b46fb80bdf80c7a9331753bb8bd94c8ff709ee</p>
     <p class="shalab" dir="ltr">البناء</p>
-    <p class="sha" dir="ltr" data-built-from="zprivacy-v1-windows-x86_64-setup.exe">4920398</p>
+    <p class="sha" dir="ltr" data-built-from="zprivacy-v1-windows-x86_64-setup.exe">50270fd</p>
     <p class="note" data-fact="the-windows-installer">ويندوز 10 أو 11، x86_64. يُركِّب لك وحدَك، في مجلَّدِك الخاصِّ — <code>%LOCALAPPDATA%\Programs\Z Privacy</code> — والمعالِجُ ضغطتان: <span dir="ltr">Install</span> ثمّ <span dir="ltr">Finish</span>.</p>
     <p class="note" data-fact="verify-it-on-windows">سطرٌ واحدٌ يتحقّق منه، في <span dir="ltr">Command Prompt</span> أو <span dir="ltr">PowerShell</span>. قارِنْ ما يطبعه بالبصمةِ أعلاه:</p>
     <pre dir="ltr"><code>certutil -hashfile zprivacy-v1-windows-x86_64-setup.exe SHA256</code></pre>
   </section>
 
   <section class="card soft" aria-labelledby="h-arabic-pdf">
-    <h2 id="h-arabic-pdf">حدٌّ معروف، إلى أن تُنشر المعالجة</h2>
-    <p class="honest" data-fact="a-known-limit-arabic-pdf">بعضُ ملفّات PDF العربيّة تحفظ نصَّها بالترتيب البصريّ. وZ Privacy يُدخِل ملفّاً كهذا دون أن يقول شيئاً، فيصل النصُّ مقلوباً — فلا يكاد الفحصُ يجد فيه شيئاً، وما يحميه قد يكون الشيءَ الخطأ. وإلى أن تُنشر المعالجة، استعمِل TXT أو DOCX للوثائق العربيّة التي فيها ما هو حسّاس. أمّا ملفُّ PDF العربيّ الذي يحفظ نصَّه بترتيب القراءة فيُقرأ قراءةً صحيحة.</p>
+    <h2 id="h-arabic-pdf">ملفّات PDF العربيّة، وما يرفضُه Z Privacy الآن</h2>
+    <p class="honest" data-fact="arabic-pdfs-and-the-drawing-order">بعضُ ملفّات PDF العربيّة تحمل نصَّها بأشكال العرض التي يرسمُها برنامجُ التنسيق، فيكون الترتيبُ الذي يقرؤه Z Privacy ترتيبَ الرسم، وتخرج الكلماتُ مقلوبة. وملفٌّ كهذا يُرفض الآن باسمِه، مع السبب ومع الإشارة إلى ملفّ Word أو ملفّ نصٍّ عاديّ: فZ Privacy لن يحمي نصّاً قرأه مقلوباً. أمّا ملفّ PDF عربيٌّ له طبقةُ نصٍّ سليمةٌ بترتيبٍ منطقيّ فلا يُرفض لهذا السبب — وفي الحالات المختبَرة يُقرأ كما يُقرأ النصُّ نفسُه بصيغة `.txt` — فالمرفوضُ هنا ليس «العربيّة» ولا «من اليمين إلى اليسار»؛ وقد يُرفض مثلُ هذا الملفّ لسببٍ آخر، كأن يكون معمّىً أو بلا طبقةِ نصٍّ صالحة. ويبقى حدّان: ملفٌّ مرسومٌ مقلوباً ومع ذلك يحمل حروفاً عاديّةً لا يلتقطُه هذا، وملفّ PDF محميّ كتبه Z Privacy نفسُه بالعربيّة لم يعد يُمكن إدخالُه وثيقةً لتُحمى — والبابُ الذي يقرأ مثلَ هذا الملفّ وحسب لم يتغير.</p>
   </section>
 
   <section class="card soft" aria-labelledby="h-smartscreen">
