@@ -160,9 +160,19 @@ def main():
                         print('  PASS   %s Q%-2d %s quotes «%s» as %s ships it'
                               % (TAG[lang], n, where, key, sha))
                     else:
-                        print('  FAIL   %s Q%-2d %s does not quote «%s» as %s ships '
-                              'it — that build says: %s'
-                              % (TAG[lang], n, where, key, sha, want))
+                        # **Both texts, not only ours.** A red that says «this
+                        # does not match» sends the reader to two files to find
+                        # out how; a red that prints the build's sentence and
+                        # the page's beside it is read once and acted on.
+                        quoted = re.findall(r'«([^»]{20,})»', body)
+                        said = max(quoted, key=len) if quoted else None
+                        print('  FAIL   %s Q%-2d %s does not quote «%s» as %s '
+                              'ships it' % (TAG[lang], n, where, key, sha))
+                        print('           the build says: %s' % want)
+                        print('           the %s says:   %s'
+                              % (where, said if said else
+                                 '— nothing in guillemets, so the quotation is '
+                                 'not marked as one'))
                         bad = 1
     print()
     print('%d quotations checked against build %s' % (checked, sha))
