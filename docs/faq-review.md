@@ -228,6 +228,8 @@ measured one request, one door or one path, the answer says so in those words.
 
 **Evidence.** `LICENSE` (Apache-2.0) and the footer of every published page; `C-03` (no account); `C-17` for the keyless local model. There is no price, no billing code and no purchase path anywhere in the tree — an absence, stated as one.
 
+**Later, not in this build — the lead's English finding of 27 October, for the owner.** One word carries two meanings in the English, and it is the third time this round in a third language: **«mark»**. Q6 says «the scan and your own taught values **mark** what they find», and every other «mark» on the page is the person's own hand — «what you marked» in Q12, «what must I mark myself» in Q19's heading. It is exactly what the owner caught in the Arabic Q6 and what the lead then caught in the German. The English is approved text, so it is not touched here; the German and the Arabic already say it his way, which means the three languages disagree until this is settled in all three together.
+
 **Later, not in this build — the owner's editorial note of 27 October.** «a model running on your own computer costs nothing at all» overreaches: it costs electricity and it costs the machine. It becomes, in all three languages, **«needs no fee to an AI provider just to run it locally»**. That is an English, German and Arabic change together, and it is not in the pages built on 27 October.
 
 **Changed.** The hedge is withdrawn on the owner's word: **«free» stands with no qualification.** His reason is a company decision rather than a measurement — Z Privacy is Faruk AB's investment in trust, and Mono Scribe is the commercial product — and it is recorded here so that the sentence has a known author.
