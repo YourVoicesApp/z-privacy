@@ -269,7 +269,7 @@ MIRROR_DE = {
  'q21-nothing-subscribe': "nichts zu abonnieren",
  'q21-your-own-computer': "ein Modell, das auf Ihrem eigenen Rechner läuft, kostet überhaupt nichts",
  'q22-ask-nobody': "und fragen Sie niemanden",
- 'q23-lists-every-claim': u"`docs/CLAIMS.md` führt jede Aussage mit denselben vier Zeilen auf: den Satz, den wir tatsächlich zeigen, was er **nicht** abdeckt, den Test oder die Prüfung, die ihn belegt, und den Befehl, den Sie selbst ausführen.",
+ 'q23-lists-every-claim': u"`docs/CLAIMS.md` führt jede Aussage mit denselben vier Zeilen auf: den Satz, den wir tatsächlich zeigen, was er **nicht** abdeckt, den Test oder das **Gate** — eine Prüfregel, die den Quelltext liest —, das ihn belegt, und den Befehl, den Sie selbst ausführen.",
  'q23-interface-cannot-open': "dass die Oberfläche keinen Socket öffnen kann",
  'q23-every-door-obeys': "dass jede Tür einem Gesetz folgt",
  'q24-nothing-has-signed': u"Unter Windows zeigt der erste Start eine blaue Seite «Der Computer wurde durch Windows geschützt», weil dieses Installationsprogramm von nichts signiert ist: Diese Seite bedeutet, dass Windows keine Grundlage hat, die Datei als vertrauenswürdig zu behandeln, und nicht, dass es sie geprüft und für sicher oder unsicher befunden hätte.",

@@ -108,7 +108,7 @@ English one means is a judgement, and for Arabic the owner is the reader.
 
 **EN (approved).** Work on the document inside Z Privacy: the scan and your own taught values mark what they find, you add anything they did not, and the question goes out with tokens in place of those values. What is replaced is what Z Privacy detected or you marked; everything else stays in the text exactly as you approved it, which is why the review step exists and why it is shown to you before anything is sent. Your professional obligations are not changed by this: Z Privacy reduces what you send, it does not make the sending permissible.
 
-**DE (draft).** Arbeiten Sie an dem Dokument in Z Privacy: Die Prüfung und Ihre eigenen eingelernten Werte markieren, was sie finden, Sie ergänzen, was sie nicht gefunden haben, und die Frage geht mit Kennzeichen an der Stelle dieser Werte hinaus. Ersetzt wird, was Z Privacy erkannt hat oder was Sie markiert haben; alles andere bleibt genau so im Text, wie Sie ihn freigegeben haben — deshalb gibt es den Schritt der Durchsicht, und deshalb wird er Ihnen gezeigt, bevor etwas gesendet wird. Ihre Berufspflichten ändert das nicht: Z Privacy verringert, was Sie senden; es macht das Senden nicht zulässig.
+**DE (draft).** Arbeiten Sie an dem Dokument in Z Privacy: Die Prüfung und die Werte, die Sie ihm beigebracht haben, markieren, was sie finden, Sie ergänzen, was sie nicht gefunden haben, und die Frage geht mit Kennzeichen an der Stelle dieser Werte hinaus. Ersetzt wird, was Z Privacy erkannt hat oder was Sie markiert haben; alles andere bleibt genau so im Text, wie Sie ihn freigegeben haben — deshalb gibt es den Schritt der Durchsicht, und deshalb wird er Ihnen gezeigt, bevor etwas gesendet wird. Ihre Berufspflichten ändert das nicht: Z Privacy verringert, was Sie senden; es macht das Senden nicht zulässig.
 
 **AR (draft).** <div dir="rtl" lang="ar">
 
@@ -178,7 +178,7 @@ English one means is a judgement, and for Arabic the owner is the reader.
 
 **EN (approved).** You open a document or write a question. Z Privacy scans it with its rules, its language packs and the values you have taught it, and shows you two columns: your original, and what would leave. You protect what should not go — by the scan's own finding, by pressing a word, or by selecting a run of text with your hand — and nothing leaves while a suggestion is unanswered. Then you choose who answers, see the exact text before it is sent, and the answer comes back with your names restored on this machine.
 
-**DE (draft).** Sie öffnen ein Dokument oder schreiben eine Frage. Z Privacy prüft sie mit seinen Regeln, seinen Sprachpaketen und den Werten, die Sie ihm beigebracht haben, und zeigt Ihnen zwei Spalten: Ihr Original und das, was hinausgehen würde. Sie schützen, was nicht gehen soll — durch den Fund der Prüfung, durch Druck auf ein Wort oder indem Sie mit der Hand einen Textlauf auswählen —, und nichts geht hinaus, solange ein Vorschlag unbeantwortet ist. Dann wählen Sie, wer antwortet, sehen den genauen Text, bevor er gesendet wird, und die Antwort kommt mit Ihren Namen zurück, wiederhergestellt auf diesem Rechner.
+**DE (draft).** Sie öffnen ein Dokument oder schreiben eine Frage. Z Privacy prüft sie mit seinen Regeln, seinen Sprachpaketen und den Werten, die Sie ihm beigebracht haben, und zeigt Ihnen zwei Spalten: Ihr Original und das, was hinausgehen würde. Sie schützen, was nicht gehen soll — durch den Fund der Prüfung, durch Druck auf ein Wort oder indem Sie mit der Hand einen Textabschnitt auswählen —, und nichts geht hinaus, solange ein Vorschlag unbeantwortet ist. Dann wählen Sie, wer antwortet, sehen den genauen Text, bevor er gesendet wird, und die Antwort kommt mit Ihren Namen zurück, wiederhergestellt auf diesem Rechner.
 
 **AR (draft).** <div dir="rtl" lang="ar">
 
@@ -346,7 +346,7 @@ English one means is a judgement, and for Arabic the owner is the reader.
 
 **EN (approved).** `docs/CLAIMS.md` lists every claim with the same four lines each: the sentence we actually show, what it does **not** cover, the test or gate that proves it, and the command you run yourself. It is worth knowing what those two kinds of proof are: a **test** runs this product's code and measures what it does, while a **gate** reads the source and measures its shape — that there is one network client, that the interface cannot open a socket, that every door obeys a law. A shape check shows that the code satisfies the constraint it checks; it is not a recording of the program running, and no number of them adds up to a network capture, an installation or a security audit — which is why some claims in that file carry the word «unproven» rather than being removed from it.
 
-**DE (draft).** `docs/CLAIMS.md` führt jede Aussage mit denselben vier Zeilen auf: den Satz, den wir tatsächlich zeigen, was er **nicht** abdeckt, den Test oder die Prüfung, die ihn belegt, und den Befehl, den Sie selbst ausführen. Es lohnt sich zu wissen, was diese zwei Arten von Beleg sind: Ein **Test** führt den Code dieses Produkts aus und misst, was er tut, während eine **Prüfung** den Quelltext liest und seine Form misst — dass es einen Netzwerk-Client gibt, dass die Oberfläche keinen Socket öffnen kann, dass jede Tür einem Gesetz folgt. Eine Formprüfung zeigt, dass der Code die Bedingung erfüllt, die sie prüft; sie ist keine Aufzeichnung des laufenden Programms, und keine Zahl von ihnen ergibt zusammen einen Netzwerkmitschnitt, eine Installation oder ein Sicherheitsaudit — deshalb tragen manche Aussagen in dieser Datei das Wort «unbelegt», statt aus ihr entfernt zu werden.
+**DE (draft).** `docs/CLAIMS.md` führt jede Aussage mit denselben vier Zeilen auf: den Satz, den wir tatsächlich zeigen, was er **nicht** abdeckt, den Test oder das **Gate** — eine Prüfregel, die den Quelltext liest —, das ihn belegt, und den Befehl, den Sie selbst ausführen. Es lohnt sich zu wissen, was diese zwei Arten von Beleg sind: Ein **Test** führt den Code dieses Produkts aus und misst, was er tut, während das **Gate** den Quelltext liest und seine Form misst — dass es einen Netzwerk-Client gibt, dass die Oberfläche keinen Socket öffnen kann, dass jede Tür einem Gesetz folgt. Eine Formprüfung zeigt, dass der Code die Bedingung erfüllt, die sie prüft; sie ist keine Aufzeichnung des laufenden Programms, und keine Zahl von ihnen ergibt zusammen einen Netzwerkmitschnitt, eine Installation oder ein Sicherheitsaudit — deshalb tragen manche Aussagen in dieser Datei das Wort «unbelegt», statt aus ihr entfernt zu werden.
 
 **AR (draft).** <div dir="rtl" lang="ar">
 
@@ -421,12 +421,12 @@ can hold the pages to them.
 
 **Q6.** How can an accountant use AI without exposing clients' financial data?
 
-- **DE** — Wie kann ein Steuerberater KI nutzen, ohne die Finanzdaten seiner Mandanten preiszugeben?
+- **DE** — Wie lässt sich KI in der Buchhaltung nutzen, ohne die Finanzdaten von Mandanten preiszugeben?
 - **AR** — <span dir="rtl" lang="ar">كيف يستعمل المحاسبُ الذكاءَ الاصطناعيّ دون أن يكشف بيانات عملائه الماليّة؟</span>
 
 **Q7.** How can a lawyer use AI on case files confidentially?
 
-- **DE** — Wie kann eine Anwältin KI vertraulich auf Fallakten anwenden?
+- **DE** — Wie lässt sich KI in einer Kanzlei vertraulich auf Fallakten anwenden?
 - **AR** — <span dir="rtl" lang="ar">كيف تستعمل المحاميةُ الذكاءَ الاصطناعيّ على ملفّات القضايا بسرّيّة؟</span>
 
 **Q8.** Can I use AI on medical or HR documents without revealing who they are about?
