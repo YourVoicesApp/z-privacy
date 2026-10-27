@@ -427,12 +427,12 @@ can hold the pages to them.
 **Q7.** How can a lawyer use AI on case files confidentially?
 
 - **DE** — Wie lässt sich KI in einer Kanzlei vertraulich auf Fallakten anwenden?
-- **AR** — <span dir="rtl" lang="ar">كيف تستعمل المحاميةُ الذكاءَ الاصطناعيّ على ملفّات القضايا بسرّيّة؟</span>
+- **AR** — <span dir="rtl" lang="ar">كيف يستعمل المحامي الذكاءَ الاصطناعيّ على ملفّات القضايا بسرّيّة؟</span>
 
 **Q8.** Can I use AI on medical or HR documents without revealing who they are about?
 
 - **DE** — Kann ich KI auf medizinische oder Personaldokumente anwenden, ohne preiszugeben, um wen es geht?
-- **AR** — <span dir="rtl" lang="ar">هل أستعمل الذكاءَ الاصطناعيّ على وثائقَ طبّيّة أو وثائق موظّفين دون الكشف عمّن تتحدّث عنه؟</span>
+- **AR** — <span dir="rtl" lang="ar">هل يمكنني أن أستعمل الذكاءَ الاصطناعيّ على وثائقَ طبّيّة أو وثائق موظّفين دون الكشف عمّن تتحدّث عنه؟</span>
 
 **Q9.** What happens to my data when I upload a PDF to an AI chatbot?
 
@@ -442,7 +442,7 @@ can hold the pages to them.
 **Q10.** Can I use an AI model on my own computer instead of a cloud service?
 
 - **DE** — Kann ich ein KI-Modell auf meinem eigenen Rechner statt in einem Cloud-Dienst nutzen?
-- **AR** — <span dir="rtl" lang="ar">هل أستعمل نموذجاً على جهازي بدل خدمةٍ سحابيّة؟</span>
+- **AR** — <span dir="rtl" lang="ar">هل يمكنني أن أستعمل نموذجَ ذكاءٍ اصطناعيّ على جهازي بدل خدمةٍ سحابيّة؟</span>
 
 **Q11.** What does Z Privacy do, in one minute?
 
