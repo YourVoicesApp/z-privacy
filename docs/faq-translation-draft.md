@@ -384,6 +384,141 @@ Faruk AB، شركةُ مساهمةٍ (Aktiebolag) في السويد. رقمُ ا
 
 **Limits to watch — certainty.** nothing is collected on this site
 
+## The 25 questions in German and Arabic
+
+**These are the only sentences on the three pages that were not in this
+file.** The draft translated the answers; its own headings stayed English,
+and a page needs its questions in the language it is written in. They are
+translations of the owner's approved English questions and nothing more,
+gathered here in one block so they can be read at once rather than found
+one at a time inside a page — and so that `scripts/check_the_faq_pages.py`
+can hold the pages to them.
+
+**Q1.** Is it safe to paste client documents into ChatGPT?
+
+- **DE** — Ist es sicher, Mandantendokumente in ChatGPT einzufügen?
+- **AR** — <span dir="rtl" lang="ar">هل من الآمن لصقُ وثائق العملاء في ChatGPT؟</span>
+
+**Q2.** Do AI services use my conversations or files for training? And do they keep them?
+
+- **DE** — Verwenden KI-Dienste meine Unterhaltungen oder Dateien zum Training? Und bewahren sie sie auf?
+- **AR** — <span dir="rtl" lang="ar">هل تستعمل خدماتُ الذكاء الاصطناعيّ محادثاتي أو ملفّاتي في التدريب؟ وهل تحتفظ بها؟</span>
+
+**Q3.** How can I use AI on documents with personal data without sending the names?
+
+- **DE** — Wie kann ich KI auf Dokumente mit personenbezogenen Daten anwenden, ohne die Namen zu senden?
+- **AR** — <span dir="rtl" lang="ar">كيف أستعمل الذكاءَ الاصطناعيّ على وثائقَ فيها بياناتٌ شخصيّة دون إرسال الأسماء؟</span>
+
+**Q4.** What should I consider under GDPR before sending client data to AI?
+
+- **DE** — Was muss ich nach der DSGVO bedenken, bevor ich Mandantendaten an eine KI sende?
+- **AR** — <span dir="rtl" lang="ar">ما الذي ينبغي أن أنظر فيه بحكم اللائحة (GDPR) قبل إرسال بيانات العملاء إلى الذكاء الاصطناعيّ؟</span>
+
+**Q5.** What is the difference between anonymisation and pseudonymisation?
+
+- **DE** — Was ist der Unterschied zwischen Anonymisierung und Pseudonymisierung?
+- **AR** — <span dir="rtl" lang="ar">ما الفرق بين إخفاء الهويّة والترميز؟</span>
+
+**Q6.** How can an accountant use AI without exposing clients' financial data?
+
+- **DE** — Wie kann ein Steuerberater KI nutzen, ohne die Finanzdaten seiner Mandanten preiszugeben?
+- **AR** — <span dir="rtl" lang="ar">كيف يستعمل المحاسبُ الذكاءَ الاصطناعيّ دون أن يكشف بيانات عملائه الماليّة؟</span>
+
+**Q7.** How can a lawyer use AI on case files confidentially?
+
+- **DE** — Wie kann eine Anwältin KI vertraulich auf Fallakten anwenden?
+- **AR** — <span dir="rtl" lang="ar">كيف تستعمل المحاميةُ الذكاءَ الاصطناعيّ على ملفّات القضايا بسرّيّة؟</span>
+
+**Q8.** Can I use AI on medical or HR documents without revealing who they are about?
+
+- **DE** — Kann ich KI auf medizinische oder Personaldokumente anwenden, ohne preiszugeben, um wen es geht?
+- **AR** — <span dir="rtl" lang="ar">هل أستعمل الذكاءَ الاصطناعيّ على وثائقَ طبّيّة أو وثائق موظّفين دون الكشف عمّن تتحدّث عنه؟</span>
+
+**Q9.** What happens to my data when I upload a PDF to an AI chatbot?
+
+- **DE** — Was geschieht mit meinen Daten, wenn ich ein PDF in einen KI-Chatbot hochlade?
+- **AR** — <span dir="rtl" lang="ar">ماذا يجري لبياناتي حين أرفع ملفّ PDF إلى محادثةٍ مع ذكاءٍ اصطناعيّ؟</span>
+
+**Q10.** Can I use an AI model on my own computer instead of a cloud service?
+
+- **DE** — Kann ich ein KI-Modell auf meinem eigenen Rechner statt in einem Cloud-Dienst nutzen?
+- **AR** — <span dir="rtl" lang="ar">هل أستعمل نموذجاً على جهازي بدل خدمةٍ سحابيّة؟</span>
+
+**Q11.** What does Z Privacy do, in one minute?
+
+- **DE** — Was macht Z Privacy, in einer Minute?
+- **AR** — <span dir="rtl" lang="ar">ماذا يفعل Z Privacy، في دقيقة؟</span>
+
+**Q12.** What does the AI actually receive?
+
+- **DE** — Was bekommt die KI tatsächlich?
+- **AR** — <span dir="rtl" lang="ar">ما الذي يصل الذكاءَ الاصطناعيّ فعلاً؟</span>
+
+**Q13.** How do the real names come back into the answer?
+
+- **DE** — Wie kommen die echten Namen in die Antwort zurück?
+- **AR** — <span dir="rtl" lang="ar">كيف تعود الأسماءُ الحقيقيّة إلى الجواب؟</span>
+
+**Q14.** Does Z Privacy see or store my documents?
+
+- **DE** — Sieht oder speichert Z Privacy meine Dokumente?
+- **AR** — <span dir="rtl" lang="ar">هل يرى Z Privacy وثائقي أو يحفظُها؟</span>
+
+**Q15.** Where are my names kept, and how are they protected?
+
+- **DE** — Wo werden meine Namen aufbewahrt, und wie sind sie geschützt?
+- **AR** — <span dir="rtl" lang="ar">أين تُحفظ أسمائي، وكيف تُحمى؟</span>
+
+**Q16.** What happens if I forget my passphrase?
+
+- **DE** — Was geschieht, wenn ich meine Passphrase vergesse?
+- **AR** — <span dir="rtl" lang="ar">ماذا يحدث إن نسيتُ عبارةَ المرور؟</span>
+
+**Q17.** Which AI services work with Z Privacy?
+
+- **DE** — Welche KI-Dienste funktionieren mit Z Privacy?
+- **AR** — <span dir="rtl" lang="ar">أيُّ خدمات الذكاء الاصطناعيّ تعمل مع Z Privacy؟</span>
+
+**Q18.** Does Z Privacy make me anonymous to the AI provider?
+
+- **DE** — Macht Z Privacy mich gegenüber dem KI-Anbieter anonym?
+- **AR** — <span dir="rtl" lang="ar">هل يجعلني Z Privacy مجهولَ الهويّة عند مزوّد الذكاء الاصطناعيّ؟</span>
+
+**Q19.** What does Z Privacy detect automatically, and what must I mark myself?
+
+- **DE** — Was erkennt Z Privacy automatisch, und was muss ich selbst markieren?
+- **AR** — <span dir="rtl" lang="ar">ما الذي يكشفُه Z Privacy تلقائيّاً، وما الذي عليّ أن أسِمَه بنفسي؟</span>
+
+**Q20.** Which file types and languages does it support?
+
+- **DE** — Welche Dateitypen und Sprachen werden unterstützt?
+- **AR** — <span dir="rtl" lang="ar">أيُّ أنواع الملفّات واللغات يدعمُها؟</span>
+
+**Q21.** Is Z Privacy free?
+
+- **DE** — Ist Z Privacy kostenlos?
+- **AR** — <span dir="rtl" lang="ar">هل Z Privacy مجانيّ؟</span>
+
+**Q22.** Is it open source, and can companies use it?
+
+- **DE** — Ist es quelloffen, und dürfen Unternehmen es nutzen?
+- **AR** — <span dir="rtl" lang="ar">هل هو مفتوحُ المصدر، وهل تستطيع الشركاتُ استعمالَه؟</span>
+
+**Q23.** How can I check Z Privacy's claims myself?
+
+- **DE** — Wie kann ich die Aussagen von Z Privacy selbst prüfen?
+- **AR** — <span dir="rtl" lang="ar">كيف أتحقّق من ادّعاءات Z Privacy بنفسي؟</span>
+
+**Q24.** Which operating systems does it run on, and why does Windows warn me?
+
+- **DE** — Auf welchen Betriebssystemen läuft es, und warum warnt mich Windows?
+- **AR** — <span dir="rtl" lang="ar">على أيّ أنظمة التشغيل يعمل، ولماذا يُحذّرُني ويندوز؟</span>
+
+**Q25.** Who makes Z Privacy?
+
+- **DE** — Wer macht Z Privacy?
+- **AR** — <span dir="rtl" lang="ar">من يصنع Z Privacy؟</span>
+
 ---
 
 ## What is still owed before any of this publishes

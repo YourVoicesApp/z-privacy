@@ -437,3 +437,17 @@ footer { margin-top: clamp(46px, 6vw, 70px); padding-bottom: 56px; }
   .btn { flex: 1 1 100%; text-align: center; }
   .legaltext { max-block-size: 420px; }
 }
+
+/* ===== the questions page ===== */
+/* The site's h2 is a small uppercase label. On this page the heading is the
+   thing a reader is looking for, so it keeps the sans face and loses the
+   label's size, spacing and capitals. The answer is ordinary prose at the
+   reading size the rest of the site uses for a lead. */
+h2.q {
+  margin: 0 0 10px; font-size: 19px; font-weight: 600;
+  letter-spacing: 0; text-transform: none; color: var(--ink);
+  line-height: 1.4;
+}
+html[lang="ar"] h2.q { font-family: var(--arab); font-size: 20px; }
+p.a { margin: 0; font-size: 15px; line-height: 1.75; }
+main > section + section { margin-top: 34px; }

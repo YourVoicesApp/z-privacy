@@ -228,6 +228,8 @@ measured one request, one door or one path, the answer says so in those words.
 
 **Evidence.** `LICENSE` (Apache-2.0) and the footer of every published page; `C-03` (no account); `C-17` for the keyless local model. There is no price, no billing code and no purchase path anywhere in the tree — an absence, stated as one.
 
+**Later, not in this build — the owner's editorial note of 27 October.** «a model running on your own computer costs nothing at all» overreaches: it costs electricity and it costs the machine. It becomes, in all three languages, **«needs no fee to an AI provider just to run it locally»**. That is an English, German and Arabic change together, and it is not in the pages built on 27 October.
+
 **Changed.** The hedge is withdrawn on the owner's word: **«free» stands with no qualification.** His reason is a company decision rather than a measurement — Z Privacy is Faruk AB's investment in trust, and Mono Scribe is the commercial product — and it is recorded here so that the sentence has a known author.
 
 ## Q22 · Is it open source, and can companies use it?
