@@ -796,9 +796,23 @@ if command -v python3 >/dev/null 2>&1; then
   else
     FAIL=1
   fi
+  # **Every sentence the FAQ quotes from the app, against the build the
+  # download pages say they are offering** — the owner, 26 October 2026:
+  # compare with the version a person can download, not with unreleased code.
+  # It belongs in this script rather than beside it, because the day it earns
+  # its keep is a publishing day: a new build goes up, the pages' own sha
+  # moves, and any quotation the new app no longer says has to red BEFORE the
+  # deploy rather than after a reader opens the app and finds us misquoting
+  # ourselves.
+  if python3 ../scripts/check_the_quoted_app_text.py; then
+    :
+  else
+    FAIL=1
+  fi
 else
   say FAIL "no python3, so no number on this site was checked against its deed"; FAIL=1
   say FAIL "no python3, so the list of pages was never compared with the pages"; FAIL=1
+  say FAIL "no python3, so no quotation was checked against the released app"; FAIL=1
 fi
 
 # The closing line says which question was answered. «site ready to publish»

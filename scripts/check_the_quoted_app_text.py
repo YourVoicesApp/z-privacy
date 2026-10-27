@@ -1,28 +1,38 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""A sentence the FAQ quotes from the app is the app's, byte for byte.
+"""A sentence the FAQ quotes from the app is the app's, byte for byte —
+**as the published build says it**, not as the working tree does.
 
 The lead, 26 October 2026, reading the Arabic draft: the FAQ quotes the
 application, so the quote must be identical to what the application ships.
 Three had drifted — the Arabic `thereIsNoWayBack` by four words, the German by
-a word order, and the German button label by its first word — and every one of
-them was a sentence somebody would check us on.
+a word order, the German button label by its first word — and every one of
+them was a sentence somebody would check us on by opening the app.
 
-**Why a gate and not a careful reader.** A quotation is the one kind of
-sentence that goes stale without anybody touching it: the app's wording moves
-in some later round, and the FAQ goes on attributing the old words to a screen
-that no longer says them. That is worse than an inaccuracy of our own, because
-the reader can open the app and see us misquote ourselves. So the quote is read
-from `apps/flutter_app/lib/l10n/app_<lang>.arb` **by key**, per language, and a
-mismatch reds — the same binding as the site's §6 and `C-13`.
+**The owner's amendment, the same day:** compare with the version a person can
+download, not with unreleased code changes. A quote is a claim about what a
+reader will see on their own screen, and that screen is the released build. So
+the sentences are read with `git show <sha>:apps/flutter_app/lib/l10n/app_<lang>.arb`,
+and **`<sha>` is whatever the three download pages themselves say they are
+offering** — the text inside their `data-built-from` elements. The site names
+its build in one place and this gate believes that place:
 
-It reads the translation draft today and the published FAQ pages when they
-exist. A quote is expected in every language the page is written in; a language
-that has the question and not the quote is a language where somebody
-paraphrased.
+  * the six values (three languages, two platforms) must agree, or the pages
+    disagree about what they are offering and nothing else here can be
+    trusted;
+  * the sha must resolve in this repository, or the pages name a build this
+    tree has never seen;
+  * and when the arb in the working tree differs from the released one for a
+    quoted key, that is a **NOTE** and not a failure: an app wording change is
+    on its way, and the FAQ follows the release until it ships.
+
+**What this buys on the day it matters.** A new build is published, the
+download pages' sha moves, and any FAQ sentence the new app no longer says
+reds **before the site deploys** — which is why it runs inside
+`scripts/check_site.sh` and not only as a script somebody remembers.
 
 **What it does not check:** that the quote is the *right* sentence for the
-answer. Naming the wrong key would pass here and is a reader's job.
+answer. Naming the wrong key would pass here, and that is a reader's job.
 
   python3 scripts/check_the_quoted_app_text.py     # the exit status is the verdict
 """
@@ -30,9 +40,12 @@ import io
 import json
 import pathlib
 import re
+import subprocess
 import sys
 
+ROOT = pathlib.Path(__file__).resolve().parents[1]
 LANGS = ('en', 'de', 'ar')
+TAG = {'en': 'EN', 'de': 'DE', 'ar': 'AR'}
 
 # question -> the arb keys its answer quotes, in the order they appear.
 QUOTED = {
@@ -40,22 +53,41 @@ QUOTED = {
     16: ('thereIsNoWayBack',),
 }
 
-DRAFT = pathlib.Path('docs/faq-translation-draft.md')
-PAGES = {lang: pathlib.Path('site/%s/faq/index.html' % lang) for lang in LANGS}
+DRAFT = ROOT / 'docs/faq-translation-draft.md'
 ARB = 'apps/flutter_app/lib/l10n/app_%s.arb'
 
-TAG = {'en': 'EN', 'de': 'DE', 'ar': 'AR'}
+
+def released():
+    """The commit the download pages say they are offering, and where they say it."""
+    seen = {}
+    for lang in LANGS:
+        page = ROOT / ('site/%s/download/index.html' % lang)
+        if not page.exists():
+            continue
+        text = io.open(page, encoding='utf-8').read()
+        for m in re.finditer(r'<[^>]*data-built-from="([^"]*)"[^>]*>([^<]*)<', text):
+            seen.setdefault(m.group(2).strip(), []).append('%s · %s' % (lang, m.group(1)))
+    return seen
 
 
-def shipped(lang, key):
-    path = pathlib.Path(ARB % lang)
+def at(sha, lang):
+    """One language's sentences as that build shipped them."""
+    try:
+        out = subprocess.run(['git', 'show', '%s:%s' % (sha, ARB % lang)],
+                             cwd=str(ROOT), capture_output=True, check=True)
+    except subprocess.CalledProcessError:
+        return None
+    return json.loads(out.stdout.decode('utf-8'))
+
+
+def in_the_tree(lang):
+    path = ROOT / (ARB % lang)
     if not path.exists():
         return None
-    return json.loads(io.open(path, encoding='utf-8').read()).get(key)
+    return json.loads(io.open(path, encoding='utf-8').read())
 
 
 def drafted(lang):
-    """Each question's answer in one language, from the draft."""
     if not DRAFT.exists():
         return {}
     text = io.open(DRAFT, encoding='utf-8').read()
@@ -68,17 +100,42 @@ def drafted(lang):
 
 
 def served(lang):
-    """The published page, when there is one, as one blob per language."""
-    page = PAGES[lang]
-    if not page.exists():
-        return None
-    return io.open(page, encoding='utf-8').read()
+    page = ROOT / ('site/%s/faq/index.html' % lang)
+    return io.open(page, encoding='utf-8').read() if page.exists() else None
 
 
 def main():
+    builds = released()
+    if not builds:
+        print('  FAIL   no download page names a build, so there is no release to '
+              'compare the quotations with')
+        return 1
+    if len(builds) > 1:
+        print('  FAIL   the download pages name %d different builds, so they '
+              'disagree about what is being offered:' % len(builds))
+        for sha, where in sorted(builds.items()):
+            print('           %s — %s' % (sha, ', '.join(where)))
+        return 1
+    sha = next(iter(builds))
+    resolved = subprocess.run(['git', 'rev-parse', '--verify', '--quiet',
+                               '%s^{commit}' % sha],
+                              cwd=str(ROOT), capture_output=True)
+    if resolved.returncode != 0:
+        print('  FAIL   the download pages offer build %s and this repository has '
+              'no such commit' % sha)
+        return 1
+    print('  PASS   the three download pages agree: the released build is %s' % sha)
+
     bad = 0
     checked = 0
     for lang in LANGS:
+        shipped = at(sha, lang)
+        if shipped is None:
+            print('  FAIL   %s has no %s, so that language has no released '
+                  'sentences to quote' % (sha, ARB % lang))
+            bad = 1
+            continue
+        here = in_the_tree(lang) or {}
         answers = drafted(lang)
         page = served(lang)
         if not answers and page is None:
@@ -86,28 +143,31 @@ def main():
             continue
         for n, keys in sorted(QUOTED.items()):
             for key in keys:
-                want = shipped(lang, key)
+                want = shipped.get(key)
                 if want is None:
-                    print('  FAIL   %s has no «%s» — the FAQ quotes a key the app '
-                          'does not define' % (ARB % lang, key))
+                    print('  FAIL   %s does not define «%s» in %s — the FAQ quotes '
+                          'a sentence that build does not say' % (sha, key, lang))
                     bad = 1
                     continue
+                if key in here and here[key] != want:
+                    print('  NOTE   %s «%s» is being reworded in the tree; the FAQ '
+                          'follows the release until that ships' % (TAG[lang], key))
                 for where, body in (('draft', answers.get(n)), ('page', page)):
                     if body is None:
                         continue
                     checked += 1
                     if want in body:
-                        print('  PASS   %s Q%-2d %s quotes «%s» as the app ships it'
-                              % (lang.upper(), n, where, key))
+                        print('  PASS   %s Q%-2d %s quotes «%s» as %s ships it'
+                              % (TAG[lang], n, where, key, sha))
                     else:
-                        print('  FAIL   %s Q%-2d %s does not quote «%s» as the app '
-                              'ships it — the app says: %s'
-                              % (lang.upper(), n, where, key, want))
+                        print('  FAIL   %s Q%-2d %s does not quote «%s» as %s ships '
+                              'it — that build says: %s'
+                              % (TAG[lang], n, where, key, sha, want))
                         bad = 1
     print()
-    print('%d quotations checked against the shipped sentences' % checked)
-    print('A QUOTED SENTENCE IS NOT THE ONE THE APP SHOWS' if bad
-          else 'every sentence the FAQ quotes is the app’s own, byte for byte')
+    print('%d quotations checked against build %s' % (checked, sha))
+    print('A QUOTED SENTENCE IS NOT THE ONE THE RELEASED APP SHOWS' if bad
+          else 'every sentence the FAQ quotes is the released app’s own, byte for byte')
     return bad
 
 

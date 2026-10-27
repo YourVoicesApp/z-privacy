@@ -25,6 +25,12 @@ language — the ones the script matches, so if one of them is reworded for
 flow the script reds and this page is where the decision gets made. A tick in
 your own hand is the whole of what is asked.
 
+**Two answers carry an Arabic-only clarification, at your own request.**
+Q5 and Q4 name the English terms in parentheses and fence «الترميز» off from
+«Encoding» and from encryption, because the Arabic word carries meanings
+the English one does not. The English answers are unchanged, and the
+absolutes mirror is unaffected — each of those entries is marked below.
+
 **One divergence is known and is not yours to fix.** The Arabic Q16 quotes
 the application, and the shipped Arabic sentence (`thereIsNoWayBack`) says
 «لا تغادر هذا الجهاز» where the English says «never leaves this device».
@@ -105,13 +111,15 @@ every run so nobody mistakes a green line for an equal sentence.
 
 **Test 3 — درجةُ اليقين.** does not make data anonymous by itself … may still be personal data
 
+**Arabic-only clarification, at your request.** «ترميزٌ (Pseudonymisation)» — the English term once, because the Arabic word arrives before Q5 defines it.
+
 **EN.** Three separate things, and none of them substitutes for another. **Data minimisation** (Art. 5(1)(c)) asks whether the model needs a given value at all — that is the question a tool like Z Privacy helps with. **Your legal obligations** — a lawful basis, your records, your processor agreements, transfers — are yours, and no tool changes them. And **what Z Privacy does** is replace values in the text you send, which is pseudonymisation: under the GDPR that does not make data anonymous by itself, and the text may still be personal data depending on what is left in it (Art. 4(5), Recital 26). This is information, not legal advice; your controller or DPO decides.
 
 **DE.** Drei getrennte Dinge, und keines ersetzt ein anderes. **Datenminimierung** (Art. 5 Abs. 1 lit. c) fragt, ob das Modell einen bestimmten Wert überhaupt braucht — das ist die Frage, bei der ein Werkzeug wie Z Privacy hilft. **Ihre rechtlichen Pflichten** — eine Rechtsgrundlage, Ihre Verzeichnisse, Ihre Auftragsverarbeitungsverträge, Übermittlungen — sind Ihre, und kein Werkzeug ändert sie. Und **was Z Privacy tut**, ist, Werte in dem Text zu ersetzen, den Sie senden: das ist Pseudonymisierung, und nach der DSGVO macht sie Daten für sich genommen nicht anonym; der Text kann weiterhin personenbezogen sein, je nachdem, was in ihm stehen bleibt (Art. 4 Nr. 5, Erwägungsgrund 26). Dies ist eine Information, keine Rechtsberatung; es entscheidet Ihr Verantwortlicher oder Ihr Datenschutzbeauftragter.
 
 **AR.** <div dir="rtl" lang="ar">
 
-ثلاثةُ أشياءَ منفصلة، ولا يُغني واحدٌ منها عن الآخر. **تقليلُ البيانات** (المادّة ٥/١/ج) يسأل: هل يحتاج النموذجُ هذه القيمةَ أصلاً؟ وهذا هو السؤالُ الذي تُعين فيه أداةٌ مثل Z Privacy. و**التزاماتُك القانونيّة** — أساسٌ قانونيّ، وسجلّاتُك، وعقودُ المعالجة لديك، والنقلُ إلى الخارج — هي التزاماتُك، ولا تغيّرها أداة. و**ما يفعله Z Privacy** هو استبدالُ قيمٍ في النصّ الذي ترسله، وهذا ترميزٌ لا إخفاءٌ للهويّة: فهو بنفسه لا يجعل البياناتِ مجهولةً بحكم اللائحة، وقد يبقى النصُّ بياناتٍ شخصيّةً تبعاً لما بقي فيه (المادّة ٤/٥ والحيثيّة ٢٦). وهذه معلومةٌ لا استشارةٌ قانونيّة؛ والقرارُ لمسؤول المعالجة عندك أو لمسؤول حماية البيانات.
+ثلاثةُ أشياءَ منفصلة، ولا يُغني واحدٌ منها عن الآخر. **تقليلُ البيانات** (المادّة ٥/١/ج) يسأل: هل يحتاج النموذجُ هذه القيمةَ أصلاً؟ وهذا هو السؤالُ الذي تُعين فيه أداةٌ مثل Z Privacy. و**التزاماتُك القانونيّة** — أساسٌ قانونيّ، وسجلّاتُك، وعقودُ المعالجة لديك، والنقلُ إلى الخارج — هي التزاماتُك، ولا تغيّرها أداة. و**ما يفعله Z Privacy** هو استبدالُ قيمٍ في النصّ الذي ترسله، وهذا ترميزٌ (Pseudonymisation) لا إخفاءٌ للهويّة: فهو بنفسه لا يجعل البياناتِ مجهولةً بحكم اللائحة، وقد يبقى النصُّ بياناتٍ شخصيّةً تبعاً لما بقي فيه (المادّة ٤/٥ والحيثيّة ٢٦). وهذه معلومةٌ لا استشارةٌ قانونيّة؛ والقرارُ لمسؤول المعالجة عندك أو لمسؤول حماية البيانات.
 
 </div>
 
@@ -132,13 +140,15 @@ every run so nobody mistakes a green line for an equal sentence.
 
 **Test 3 — درجةُ اليقين.** can remain personal data / means reasonably likely to be used
 
+**Arabic-only clarification, at your request.** The opening sentence is **his own text**, and the clause fencing «الترميز» off from «Encoding» and from encryption, and «إخفاءُ الهويّة (Anonymisation)» where anonymous data is defined. English needs none of this: «pseudonymisation» carries one meaning there.
+
 **EN.** Pseudonymisation replaces identifying values with stand-ins while a mapping that can reverse it still exists somewhere; the data can remain personal data (Art. 4(5)). Data counts as anonymous only where the person can no longer be identified by means reasonably likely to be used — a standard that takes account of what others might reasonably do, and not only of what you would do — and then the GDPR no longer applies to it (Recital 26). Z Privacy does the first: the mapping is your vault, on your machine. And a text with every name removed can still be about one identifiable person — a single-patient clinic letter is the standard example.
 
 **DE.** Pseudonymisierung ersetzt identifizierende Werte durch Platzhalter, während eine Zuordnung, die sich umkehren lässt, irgendwo weiter besteht; die Daten können personenbezogen bleiben (Art. 4 Nr. 5). Als anonym gelten Daten nur dort, wo die Person mit Mitteln, die nach allgemeinem Ermessen wahrscheinlich genutzt werden, nicht mehr identifiziert werden kann — ein Maßstab, der berücksichtigt, was andere vernünftigerweise tun könnten, und nicht nur, was Sie selbst tun würden —, und dann gilt die DSGVO für sie nicht mehr (Erwägungsgrund 26). Z Privacy tut das Erste: Die Zuordnung ist Ihr Tresor, auf Ihrem Rechner. Und ein Text, aus dem jeder Name entfernt wurde, kann immer noch von einer identifizierbaren Person handeln — ein Arztbrief über eine einzige Patientin ist das übliche Beispiel.
 
 **AR.** <div dir="rtl" lang="ar">
 
-الترميزُ بأسماءٍ مستعارة يستبدل بالقيم المعرِّفة بدائلَ مع بقاء رابطٍ في مكانٍ ما يمكن أن يعكسه؛ وقد تبقى البياناتُ شخصيّة (المادّة ٤/٥). ولا تُعدّ البياناتُ مجهولةً إلّا حيث لم يعد يمكن التعرّفُ على الشخص بوسائلَ يُرجَّح في المعتاد أن تُستعمل — وهو معيارٌ يأخذ في الحسبان ما قد يفعله غيرُك على نحوٍ معقول، لا ما تفعله أنت وحدك — وعندها لا تسري عليها اللائحة (الحيثيّة ٢٦). وZ Privacy يفعل الأوّل: الرابطُ هو خزنتُك، على جهازك. ونصٌّ أُزيل منه كلُّ اسمٍ قد يظلّ عن شخصٍ يمكن التعرّفُ عليه — ورسالةُ عيادةٍ عن مريضةٍ واحدة هي المثالُ المعتاد.
+الترميز (Pseudonymisation) هو استبدال القيم المعرّفة ببدائل، مع بقاء رابطٍ في مكانٍ ما يسمح باستعادة القيم الأصلية؛ وقد تبقى البياناتُ شخصيّة (المادّة ٤/٥). والمقصودُ بـ«الترميز» هنا مصطلحُ اللائحة، لا ترميزُ النصّ (Encoding) ولا التشفير. ولا تُعدّ البياناتُ مجهولةَ الهويّة — وهذا هو إخفاءُ الهويّة (Anonymisation) — إلّا حيث لم يعد يمكن التعرّفُ على الشخص بوسائلَ يُرجَّح في المعتاد أن تُستعمل — وهو معيارٌ يأخذ في الحسبان ما قد يفعله غيرُك على نحوٍ معقول، لا ما تفعله أنت وحدك — وعندها لا تسري عليها اللائحة (الحيثيّة ٢٦). وZ Privacy يفعل الأوّل: الرابطُ هو خزنتُك، على جهازك. ونصٌّ أُزيل منه كلُّ اسمٍ قد يظلّ عن شخصٍ يمكن التعرّفُ عليه — ورسالةُ عيادةٍ عن مريضةٍ واحدة هي المثالُ المعتاد.
 
 </div>
 
@@ -147,7 +157,7 @@ every run so nobody mistakes a green line for an equal sentence.
 - `q5-only-where-person`
   - EN — only where the person can no longer be identified
   - DE — Als anonym gelten Daten nur dort, wo die Person mit Mitteln, die nach allgemeinem Ermessen wahrscheinlich genutzt werden, nicht mehr identifiziert werden kann
-  - AR — <span dir="rtl" lang="ar">ولا تُعدّ البياناتُ مجهولةً إلّا حيث لم يعد يمكن التعرّفُ على الشخص بوسائلَ يُرجَّح في المعتاد أن تُستعمل</span>
+  - AR — <span dir="rtl" lang="ar">ولا تُعدّ البياناتُ مجهولةَ الهويّة — وهذا هو إخفاءُ الهويّة (Anonymisation) — إلّا حيث لم يعد يمكن التعرّفُ على الشخص بوسائلَ يُرجَّح في المعتاد أن تُستعمل — وهو معيارٌ يأخذ في الحسبان ما قد يفعله غيرُك على نحوٍ معقول، لا ما تفعله أنت وحدك — وعندها لا تسري عليها اللائحة (الحيثيّة ٢٦).</span>
 - `q5-standard-takes-account`
   - EN — a standard that takes account of what others might reasonably do, and not only of what you would do
   - DE — ein Maßstab, der berücksichtigt, was andere vernünftigerweise tun könnten, und nicht nur, was Sie selbst tun würden
@@ -169,7 +179,7 @@ every run so nobody mistakes a green line for an equal sentence.
 
 **AR.** <div dir="rtl" lang="ar">
 
-اعمل على الوثيقة داخل Z Privacy: الفحصُ والقيمُ التي علّمتَها تُعلِّم ما تجده، وتضيف أنت ما فاتها، ويخرج السؤالُ وفي مواضع تلك القيم رموز. والمستبدَلُ هو ما كشفه Z Privacy أو ما علَّمتَه أنت؛ وكلُّ ما عدا ذلك يبقى في النصّ كما أقررتَه تماماً — ولهذا توجد خطوةُ المراجعة، ولهذا تُعرَض عليك قبل أن يُرسَل شيء. ولا تتغيّر بهذا التزاماتُك المهنيّة: فZ Privacy يُقلّل ما ترسله، ولا يجعل الإرسالَ جائزاً.
+اعمل على الوثيقة داخل Z Privacy: يحدّد الفحصُ والقيمُ التي علّمتَها لـZ Privacy سابقاً ما يستطيعان اكتشافه، وتضيف أنت ما لم يُكتشف، ويخرج السؤالُ وفي مواضع تلك القيم رموز. والمستبدَلُ هو ما كشفه Z Privacy أو ما وسمتَه أنت؛ وكلُّ ما عدا ذلك يبقى في النصّ كما أقررتَه تماماً — ولهذا توجد خطوةُ المراجعة، ولهذا تُعرَض عليك قبل أن يُرسَل شيء. ولا تتغيّر بهذا التزاماتُك المهنيّة: فZ Privacy يُقلّل ما ترسله، ولا يجعل الإرسالَ جائزاً.
 
 </div>
 
@@ -178,7 +188,7 @@ every run so nobody mistakes a green line for an equal sentence.
 - `q6-everything-else-stays`
   - EN — everything else stays in the text exactly as you approved it
   - DE — Ersetzt wird, was Z Privacy erkannt hat oder was Sie markiert haben; alles andere bleibt genau so im Text, wie Sie ihn freigegeben haben — deshalb gibt es den Schritt der Durchsicht, und deshalb wird er Ihnen gezeigt, bevor etwas gesendet wird.
-  - AR — <span dir="rtl" lang="ar">والمستبدَلُ هو ما كشفه Z Privacy أو ما علَّمتَه أنت؛ وكلُّ ما عدا ذلك يبقى في النصّ كما أقررتَه تماماً — ولهذا توجد خطوةُ المراجعة، ولهذا تُعرَض عليك قبل أن يُرسَل شيء.</span>
+  - AR — <span dir="rtl" lang="ar">والمستبدَلُ هو ما كشفه Z Privacy أو ما وسمتَه أنت؛ وكلُّ ما عدا ذلك يبقى في النصّ كما أقررتَه تماماً — ولهذا توجد خطوةُ المراجعة، ولهذا تُعرَض عليك قبل أن يُرسَل شيء.</span>
 
 **الحكم · verdict.** العربيّ □ مطابقٌ   □ يحتاج تعديلاً — الألمانيّ □ مطابقٌ   □ يحتاج تعديلاً
 
@@ -315,7 +325,7 @@ every run so nobody mistakes a green line for an equal sentence.
 
 **AR.** <div dir="rtl" lang="ar">
 
-ثلاثةُ أشياءَ يجدر فصلُها. **ما يُرسله Z Privacy** هو طلبٌ واحدٌ إلى العنوان الذي أعددتَه: اسمُ النموذج، ونصُّك المحميّ، و— داخل التطبيق، ابتداءً من السؤال الثاني — التبادلُ الذي قبله بالصورة المحميّة التي غادر بها. وهذا النصُّ المحميّ هو الوثيقةُ والسؤالُ كما أقررتَهما، فما لم يجده الفحصُ ولم تُعلِّمه أنت موجودٌ فيه، والتبادلُ السابق يحمل ما كان يحمله. ويحمل الطلبُ أيضاً بيانَ الاعتماد الذي أعطيتَه لتلك الخدمة. و**ما يستطيع المزوّد ملاحظتَه على كلّ حال**، كما مع أيّ برنامجٍ يتّصل به، هو عنوانُك الشبكيّ، والوقت، وحجمُ الطلب، وكم مرّةً تسأل. و**ما قِسناه نحن**، بالضبط: طلبٌ واحدٌ سُجّل بايتاً بايتاً أمام خادمٍ على هذا الجهاز، مع إثباتِ أنّ محتوى الجسم هو الحمولةُ المحميّة حرفاً بحرف، وأنّه لا تظهر قيمةٌ أصليّةٌ ولا قيمةٌ من الخزنة في الجسم ولا في الترويسات ولا في العنوان. وهذا قياسُ محتوى طلبٍ واحد، لا برهانٌ على أنّه لا يوجد برنامجٌ آخرُ ولا طريقٌ آخر.
+ثلاثةُ أشياءَ يجدر فصلُها. **ما يُرسله Z Privacy** هو طلبٌ واحدٌ إلى العنوان الذي أعددتَه: اسمُ النموذج، ونصُّك المحميّ، و— داخل التطبيق، ابتداءً من السؤال الثاني — التبادلُ الذي قبله بالصورة المحميّة التي غادر بها. وهذا النصُّ المحميّ هو الوثيقةُ والسؤالُ كما أقررتَهما، فما لم يجده الفحصُ ولم تَسِمْه أنت موجودٌ فيه، والتبادلُ السابق يحمل ما كان يحمله. ويحمل الطلبُ أيضاً بيانَ الاعتماد الذي أعطيتَه لتلك الخدمة. و**ما يستطيع المزوّد ملاحظتَه على كلّ حال**، كما مع أيّ برنامجٍ يتّصل به، هو عنوانُك الشبكيّ، والوقت، وحجمُ الطلب، وكم مرّةً تسأل. و**ما قِسناه نحن**، بالضبط: طلبٌ واحدٌ سُجّل بايتاً بايتاً أمام خادمٍ على هذا الجهاز، مع إثباتِ أنّ محتوى الجسم هو الحمولةُ المحميّة حرفاً بحرف، وأنّه لا تظهر قيمةٌ أصليّةٌ ولا قيمةٌ من الخزنة في الجسم ولا في الترويسات ولا في العنوان. وهذا قياسُ محتوى طلبٍ واحد، لا برهانٌ على أنّه لا يوجد برنامجٌ آخرُ ولا طريقٌ آخر.
 
 </div>
 
@@ -361,7 +371,7 @@ every run so nobody mistakes a green line for an equal sentence.
 
 **AR.** <div dir="rtl" lang="ar">
 
-لا حساب في Z Privacy، ولا خادم لZ Privacy، ولا تحليلات: الشيفرةُ تحمل عميلَ شبكةٍ واحداً وطريقَ إرسالٍ واحداً، والواجهةُ لا تستطيع فتح مقبسٍ أصلاً، ولا يظهر فيها عنوانٌ لZ Privacy في أيّ موضع — فالعنوانُ الوحيد الذي بُني هذا البرنامج ليتحدّث إليه هو المزوّد الذي أعددتَه، ببيان الاعتماد الذي أعطيتَه. وعلى جهازك أنت، **في هذا البناء، ومقروءاً من شيفرته لا مُراقَباً على تثبيتٍ يعمل**، يكتب مجموعةً معروفةً من الملفّات ولا يكتب غيرها: الخزنةَ المشفّرة، وملفّاً مشفّراً لكلّ جلسة، وقفلاً بجانبها، وملفَّ إعداداتٍ لا يحمل عملَك أبداً — ومعها الوثيقتان اللتان تطلبهما باسمهما: نسخةٌ محميّة، وملفُّ PDF عاديٌّ مُستعاد. والوثيقةُ التي في المعاينة تبقى في ملفّ جلستها المشفّر حتّى تخرج من بابٍ من الأبواب التي تُخرج النصّ، وخروجُها يأخذ النسخةَ معه. وبالقراءة نفسِها للشيفرة: الملفُّ وهو يُكتَب يوجد لحظةً باسمٍ ثانٍ بجانب الملفّ التامّ، في المجلّد نفسِه، ثمّ يُعاد تسميتُه في موضعه؛ ولا يُكتب شيءٌ في المجلّد المؤقّت للنظام، ولا يُكتب ملفُّ سجلٍّ البتّة.
+لا حساب في Z Privacy، ولا خادم لZ Privacy، ولا تحليلات: الشيفرةُ تحمل عميلَ شبكةٍ واحداً وطريقَ إرسالٍ واحداً، والواجهةُ لا تستطيع فتح مقبسٍ أصلاً، ولا يظهر في الشيفرة أيُّ عنوانٍ لZ Privacy — فالعنوانُ الوحيد الذي بُني هذا البرنامج ليتحدّث إليه هو المزوّد الذي أعددتَه، ببيان الاعتماد الذي أعطيتَه. وعلى جهازك أنت، **في هذا البناء، ومقروءاً من شيفرته لا مُراقَباً على تثبيتٍ يعمل**، يكتب مجموعةً معروفةً من الملفّات ولا يكتب غيرها: الخزنةَ المشفّرة، وملفّاً مشفّراً لكلّ جلسة، وقفلاً بجانبها، وملفَّ إعداداتٍ لا يحمل عملَك أبداً — ومعها الوثيقتان اللتان تطلبهما باسمهما: نسخةٌ محميّة، وملفُّ PDF عاديٌّ مُستعاد. والوثيقةُ التي في المعاينة تبقى في ملفّ جلستها المشفّر حتّى تخرج من بابٍ من الأبواب التي تُخرج النصّ، وخروجُها يأخذ النسخةَ معه. وبالقراءة نفسِها للشيفرة: الملفُّ وهو يُكتَب يوجد لحظةً باسمٍ ثانٍ بجانب الملفّ التامّ، في المجلّد نفسِه، ثمّ يُعاد تسميتُه في موضعه؛ ولا يُكتب شيءٌ في المجلّد المؤقّت للنظام، ولا يُكتب ملفُّ سجلٍّ البتّة.
 
 </div>
 
@@ -370,7 +380,7 @@ every run so nobody mistakes a green line for an equal sentence.
 - `q14-interface-cannot-open`
   - EN — the interface cannot open a socket at all, and no Z Privacy address appears anywhere in it — so the only address this program is built to speak to
   - DE — die Oberfläche kann überhaupt keinen Socket öffnen, und nirgends in ihm steht eine Z-Privacy-Adresse — die einzige Adresse also, für die dieses Programm gebaut ist
-  - AR — <span dir="rtl" lang="ar">لا حساب في Z Privacy، ولا خادم لZ Privacy، ولا تحليلات: الشيفرةُ تحمل عميلَ شبكةٍ واحداً وطريقَ إرسالٍ واحداً، والواجهةُ لا تستطيع فتح مقبسٍ أصلاً، ولا يظهر فيها عنوانٌ لZ Privacy في أيّ موضع — فالعنوانُ الوحيد الذي بُني هذا البرنامج ليتحدّث إليه هو المزوّد الذي أعددتَه، ببيان الاعتماد الذي أعطيتَه.</span>
+  - AR — <span dir="rtl" lang="ar">لا حساب في Z Privacy، ولا خادم لZ Privacy، ولا تحليلات: الشيفرةُ تحمل عميلَ شبكةٍ واحداً وطريقَ إرسالٍ واحداً، والواجهةُ لا تستطيع فتح مقبسٍ أصلاً، ولا يظهر في الشيفرة أيُّ عنوانٍ لZ Privacy — فالعنوانُ الوحيد الذي بُني هذا البرنامج ليتحدّث إليه هو المزوّد الذي أعددتَه، ببيان الاعتماد الذي أعطيتَه.</span>
 - `q14-settings-file-never`
   - EN — a settings file that never holds your work
   - DE — Auf Ihrem eigenen Rechner schreibt es, **in diesem Build und aus seinem Quelltext gelesen, nicht an einer laufenden Installation beobachtet**, einen bekannten Satz von Dateien und keine anderen: den verschlüsselten Tresor, eine verschlüsselte Datei je Sitzung, eine Sperre daneben und eine Einstellungsdatei, die niemals Ihre Arbeit enthält — dazu die zwei Dokumente, die Sie ausdrücklich verlangen, eine geschützte Kopie und ein wiederhergestelltes einfaches PDF.
@@ -396,7 +406,7 @@ every run so nobody mistakes a green line for an equal sentence.
 
 **AR.** <div dir="rtl" lang="ar">
 
-في ملفّ خزنةٍ مشفّرٍ واحد على جهازك، بلوكٌ لكلّ قيمةٍ محميّة، يُفتَح بعبارة مرورٍ لا تغادر الجهاز أبداً — واختبارٌ يبحث في الملفّ المكتوب عن الأسماء التي عُلِّمها فلا يجد منها شيئاً. والتشفيرُ ليس أقوى من عبارة المرور التي تختارها، والخزنةُ المفتوحة يقرؤها كلُّ ما يعمل باسمك على ذلك الجهاز: نحن نحمي ملفّاً ساكناً، لا جهازاً اختُرق أصلاً. وعلى لينكس يُضيَّق المجلّد عليك وحدك، ويرفض القلبُ الكتابةَ إن لم يستطع ذلك؛ وعلى ويندوز المجلّدُ هو ما تجعله صلاحيّاتُ ذلك الجهاز.
+في ملفّ خزنةٍ مشفّرٍ واحد على جهازك، بلوكٌ لكلّ قيمةٍ محميّة، يُفتَح بعبارة مرورٍ لا تغادر الجهاز أبداً — واختبارٌ يبحث في الملفّ المكتوب عن الأسماء التي سبق أن تعلّمها Z Privacy فلا يجد منها شيئاً. والتشفيرُ ليس أقوى من عبارة المرور التي تختارها، والخزنةُ المفتوحة يقرؤها كلُّ ما يعمل باسمك على ذلك الجهاز: نحن نحمي ملفّاً ساكناً، لا جهازاً اختُرق أصلاً. وعلى لينكس يُضيَّق المجلّد عليك وحدك، ويرفض القلبُ الكتابةَ إن لم يستطع ذلك؛ وعلى ويندوز المجلّدُ هو ما تجعله صلاحيّاتُ ذلك الجهاز.
 
 </div>
 
