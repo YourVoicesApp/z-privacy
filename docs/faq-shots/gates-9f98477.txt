@@ -1,0 +1,268 @@
+Every gate, run on the tree of 9f98477, unedited.
+2026-10-27 11:14 UTC · 9f984774c8c89931495d307682ad183d7ff66f4c · branch feat/the-questions-before-the-name
+
+What is in this file — six runs, in the order they were made:
+  exit 0   python3 scripts/check_the_faq_pages.py
+  exit 0   python3 scripts/check_the_quoted_app_text.py
+  exit 0   python3 scripts/check_the_absolutes.py
+  exit 0   python3 scripts/check_sitemap.py
+  exit 0   bash scripts/check_site.sh --tree-only
+  exit 1   bash scripts/check_site.sh
+
+Nothing below this line is edited, summarised or reordered: the NOTE, the
+SKIP and the two FAIL lines are the runs’ own words.
+================================================================
+$ python3 scripts/check_the_faq_pages.py
+================================================================
+  PASS   EN: one FAQPage, 25 questions, the data equal to the page and the page equal to what was approved
+  PASS   DE: one FAQPage, 25 questions, the data equal to the page and the page equal to what was approved
+  PASS   AR: one FAQPage, 25 questions, the data equal to the page and the page equal to what was approved
+
+3 FAQ pages checked
+the three pages say what was approved, and their structured data says what they say
+exit: 0
+
+================================================================
+$ python3 scripts/check_the_quoted_app_text.py
+================================================================
+  PASS   the three download pages agree: the released build is 4920398
+  PASS   EN Q13 draft quotes «addAnAnswer» as 4920398 ships it
+  PASS   EN Q13 page quotes «addAnAnswer» as 4920398 ships it
+  PASS   EN Q16 draft quotes «thereIsNoWayBack» as 4920398 ships it
+  PASS   EN Q16 page quotes «thereIsNoWayBack» as 4920398 ships it
+  PASS   DE Q13 draft quotes «addAnAnswer» as 4920398 ships it
+  PASS   DE Q13 page quotes «addAnAnswer» as 4920398 ships it
+  PASS   DE Q16 draft quotes «thereIsNoWayBack» as 4920398 ships it
+  PASS   DE Q16 page quotes «thereIsNoWayBack» as 4920398 ships it
+  PASS   AR Q13 draft quotes «addAnAnswer» as 4920398 ships it
+  PASS   AR Q13 page quotes «addAnAnswer» as 4920398 ships it
+  PASS   AR Q16 draft quotes «thereIsNoWayBack» as 4920398 ships it
+  PASS   AR Q16 page quotes «thereIsNoWayBack» as 4920398 ships it
+
+12 quotations checked against build 4920398
+every sentence the FAQ quotes is the released app’s own, byte for byte
+exit: 0
+
+================================================================
+$ python3 scripts/check_the_absolutes.py
+================================================================
+  PASS   Q2  «only» — NOT_OURS
+  PASS   Q2  «neither» — docs/THE_PROVIDERS.md — Z alters, evades and comments on no provider's terms, and takes no position on them
+  PASS   Q3  «only» — C-06 — the mapping is the vault, and the written file holds none of the names it was taught (the_vault_file_says_nothing.rs); and the next sentence says what this does NOT mean
+  PASS   Q4  «none» — NOT_OURS
+  PASS   Q4  «at all» — NOT_OURS
+  PASS   Q5  «only» — NOT_OURS
+  PASS   Q5  «only» — NOT_OURS
+  PASS   Q5  «every» — qualified in the sentence
+  PASS   Q6  «everything» — z_core/tests/round_trip.rs:59 asserts the safe payload equals the original sentence with only the chosen values swapped, character for character
+  PASS   Q7  «at all» — NOT_OURS
+  PASS   Q8  «at all» — NOT_OURS
+  PASS   Q9  «every» — NOT_OURS
+  PASS   Q10 «at all» — C-17 — truthfulness_regressions.rs::lie_a_keyless_login_claims_a_key measures the keyless local login with the vault open
+  PASS   Q10 «only» — is_loopback_url in z_core/src/providers/http.rs, measured by plain_http_is_refused_unless_the_host_is_a_literal_loopback_address
+  PASS   Q10 «never» — is_loopback_url in z_core/src/providers/http.rs, measured by plain_http_is_refused_unless_the_host_is_a_literal_loopback_address
+  PASS   Q10 «cannot» — is_loopback_url in z_core/src/providers/http.rs, measured by plain_http_is_refused_unless_the_host_is_a_literal_loopback_address
+  PASS   Q10 «nothing» — qualified in the sentence
+  PASS   Q11 «nothing» — C-11 (nothing_leaves_while_a_word_waits.rs); the refusal is one function that gate G28 reads, asked of every door gate G36 counts from the source
+  PASS   Q12 «no other» — qualified in the sentence
+  PASS   Q13 «every» — C-13 — the_chat_remembers.rs, the_copy_is_the_current_point_and_still_brings_home_a_name_from_the_first_turn
+  PASS   Q14 «cannot» — C-03 — one HTTP client (G1), the interface cannot open a socket (G5), one reader behind the gateway (G16), and no Z Privacy address in the tree. Shape checks over the source, which is what «is built to» says; C-04 stays unproven for the running case
+  PASS   Q14 «at all» — C-03 — one HTTP client (G1), the interface cannot open a socket (G5), one reader behind the gateway (G16), and no Z Privacy address in the tree. Shape checks over the source, which is what «is built to» says; C-04 stays unproven for the running case
+  PASS   Q14 «only» — C-03 — one HTTP client (G1), the interface cannot open a socket (G5), one reader behind the gateway (G16), and no Z Privacy address in the tree. Shape checks over the source, which is what «is built to» says; C-04 stays unproven for the running case
+  PASS   Q14 «never» — z_core/tests/zcfg_leak.rs searches the one unencrypted file for the names it was taught
+  PASS   Q14 «nothing» — qualified in the sentence
+  PASS   Q14 «at all» — governed by the sentence's own lead-in, «By that same reading of the source»: the core carries no println!, no eprintln! and no logging crate outside its tests
+  PASS   Q15 «never» — C-06 and gate G8 — no function in the whole contract returns a key or a passphrase
+  PASS   Q15 «none» — z_core/tests/the_vault_file_says_nothing.rs
+  PASS   Q15 «only» — qualified in the sentence
+  PASS   Q15 «cannot» — z_core/src/secure_file.rs and its own tests
+  PASS   Q16 «cannot» — C-06 and gate G8
+  PASS   Q16 «any kind» — C-06 — the passphrase is never stored; gate G8, no function in the whole contract returns a key or a passphrase
+  PASS   Q16 «nothing» — C-06 — the passphrase is never stored; gate G8
+  PASS   Q16 «Nobody» — the shipped sentence, key thereIsNoWayBack; the claim behind it is C-06
+  PASS   Q16 «never» — C-06, gate G8
+  PASS   Q16 «nothing» — the shipped sentence, key thereIsNoWayBack; C-06 and gate G8
+  PASS   Q17 «neither» — C-17 — the_model_gateway.rs; five of the six go out through chat/completions and Anthropic has its own path
+  PASS   Q17 «Every» — C-17 — the_bundle_of_six.rs; every base address comes from the person's own login
+  PASS   Q17 «at all» — C-17 — the same keyless login as Q10
+  PASS   Q18 «nothing» — NOT_OURS
+  PASS   Q19 «every» — qualified in the sentence
+  PASS   Q19 «All of» — qualified in the sentence
+  PASS   Q19 «nothing» — C-11; gate G28 asks it of every door gate G36 finds
+  PASS   Q19 «every» — gate G36 counts the doors from what the functions do, not from a list — which is why the count has moved twice
+  PASS   Q21 «nothing» — an absence, stated as one: no price, no billing code and no purchase path anywhere in the tree
+  PASS   Q21 «nothing» — C-17 — a local model reports connected with no credential (truthfulness_regressions.rs::lie_a_keyless_login_claims_a_key)
+  PASS   Q21 «at all» — C-17 — a local model reports connected with no credential (truthfulness_regressions.rs::lie_a_keyless_login_claims_a_key)
+  PASS   Q22 «nobody» — NOT_OURS
+  PASS   Q23 «every» — gate G56 refuses a section missing one of its four lines
+  PASS   Q23 «cannot» — gate G5 — and this very sentence is explaining what a shape check is, so the reader is told its kind as they read it
+  PASS   Q23 «every» — gates G28 and G36
+  PASS   Q24 «nothing» — site/en/download/index.html, data-fact=windows-will-warn-you; the Windows job deletes an unsigned package rather than hand it over (C-14), and the installer carries no signature by construction
+  PASS   Q24 «nothing» — qualified in the sentence
+  PASS   Q25 «nothing» — scripts/check_site.sh refuses a handler, a cookie, a counter or any script but a declared data block, and there is no form on any page
+
+  PASS   DE carries all 49 English absolutes and invents none
+  PASS   AR carries all 49 English absolutes and invents none
+  NOTE   AR «q16-passphrase-never-leaves» is carried but weaker — the English says «never leaves this device» and the shipped Arabic sentence says «لا تغادر هذا الجهاز» with no «أبداً». The FAQ quotes the app and may not strengthen a quotation, so this is an APP-side meaning debt for after the pause — the lead's list, not this page's (key thereIsNoWayBack).
+
+49 absolutes registered across 23 answers
+every absolute on the page is covered or qualified
+exit: 0
+
+================================================================
+$ python3 scripts/check_sitemap.py
+================================================================
+  PASS   the list offers all 21 pages of the tree and nothing else, each at the address it claims for itself
+
+the sitemap and the tree are the same 21 pages
+exit: 0
+
+================================================================
+$ bash scripts/check_site.sh --tree-only
+================================================================
+  PASS   every build value is filled
+  PASS   no third-party request: fonts and styles are served from here
+  PASS   no handler, no cookie, no counter
+  PASS   the only tag a page opens is a declared data block
+  PASS   every data block parses and names its type
+  PASS   21 of our own addresses are checked against the tree, not asked of the network
+  SKIP   the outward links are not asked of the network, because --tree-only
+  PASS   the mark is on all three pages, and its four files are here
+  PASS   the mark on the site is the app's own picture, byte for byte
+  PASS   every page draws the picture exactly once, and no lettered tile is left
+  PASS   the first page a stranger opens carries the mark large (96px)
+  PASS   the first screen carries the idea, the word, and the state of the build
+  PASS   every jump on every page lands on something (3 walked)
+  PASS   two menus on every page but the chooser, and one vocabulary, under Help
+  PASS   three privacy pages, reachable, saying the same things and naming the same files — and every file is there
+  PASS   three terms pages, reachable, naming one set of proofs and the commit they were written against
+  PASS   one way to be told of a release — a mailto with its subject, the same block on six pages — and no form on this site
+  PASS   21 served pages, and not one invisible character in any of them but 3 directional mark(s), each printed above
+           and a directional mark: site/ar/faq/index.html line 231: U+200F RIGHT-TO-LEFT MARK for an Arabic sentence around a Latin run — …ّ التجاريّ (Org.nr) ⟨here⟩559473-3494. Hotell…
+           and a directional mark: site/ar/faq/index.html line 352: U+200F RIGHT-TO-LEFT MARK for an Arabic sentence around a Latin run — …ّ التجاريّ (Org.nr) ⟨here⟩559473-3494. Hotell…
+           and a directional mark: site/ar/privacy/index.html line 111: U+200F RIGHT-TO-LEFT MARK for an Arabic sentence around a Latin run — … في العقدة نفسِها. و⟨here⟩Z Privacy مفتوحُ ال…
+  PASS   one publisher block, four facts, the same in every place that states them
+  PASS   one colophon, the same on every page, spelling the company as its domain does
+  PASS   no file, no fingerprint and no verify command outside the three download pages
+  PASS   all pages present
+  PASS   every page names itself as canonical, at the absolute address its own path gives it
+  PASS   every hreflang is an absolute address at our own origin
+  PASS   every set of translations names the same members on every page in it
+  PASS   robots.txt allows every crawler, names the sitemap, and names no path of its own
+  PASS   all 143 crates on the notices page are exactly what Cargo.lock says
+  PASS   the face counts are the faces served: Newsreader 6, IBM Plex Sans 18, IBM Plex Sans Arabic 12, IBM Plex Mono 10
+  PASS   the glossary is the app’s own words: 23 of 29 printed as a label, 4 inside a longer one, 2 named as not on a screen
+  PASS   every step of the path is a word the app prints (Import → Scan → Review → Protect → Choose who answers → AI → Restore)
+  PASS   the interface speaks what the lists really hold (ar 695 values, de 692 values, sv 690 values), the three pages name the services this tree really speaks to, and they owe the one list’s own numbers: 0 sentences in 0 screens
+  PASS   the guide is one text in one place: 38 controls named by key on three pages, every one of them a sentence the application has, one spelling of the address in the app and on the site, the write sentence carrying its measured boundary on all three, and 4 of 4 pictures still to be taken
+  PASS   the two columns say what they are on 3 pages, each quoting the app’s own sentence for the right-hand one and leaving what travels to the section that measures it
+  PASS   what an in-app chat sends stands in 9 places — ar, de, en × index.html, guide/index.html, privacy/index.html — each bound to C-13’s own measured words and dating nothing
+  PASS   the one condition on the code stands on all four pages that name the licence, each quoting NOTICE’s own «Copyright 2026 Faruk AB» and naming the clause that binds it, and the license page serves the file’s own six lines byte for byte
+  PASS   the download is one section in three languages: 2 files named by the scripts that build them and by the commit they came from, 13 honest sentences on each page, 0 of 2 fingerprints measured against the file in site/download/, and 0 markers still saying the numbers are a development build’s
+
+every number on the site has a deed behind it
+  PASS   the list offers all 21 pages of the tree and nothing else, each at the address it claims for itself
+
+the sitemap and the tree are the same 21 pages
+  PASS   the three download pages agree: the released build is 4920398
+  PASS   EN Q13 draft quotes «addAnAnswer» as 4920398 ships it
+  PASS   EN Q13 page quotes «addAnAnswer» as 4920398 ships it
+  PASS   EN Q16 draft quotes «thereIsNoWayBack» as 4920398 ships it
+  PASS   EN Q16 page quotes «thereIsNoWayBack» as 4920398 ships it
+  PASS   DE Q13 draft quotes «addAnAnswer» as 4920398 ships it
+  PASS   DE Q13 page quotes «addAnAnswer» as 4920398 ships it
+  PASS   DE Q16 draft quotes «thereIsNoWayBack» as 4920398 ships it
+  PASS   DE Q16 page quotes «thereIsNoWayBack» as 4920398 ships it
+  PASS   AR Q13 draft quotes «addAnAnswer» as 4920398 ships it
+  PASS   AR Q13 page quotes «addAnAnswer» as 4920398 ships it
+  PASS   AR Q16 draft quotes «thereIsNoWayBack» as 4920398 ships it
+  PASS   AR Q16 page quotes «thereIsNoWayBack» as 4920398 ships it
+
+12 quotations checked against build 4920398
+every sentence the FAQ quotes is the released app’s own, byte for byte
+  PASS   EN: one FAQPage, 25 questions, the data equal to the page and the page equal to what was approved
+  PASS   DE: one FAQPage, 25 questions, the data equal to the page and the page equal to what was approved
+  PASS   AR: one FAQPage, 25 questions, the data equal to the page and the page equal to what was approved
+
+3 FAQ pages checked
+the three pages say what was approved, and their structured data says what they say
+
+the tree says nothing false — the publishing questions were not asked, because --tree-only
+exit: 0
+
+================================================================
+$ bash scripts/check_site.sh          # the networked run
+================================================================
+  PASS   every build value is filled
+  PASS   no third-party request: fonts and styles are served from here
+  PASS   no handler, no cookie, no counter
+  PASS   the only tag a page opens is a declared data block
+  PASS   every data block parses and names its type
+  PASS   21 of our own addresses are checked against the tree, not asked of the network
+  PASS   answers (200): https://github.com/YourVoicesApp/z-privacy
+  PASS   answers (200): https://github.com/YourVoicesApp/z-privacy/blob/main/LICENSE
+  PASS   answers (200): https://github.com/YourVoicesApp/z-privacy/blob/main/NOTICE
+  PASS   answers (200): https://github.com/YourVoicesApp/z-privacy/releases
+  PASS   the mark is on all three pages, and its four files are here
+  PASS   the mark on the site is the app's own picture, byte for byte
+  PASS   every page draws the picture exactly once, and no lettered tile is left
+  PASS   the first page a stranger opens carries the mark large (96px)
+  PASS   the first screen carries the idea, the word, and the state of the build
+  PASS   every jump on every page lands on something (3 walked)
+  PASS   two menus on every page but the chooser, and one vocabulary, under Help
+  PASS   three privacy pages, reachable, saying the same things and naming the same files — and every file is there
+  PASS   three terms pages, reachable, naming one set of proofs and the commit they were written against
+  PASS   one way to be told of a release — a mailto with its subject, the same block on six pages — and no form on this site
+  PASS   21 served pages, and not one invisible character in any of them but 3 directional mark(s), each printed above
+           and a directional mark: site/ar/faq/index.html line 231: U+200F RIGHT-TO-LEFT MARK for an Arabic sentence around a Latin run — …ّ التجاريّ (Org.nr) ⟨here⟩559473-3494. Hotell…
+           and a directional mark: site/ar/faq/index.html line 352: U+200F RIGHT-TO-LEFT MARK for an Arabic sentence around a Latin run — …ّ التجاريّ (Org.nr) ⟨here⟩559473-3494. Hotell…
+           and a directional mark: site/ar/privacy/index.html line 111: U+200F RIGHT-TO-LEFT MARK for an Arabic sentence around a Latin run — … في العقدة نفسِها. و⟨here⟩Z Privacy مفتوحُ ال…
+  PASS   one publisher block, four facts, the same in every place that states them
+  PASS   one colophon, the same on every page, spelling the company as its domain does
+  PASS   no file, no fingerprint and no verify command outside the three download pages
+  PASS   all pages present
+  PASS   every page names itself as canonical, at the absolute address its own path gives it
+  PASS   every hreflang is an absolute address at our own origin
+  PASS   every set of translations names the same members on every page in it
+  PASS   robots.txt allows every crawler, names the sitemap, and names no path of its own
+  PASS   all 143 crates on the notices page are exactly what Cargo.lock says
+  PASS   the face counts are the faces served: Newsreader 6, IBM Plex Sans 18, IBM Plex Sans Arabic 12, IBM Plex Mono 10
+  PASS   the glossary is the app’s own words: 23 of 29 printed as a label, 4 inside a longer one, 2 named as not on a screen
+  PASS   every step of the path is a word the app prints (Import → Scan → Review → Protect → Choose who answers → AI → Restore)
+  PASS   the interface speaks what the lists really hold (ar 695 values, de 692 values, sv 690 values), the three pages name the services this tree really speaks to, and they owe the one list’s own numbers: 0 sentences in 0 screens
+  PASS   the guide is one text in one place: 38 controls named by key on three pages, every one of them a sentence the application has, one spelling of the address in the app and on the site, the write sentence carrying its measured boundary on all three, and 4 of 4 pictures still to be taken
+  PASS   the two columns say what they are on 3 pages, each quoting the app’s own sentence for the right-hand one and leaving what travels to the section that measures it
+  PASS   what an in-app chat sends stands in 9 places — ar, de, en × index.html, guide/index.html, privacy/index.html — each bound to C-13’s own measured words and dating nothing
+  PASS   the one condition on the code stands on all four pages that name the licence, each quoting NOTICE’s own «Copyright 2026 Faruk AB» and naming the clause that binds it, and the license page serves the file’s own six lines byte for byte
+  FAIL   the pages offer zprivacy-v1-linux-x86_64.tar.gz and site/download/ does not hold it, so the link is a 404 and the fingerprint beside it is about nothing
+  FAIL   the pages offer zprivacy-v1-windows-x86_64-setup.exe and site/download/ does not hold it, so the link is a 404 and the fingerprint beside it is about nothing
+
+A NUMBER ON THE SITE HAS NO DEED BEHIND IT
+  PASS   the list offers all 21 pages of the tree and nothing else, each at the address it claims for itself
+
+the sitemap and the tree are the same 21 pages
+  PASS   the three download pages agree: the released build is 4920398
+  PASS   EN Q13 draft quotes «addAnAnswer» as 4920398 ships it
+  PASS   EN Q13 page quotes «addAnAnswer» as 4920398 ships it
+  PASS   EN Q16 draft quotes «thereIsNoWayBack» as 4920398 ships it
+  PASS   EN Q16 page quotes «thereIsNoWayBack» as 4920398 ships it
+  PASS   DE Q13 draft quotes «addAnAnswer» as 4920398 ships it
+  PASS   DE Q13 page quotes «addAnAnswer» as 4920398 ships it
+  PASS   DE Q16 draft quotes «thereIsNoWayBack» as 4920398 ships it
+  PASS   DE Q16 page quotes «thereIsNoWayBack» as 4920398 ships it
+  PASS   AR Q13 draft quotes «addAnAnswer» as 4920398 ships it
+  PASS   AR Q13 page quotes «addAnAnswer» as 4920398 ships it
+  PASS   AR Q16 draft quotes «thereIsNoWayBack» as 4920398 ships it
+  PASS   AR Q16 page quotes «thereIsNoWayBack» as 4920398 ships it
+
+12 quotations checked against build 4920398
+every sentence the FAQ quotes is the released app’s own, byte for byte
+  PASS   EN: one FAQPage, 25 questions, the data equal to the page and the page equal to what was approved
+  PASS   DE: one FAQPage, 25 questions, the data equal to the page and the page equal to what was approved
+  PASS   AR: one FAQPage, 25 questions, the data equal to the page and the page equal to what was approved
+
+3 FAQ pages checked
+the three pages say what was approved, and their structured data says what they say
+
+SITE NOT READY
+exit: 1

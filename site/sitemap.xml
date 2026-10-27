@@ -109,6 +109,27 @@
     <xhtml:link rel="alternate" hreflang="ar" href="https://z-privacy.com/ar/guide/"/>
   </url>
   <url>
+    <loc>https://z-privacy.com/en/faq/</loc>
+    <lastmod>2026-10-22</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://z-privacy.com/en/faq/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://z-privacy.com/de/faq/"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://z-privacy.com/ar/faq/"/>
+  </url>
+  <url>
+    <loc>https://z-privacy.com/de/faq/</loc>
+    <lastmod>2026-10-22</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://z-privacy.com/en/faq/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://z-privacy.com/de/faq/"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://z-privacy.com/ar/faq/"/>
+  </url>
+  <url>
+    <loc>https://z-privacy.com/ar/faq/</loc>
+    <lastmod>2026-10-22</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://z-privacy.com/en/faq/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://z-privacy.com/de/faq/"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://z-privacy.com/ar/faq/"/>
+  </url>
+  <url>
     <loc>https://z-privacy.com/de/guide/</loc>
     <lastmod>2026-10-22</lastmod>
     <xhtml:link rel="alternate" hreflang="en" href="https://z-privacy.com/en/guide/"/>

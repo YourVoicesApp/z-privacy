@@ -281,6 +281,7 @@ JUMPS=0
 WALKED=0
 for f in index.html en/index.html de/index.html ar/index.html license/index.html third-party/index.html \
          en/guide/index.html de/guide/index.html ar/guide/index.html \
+         en/faq/index.html de/faq/index.html ar/faq/index.html \
          en/download/index.html de/download/index.html ar/download/index.html; do
   for a in $(grep -o 'href="#[A-Za-z0-9_-]*"' "$f" 2>/dev/null | sed -E 's/href="#//; s/"//' | sort -u); do
     WALKED=$((WALKED + 1))
@@ -309,6 +310,7 @@ for pair in "index.html:" "en/index.html:Help" "de/index.html:Hilfe" "ar/index.h
             "en/terms/index.html:Help" "de/terms/index.html:Hilfe" "ar/terms/index.html:مساعدة" \
             "en/guide/index.html:Help" "de/guide/index.html:Hilfe" "ar/guide/index.html:مساعدة" \
             "en/download/index.html:Help" "de/download/index.html:Hilfe" "ar/download/index.html:مساعدة" \
+            "en/faq/index.html:Help" "de/faq/index.html:Hilfe" "ar/faq/index.html:مساعدة" \
             "license/index.html:Help" "third-party/index.html:Help"
 do
   f="${pair%%:*}"; help="${pair##*:}"
@@ -333,7 +335,7 @@ for f in en/index.html de/index.html ar/index.html; do
   [ "$n" = 1 ] || { say FAIL "$f holds $n vocabulary tables, and there should be one"; FAIL=1; MENUS=1; }
   grep -q '<div class="menu-panel wide">' "$f" || { say FAIL "$f does not keep its vocabulary under Help"; FAIL=1; MENUS=1; }
 done
-for f in index.html en/privacy/index.html de/privacy/index.html ar/privacy/index.html en/terms/index.html de/terms/index.html ar/terms/index.html en/guide/index.html de/guide/index.html ar/guide/index.html en/download/index.html de/download/index.html ar/download/index.html license/index.html third-party/index.html; do
+for f in index.html en/privacy/index.html de/privacy/index.html ar/privacy/index.html en/terms/index.html de/terms/index.html ar/terms/index.html en/guide/index.html de/guide/index.html ar/guide/index.html en/download/index.html de/download/index.html ar/download/index.html en/faq/index.html de/faq/index.html ar/faq/index.html license/index.html third-party/index.html; do
   grep -q '<div class="vocab">' "$f" && { say FAIL "$f carries a second copy of the vocabulary"; FAIL=1; MENUS=1; }
 done
 [ "$MENUS" = 0 ] && say PASS "two menus on every page but the chooser, and one vocabulary, under Help"
@@ -517,7 +519,7 @@ LEGAL=0
 if grep -rn 'yourvoices.app@mono-peak.com' --include='*.html' . 2>/dev/null; then
   say FAIL "the platform's mailbox is still on a Z page (above)"; FAIL=1; LEGAL=1
 fi
-for f in en/index.html de/index.html ar/index.html en/privacy/index.html de/privacy/index.html ar/privacy/index.html en/terms/index.html de/terms/index.html ar/terms/index.html en/guide/index.html de/guide/index.html ar/guide/index.html en/download/index.html de/download/index.html ar/download/index.html; do
+for f in en/index.html de/index.html ar/index.html en/privacy/index.html de/privacy/index.html ar/privacy/index.html en/terms/index.html de/terms/index.html ar/terms/index.html en/guide/index.html de/guide/index.html ar/guide/index.html en/download/index.html de/download/index.html ar/download/index.html en/faq/index.html de/faq/index.html ar/faq/index.html; do
   [ -f "$f" ] || continue
   # The country's name is translated on purpose — «Schweden» on the German page —
   # so the guarded part of the address is the street, the postcode and the city,
@@ -796,9 +798,34 @@ if command -v python3 >/dev/null 2>&1; then
   else
     FAIL=1
   fi
+  # **Every sentence the FAQ quotes from the app, against the build the
+  # download pages say they are offering** — the owner, 26 October 2026:
+  # compare with the version a person can download, not with unreleased code.
+  # It belongs in this script rather than beside it, because the day it earns
+  # its keep is a publishing day: a new build goes up, the pages' own sha
+  # moves, and any quotation the new app no longer says has to red BEFORE the
+  # deploy rather than after a reader opens the app and finds us misquoting
+  # ourselves.
+  if python3 ../scripts/check_the_quoted_app_text.py; then
+    :
+  else
+    FAIL=1
+  fi
+  # **The questions page says what was approved, and its structured data says
+  # what the page says.** Two of the owner's three conditions for publishing
+  # those pages; the third is the quotation check above. Structured data that
+  # says more, less or other than the page is the oldest trick on the web, and
+  # a sentence improved while building a page is a sentence nobody approved.
+  if python3 ../scripts/check_the_faq_pages.py; then
+    :
+  else
+    FAIL=1
+  fi
 else
   say FAIL "no python3, so no number on this site was checked against its deed"; FAIL=1
   say FAIL "no python3, so the list of pages was never compared with the pages"; FAIL=1
+  say FAIL "no python3, so no quotation was checked against the released app"; FAIL=1
+  say FAIL "no python3, so the questions page was never compared with what was approved"; FAIL=1
 fi
 
 # The closing line says which question was answered. «site ready to publish»

@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Questions and answers — Z Privacy</title>
+<meta name="description" content="Twenty-five questions about using AI on documents that carry personal data, each answered from what this product measures and with its limits named.">
+<meta name="referrer" content="no-referrer">
+<link rel="icon" href="../../assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="icon" href="../../assets/favicon-16.png" sizes="16x16" type="image/png">
+<link rel="apple-touch-icon" href="../../assets/apple-touch-icon.png">
+<link rel="stylesheet" href="../../assets/fonts.css">
+<link rel="stylesheet" href="../../assets/site.css">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Z Privacy">
+<meta property="og:title" content="Questions and answers">
+<meta property="og:description" content="Twenty-five questions about using AI on documents that carry personal data, each answered from what this product measures and with its limits named.">
+<meta property="og:url" content="https://z-privacy.com/en/faq/">
+<meta property="og:image" content="https://z-privacy.com/assets/logo-512.png">
+<meta property="og:image:width" content="512">
+<meta property="og:image:height" content="512">
+<meta name="twitter:card" content="summary">
+<link rel="canonical" href="https://z-privacy.com/en/faq/">
+<link rel="alternate" hreflang="en" href="https://z-privacy.com/en/faq/">
+<link rel="alternate" hreflang="de" href="https://z-privacy.com/de/faq/">
+<link rel="alternate" hreflang="ar" href="https://z-privacy.com/ar/faq/">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "inLanguage": "en",
+  "url": "https://z-privacy.com/en/faq/",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Is it safe to paste client documents into ChatGPT?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "That depends on your agreement with the service and on what is in the document, and it is a question about them rather than about us. What is certain either way is that the whole document leaves your machine: the names, the account numbers and the addresses travel with the part you actually wanted help with. The useful question is which of those values the model needs for the task you are asking about — for some tasks it does need them — and Z Privacy is built so that you decide that value by value and see the result before anything is sent."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Do AI services use my conversations or files for training? And do they keep them?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Those are two different questions and each provider answers them separately: training is whether your content is used to improve a model, retention is how long a copy is kept and who may see it. The answers differ by provider, by plan — a consumer account and an API account are often not the same — and they change over time, so the only reliable source is the provider's own current terms. Z Privacy changes neither; what it changes is what is in the text you send."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How can I use AI on documents with personal data without sending the names?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "You replace each value with a token before the text leaves, and put the real values back when the answer comes home. In Z Privacy that is the whole path — Import, Scan, Review, Protect, Choose who answers, AI, Restore — and before anything is sent you are shown exactly what will leave. The mapping from token back to value lives in your vault and nowhere else, so only your machine can reverse it. That is not the same as being unlinkable: what is left of a document can still point at a person through its content alone (see «anonymisation or pseudonymisation» and «does Z make me anonymous»)."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What should I consider under GDPR before sending client data to AI?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Three separate things, and none of them substitutes for another. Data minimisation (Art. 5(1)(c)) asks whether the model needs a given value at all — that is the question a tool like Z Privacy helps with. Your legal obligations — a lawful basis, your records, your processor agreements, transfers — are yours, and no tool changes them. And what Z Privacy does is replace values in the text you send, which is pseudonymisation: under the GDPR that does not make data anonymous by itself, and the text may still be personal data depending on what is left in it (Art. 4(5), Recital 26). This is information, not legal advice; your controller or DPO decides."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is the difference between anonymisation and pseudonymisation?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Pseudonymisation replaces identifying values with stand-ins while a mapping that can reverse it still exists somewhere; the data can remain personal data (Art. 4(5)). Data counts as anonymous only where the person can no longer be identified by means reasonably likely to be used — a standard that takes account of what others might reasonably do, and not only of what you would do — and then the GDPR no longer applies to it (Recital 26). Z Privacy does the first: the mapping is your vault, on your machine. And a text with every name removed can still be about one identifiable person — a single-patient clinic letter is the standard example."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How can an accountant use AI without exposing clients' financial data?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Work on the document inside Z Privacy: the scan and the values you have taught it find what they can, you add anything they did not, and the question goes out with tokens in place of those values. What is replaced is what Z Privacy detected or you marked; everything else stays in the text exactly as you approved it, which is why the review step exists and why it is shown to you before anything is sent. Your professional obligations are not changed by this: Z Privacy reduces what you send, it does not make the sending permissible."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How can a lawyer use AI on case files confidentially?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The same path: what Z Privacy detected and what you chose to protect is replaced before anything leaves, the rest of the text goes as you approved it, and the answer is restored on your machine. Z Privacy does not decide whether your professional rules allow an external model to see a matter at all — that judgement is yours and it differs by jurisdiction. What it changes is how much identifying detail is in what you send, and it shows you the exact text before it goes."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I use AI on medical or HR documents without revealing who they are about?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Mechanically yes — names, identifiers and addresses can be replaced before the text leaves. But these are the two kinds of document where the identity is most often inferable from the content itself, and no replacement fixes that. Health data is a special category under Art. 9 and HR data carries its own obligations; whether to process it with an external model at all is the controller's decision, not a tool's. If you do, pseudonymisation is a measure, not a permission."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What happens to my data when I upload a PDF to an AI chatbot?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The file leaves your machine and is processed on the provider's servers; what happens next — how long a copy is kept, who may look at it, whether it is used to improve a model — is set by that provider's terms and your plan, and is not visible from the file. The part worth noticing is that a PDF carries every page, including the ones you did not need help with. Z Privacy's answer is to send the text with the values replaced, rather than the file."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I use an AI model on my own computer instead of a cloud service?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. Z Privacy speaks to any server that answers an OpenAI-compatible request, including one on your own machine — llama.cpp, Ollama, LM Studio — and a local model needs no key at all. Plain http is accepted only for a literal loopback IP address, never for a name like «localhost», so a hosts file cannot be what decides that plaintext is safe. On that path Z Privacy's request to the model goes to that address and no further; it says nothing about what other programs on your computer do."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What does Z Privacy do, in one minute?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "You open a document or write a question. Z Privacy scans it with its rules, its language packs and the values you have taught it, and shows you two columns: your original, and what would leave. You protect what should not go — by the scan's own finding, by pressing a word, or by selecting a run of text with your hand — and nothing leaves while a suggestion is unanswered. Then you choose who answers, see the exact text before it is sent, and the answer comes back with your names restored on this machine."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What does the AI actually receive?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Three things are worth separating. What Z Privacy sends is one request to the address you configured: the model's name, your protected text, and — inside the app, from the second question on — the exchange before it, in the protected form it left in. That protected text is the document and question as you approved them, so whatever the scan did not find and you did not mark is in it, and the earlier exchange carries whatever it carried. The request also carries the credential you gave for that service. What the provider can observe anyway, as with any program that connects to it, is your network address, the time, how large the request was and how often you ask. And what we measured, exactly: one request recorded byte for byte against a server on this machine, asserting that the body's content is the protected payload character for character and that no original value and no vault value appears in the body, the headers or the URL. That is a measurement of one request's content, not a proof that no other program or path exists."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do the real names come back into the answer?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "On your machine, out of your vault. Inside the app the answer is restored as it arrives; if you carried the question to a model yourself, «Add an answer» brings the text back and every token that chat has carried turns back into its name. A protected PDF has its own door: «z-pdf» in Settings reads such a file back into its names and says which session each one came from. A token whose key this vault does not hold stays as text, and the app says so rather than guessing."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does Z Privacy see or store my documents?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "There is no Z Privacy account, no Z Privacy server and no analytics: the source carries one network client and one send path, the interface cannot open a socket at all, and no Z Privacy address appears anywhere in it — so the only address this program is built to speak to is the provider you configured, with the credential you gave it. On your own machine, in this build and as read from its source code rather than watched on a running installation, it writes a known set of files and no others: the encrypted vault, one encrypted file per session, a lock beside them, and a settings file that never holds your work — plus the two documents you ask for by name, a protected copy and a restored plain PDF. The document in the preview is kept in its session's own encrypted file until it leaves by one of the doors that take text out, and leaving takes the copy with it. By that same reading of the source: a file being written exists briefly under a second name beside the finished one, in the same folder, and is renamed into place; nothing is written to the system's temporary directory, and no log file is written at all."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Where are my names kept, and how are they protected?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "In one encrypted vault file on your device, one block per protected value, opened by a passphrase that never leaves the machine — a test searches the written file for the names it was taught and finds none. The encryption is only as strong as the passphrase you choose, and an unlocked vault is readable by anything running as you on that machine: we protect a file at rest, not a machine already taken. On Linux the folder is narrowed to you and the core refuses to write if it cannot be; on Windows the folder is whatever that machine's own permissions make it."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What happens if I forget my passphrase?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The vault cannot be opened — not by you and not by us. This build has no recovery mechanism of any kind: no reset, no escrow, no second key and no copy held anywhere, and nothing on our side could recover the vault without the passphrase. The app says so before you set one: «There is no way back. Nobody holds a copy of this, and no reset exists — the passphrase never leaves this device and nothing on our side could recover the vault without it.»"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Which AI services work with Z Privacy?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Two are supported and have been used against the live service: OpenAI and Anthropic. Four more are in the catalogue — xAI, DeepSeek, Moonshot and Google — and have not been tested with a live connection; a provider with no credential reports itself as unavailable rather than as ready. Five of the six go out through the same chat/completions request shape and Anthropic has its own, so a service that answers neither shape is not reached by this build however open the address field is. Every connection is made at an address you can change, and a model on your own computer needs no key at all."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does Z Privacy make me anonymous to the AI provider?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No. You sign up under your own name with your own credential, and the provider is entitled to know who its customer is; your network address, the time and the size of each request are visible to them as they are to any service you connect to. Z Privacy removes values from inside the text — it does not remove you. What it protects is the people in your documents, who agreed to nothing with your provider."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What does Z Privacy detect automatically, and what must I mark myself?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Automatically: what its rules describe. The IBAN and BIC rules are not tied to a language pack, so they do not depend on which language a document is in; the language sets add e-mail addresses, telephone numbers, tax and social-insurance numbers, customer, contract and employee references, dates of birth, people, companies and addresses — and every value you have taught it is matched wherever it appears. All of that depends on two things upstream of any rule: that the text reached the scanner as it reads on the page, and that the value is written in a form the rules describe. Anything it is unsure of becomes a suggestion that waits for your word, and the law «nothing leaves while a suggestion is unanswered» is asked of every door that takes text out of the app: sending to a model, copying the protected text, copying the chat, and saving a protected PDF. Those doors are not a list somebody keeps up to date — they are counted from what the functions do, so a new one is caught by the count rather than remembered. What the scanner still misses is written down rather than left to be found: a typographic ligature, a date of birth written out in words, and a payment card from a network whose prefix is not in the published table."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Which file types and languages does it support?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Files: plain text (.txt, .md, .csv), Word documents (.docx) and PDFs. A PDF with no text layer — a photograph of a document — is refused by name rather than guessed at, and so is an encrypted one. Detection has four language packs today — English, German, Swedish and Arabic — beside rule sets that are not bound to a language, and the interface itself speaks those four. Arabic inside a PDF is a case of its own: a file that carries its text in the shapes a layout program drew is refused by name, because the order read would be the drawing’s and the words would come out backwards, and you are pointed to .docx or .txt; an Arabic PDF with a sound text layer in logical order is not refused for this reason, and in the cases tested it reads as the same text as plain text, though such a file may still be refused for another reason, such as encryption or a missing text layer. Two limits remain there: a file drawn backwards that still carries ordinary letters is not caught by this, and a protected PDF that Z Privacy itself wrote in Arabic can no longer be brought in as a document to protect."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is Z Privacy free?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. There is no paid tier, no account and nothing to subscribe to, and the source is under the Apache License 2.0. What can cost money is the model you choose: a credential from OpenAI or Anthropic is billed by them at their prices, and a model running on your own computer costs nothing at all."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is it open source, and can companies use it?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes — Apache License 2.0, with the source repository linked from this site. Use it as you like, in a company or alone, and ask nobody. This project ships a NOTICE file, and §4(d) of the licence says what a distributed derivative work must do with the notices such a file contains; the licence and the file are both published here, and they are the text that governs rather than anything said on this page. It is attribution carried forward, not an advertisement you owe us."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How can I check Z Privacy's claims myself?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "docs/CLAIMS.md lists every claim with the same four lines each: the sentence we actually show, what it does not cover, the test or gate that proves it, and the command you run yourself. It is worth knowing what those two kinds of proof are: a test runs this product's code and measures what it does, while a gate reads the source and measures its shape — that there is one network client, that the interface cannot open a socket, that every door obeys a law. A shape check shows that the code satisfies the constraint it checks; it is not a recording of the program running, and no number of them adds up to a network capture, an installation or a security audit — which is why some claims in that file carry the word «unproven» rather than being removed from it."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Which operating systems does it run on, and why does Windows warn me?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Linux x86_64 with GTK3, and Windows 10 or 11 on x86_64; macOS, iOS and Android are not built. On Windows the first start shows a blue «Windows protected your PC» page, because nothing has signed this installer: that page means Windows has no basis to treat the file as trusted, not that it has examined it and found it safe or unsafe. The SHA-256 printed on the download page tells you the file you have is the file that fingerprint describes, provided the fingerprint itself comes from a source you trust — it says nothing about who published the file, and if the site serving both were compromised both could change together. It is not a substitute for a signature, and the download page's own paragraph says what the screen looks like and how it is got through."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Who makes Z Privacy?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Faruk AB, Aktiebolag (AB), Sweden. Company registration (Org.nr) 559473-3494. Hotellgatan 3, 311 31 Falkenberg, Sweden. Contact and support: zprivacy@mono-peak.com — there is no form and nothing is collected on this site."
+      }
+    }
+  ]
+}
+</script>
+</head>
+<body>
+<header class="top">
+  <a class="mark" href="/en/"><img class="z" src="../../assets/logo-512.png" width="30" height="30" alt="" aria-hidden="true"><span class="wm" lang="en" dir="ltr">Z Privacy</span></a>
+  <nav class="menus" aria-label="Language and help">
+    <details class="menu" name="topmenu">
+      <summary lang="en">English</summary>
+      <div class="menu-panel"><a class="menu-item" href="/en/faq/" lang="en" hreflang="en">English</a><a class="menu-item" href="/de/guide/" lang="de" hreflang="de">Deutsch</a><a class="menu-item" href="/ar/guide/" lang="ar" dir="rtl" hreflang="ar">العربية</a></div>
+    </details>
+    <details class="menu" name="topmenu">
+      <summary>Help</summary>
+      <div class="menu-panel"><a class="menu-item" href="/en/">Z Privacy — the first page</a><a class="menu-item" href="/en/faq/">How to use Z Privacy</a><a class="menu-item" href="/en/faq/">Questions and answers</a><a class="menu-item" href="/en/download/">Download Z Privacy</a><a class="menu-item" href="/en/privacy/">Privacy and data protection</a><a class="menu-item" href="/en/terms/">Terms of use</a><a class="menu-item" href="/license/">License</a><a class="menu-item" href="/third-party/">Third-party notices</a></div>
+    </details>
+  </nav>
+</header>
+<main>
+  <h1 class="doc-h">Questions and answers</h1>
+  <section aria-labelledby="q1">
+    <h2 class="q" id="q1">Is it safe to paste client documents into ChatGPT?</h2>
+    <p class="a">That depends on your agreement with the service and on what is in the document, and it is a question about them rather than about us. What is certain either way is that the whole document leaves your machine: the names, the account numbers and the addresses travel with the part you actually wanted help with. The useful question is which of those values the model needs for the task you are asking about — for some tasks it does need them — and Z&nbsp;Privacy is built so that you decide that value by value and see the result before anything is sent.</p>
+  </section>
+  <section aria-labelledby="q2">
+    <h2 class="q" id="q2">Do AI services use my conversations or files for training? And do they keep them?</h2>
+    <p class="a">Those are two different questions and each provider answers them separately: training is whether your content is used to improve a model, retention is how long a copy is kept and who may see it. The answers differ by provider, by plan — a consumer account and an API account are often not the same — and they change over time, so the only reliable source is the provider's own current terms. Z&nbsp;Privacy changes neither; what it changes is what is in the text you send.</p>
+  </section>
+  <section aria-labelledby="q3">
+    <h2 class="q" id="q3">How can I use AI on documents with personal data without sending the names?</h2>
+    <p class="a">You replace each value with a token before the text leaves, and put the real values back when the answer comes home. In Z&nbsp;Privacy that is the whole path — Import, Scan, Review, Protect, Choose who answers, AI, Restore — and before anything is sent you are shown exactly what will leave. The mapping from token back to value lives in your vault and nowhere else, so only your machine can reverse it. That is not the same as being unlinkable: what is left of a document can still point at a person through its content alone (see «anonymisation or pseudonymisation» and «does Z make me anonymous»).</p>
+  </section>
+  <section aria-labelledby="q4">
+    <h2 class="q" id="q4">What should I consider under GDPR before sending client data to AI?</h2>
+    <p class="a">Three separate things, and none of them substitutes for another. <b>Data minimisation</b> (Art. 5(1)(c)) asks whether the model needs a given value at all — that is the question a tool like Z&nbsp;Privacy helps with. <b>Your legal obligations</b> — a lawful basis, your records, your processor agreements, transfers — are yours, and no tool changes them. And <b>what Z&nbsp;Privacy does</b> is replace values in the text you send, which is pseudonymisation: under the GDPR that does not make data anonymous by itself, and the text may still be personal data depending on what is left in it (Art. 4(5), Recital 26). This is information, not legal advice; your controller or DPO decides.</p>
+  </section>
+  <section aria-labelledby="q5">
+    <h2 class="q" id="q5">What is the difference between anonymisation and pseudonymisation?</h2>
+    <p class="a">Pseudonymisation replaces identifying values with stand-ins while a mapping that can reverse it still exists somewhere; the data can remain personal data (Art. 4(5)). Data counts as anonymous only where the person can no longer be identified by means reasonably likely to be used — a standard that takes account of what others might reasonably do, and not only of what you would do — and then the GDPR no longer applies to it (Recital 26). Z&nbsp;Privacy does the first: the mapping is your vault, on your machine. And a text with every name removed can still be about one identifiable person — a single-patient clinic letter is the standard example.</p>
+  </section>
+  <section aria-labelledby="q6">
+    <h2 class="q" id="q6">How can an accountant use AI without exposing clients' financial data?</h2>
+    <p class="a">Work on the document inside Z&nbsp;Privacy: the scan and the values you have taught it find what they can, you add anything they did not, and the question goes out with tokens in place of those values. What is replaced is what Z&nbsp;Privacy detected or you marked; everything else stays in the text exactly as you approved it, which is why the review step exists and why it is shown to you before anything is sent. Your professional obligations are not changed by this: Z&nbsp;Privacy reduces what you send, it does not make the sending permissible.</p>
+  </section>
+  <section aria-labelledby="q7">
+    <h2 class="q" id="q7">How can a lawyer use AI on case files confidentially?</h2>
+    <p class="a">The same path: what Z&nbsp;Privacy detected and what you chose to protect is replaced before anything leaves, the rest of the text goes as you approved it, and the answer is restored on your machine. Z&nbsp;Privacy does not decide whether your professional rules allow an external model to see a matter at all — that judgement is yours and it differs by jurisdiction. What it changes is how much identifying detail is in what you send, and it shows you the exact text before it goes.</p>
+  </section>
+  <section aria-labelledby="q8">
+    <h2 class="q" id="q8">Can I use AI on medical or HR documents without revealing who they are about?</h2>
+    <p class="a">Mechanically yes — names, identifiers and addresses can be replaced before the text leaves. But these are the two kinds of document where the identity is most often inferable from the content itself, and no replacement fixes that. Health data is a special category under Art. 9 and HR data carries its own obligations; whether to process it with an external model at all is the controller's decision, not a tool's. If you do, pseudonymisation is a measure, not a permission.</p>
+  </section>
+  <section aria-labelledby="q9">
+    <h2 class="q" id="q9">What happens to my data when I upload a PDF to an AI chatbot?</h2>
+    <p class="a">The file leaves your machine and is processed on the provider's servers; what happens next — how long a copy is kept, who may look at it, whether it is used to improve a model — is set by that provider's terms and your plan, and is not visible from the file. The part worth noticing is that a PDF carries every page, including the ones you did not need help with. Z&nbsp;Privacy's answer is to send the text with the values replaced, rather than the file.</p>
+  </section>
+  <section aria-labelledby="q10">
+    <h2 class="q" id="q10">Can I use an AI model on my own computer instead of a cloud service?</h2>
+    <p class="a">Yes. Z&nbsp;Privacy speaks to any server that answers an OpenAI-compatible request, including one on your own machine — llama.cpp, Ollama, LM Studio — and a local model needs no key at all. Plain <code>http</code> is accepted only for a <b>literal</b> loopback IP address, never for a name like «localhost», so a hosts file cannot be what decides that plaintext is safe. On that path Z&nbsp;Privacy's request to the model goes to that address and no further; it says nothing about what other programs on your computer do.</p>
+  </section>
+  <section aria-labelledby="q11">
+    <h2 class="q" id="q11">What does Z&nbsp;Privacy do, in one minute?</h2>
+    <p class="a">You open a document or write a question. Z&nbsp;Privacy scans it with its rules, its language packs and the values you have taught it, and shows you two columns: your original, and what would leave. You protect what should not go — by the scan's own finding, by pressing a word, or by selecting a run of text with your hand — and nothing leaves while a suggestion is unanswered. Then you choose who answers, see the exact text before it is sent, and the answer comes back with your names restored on this machine.</p>
+  </section>
+  <section aria-labelledby="q12">
+    <h2 class="q" id="q12">What does the AI actually receive?</h2>
+    <p class="a">Three things are worth separating. <b>What Z&nbsp;Privacy sends</b> is one request to the address you configured: the model's name, your protected text, and — inside the app, from the second question on — the exchange before it, in the protected form it left in. That protected text is the document and question as you approved them, so whatever the scan did not find and you did not mark is in it, and the earlier exchange carries whatever it carried. The request also carries the credential you gave for that service. <b>What the provider can observe anyway</b>, as with any program that connects to it, is your network address, the time, how large the request was and how often you ask. <b>And what we measured</b>, exactly: one request recorded byte for byte against a server on this machine, asserting that the body's content is the protected payload character for character and that no original value and no vault value appears in the body, the headers or the URL. That is a measurement of one request's content, not a proof that no other program or path exists.</p>
+  </section>
+  <section aria-labelledby="q13">
+    <h2 class="q" id="q13">How do the real names come back into the answer?</h2>
+    <p class="a">On your machine, out of your vault. Inside the app the answer is restored as it arrives; if you carried the question to a model yourself, «Add an answer» brings the text back and every token that chat has carried turns back into its name. A protected PDF has its own door: «z-pdf» in Settings reads such a file back into its names and says which session each one came from. A token whose key this vault does not hold stays as text, and the app says so rather than guessing.</p>
+  </section>
+  <section aria-labelledby="q14">
+    <h2 class="q" id="q14">Does Z&nbsp;Privacy see or store my documents?</h2>
+    <p class="a">There is no Z&nbsp;Privacy account, no Z&nbsp;Privacy server and no analytics: the source carries one network client and one send path, the interface cannot open a socket at all, and no Z&nbsp;Privacy address appears anywhere in it — so the only address this program is built to speak to is the provider you configured, with the credential you gave it. On your own machine, <b>in this build and as read from its source code rather than watched on a running installation</b>, it writes a known set of files and no others: the encrypted vault, one encrypted file per session, a lock beside them, and a settings file that never holds your work — plus the two documents you ask for by name, a protected copy and a restored plain PDF. The document in the preview is kept in its session's own encrypted file until it leaves by one of the doors that take text out, and leaving takes the copy with it. By that same reading of the source: a file being written exists briefly under a second name beside the finished one, in the same folder, and is renamed into place; nothing is written to the system's temporary directory, and no log file is written at all.</p>
+  </section>
+  <section aria-labelledby="q15">
+    <h2 class="q" id="q15">Where are my names kept, and how are they protected?</h2>
+    <p class="a">In one encrypted vault file on your device, one block per protected value, opened by a passphrase that never leaves the machine — a test searches the written file for the names it was taught and finds none. The encryption is only as strong as the passphrase you choose, and an unlocked vault is readable by anything running as you on that machine: we protect a file at rest, not a machine already taken. On Linux the folder is narrowed to you and the core refuses to write if it cannot be; on Windows the folder is whatever that machine's own permissions make it.</p>
+  </section>
+  <section aria-labelledby="q16">
+    <h2 class="q" id="q16">What happens if I forget my passphrase?</h2>
+    <p class="a">The vault cannot be opened — not by you and not by us. This build has no recovery mechanism of any kind: no reset, no escrow, no second key and no copy held anywhere, and nothing on our side could recover the vault without the passphrase. The app says so before you set one: «There is no way back. Nobody holds a copy of this, and no reset exists — the passphrase never leaves this device and nothing on our side could recover the vault without it.»</p>
+  </section>
+  <section aria-labelledby="q17">
+    <h2 class="q" id="q17">Which AI services work with Z&nbsp;Privacy?</h2>
+    <p class="a">Two are supported and have been used against the live service: OpenAI and Anthropic. Four more are in the catalogue — xAI, DeepSeek, Moonshot and Google — and have not been tested with a live connection; a provider with no credential reports itself as unavailable rather than as ready. Five of the six go out through the same <code>chat/completions</code> request shape and Anthropic has its own, so a service that answers neither shape is not reached by this build however open the address field is. Every connection is made at an address you can change, and a model on your own computer needs no key at all.</p>
+  </section>
+  <section aria-labelledby="q18">
+    <h2 class="q" id="q18">Does Z&nbsp;Privacy make me anonymous to the AI provider?</h2>
+    <p class="a">No. You sign up under your own name with your own credential, and the provider is entitled to know who its customer is; your network address, the time and the size of each request are visible to them as they are to any service you connect to. Z&nbsp;Privacy removes values from inside the text — it does not remove you. What it protects is the people in your documents, who agreed to nothing with your provider.</p>
+  </section>
+  <section aria-labelledby="q19">
+    <h2 class="q" id="q19">What does Z&nbsp;Privacy detect automatically, and what must I mark myself?</h2>
+    <p class="a">Automatically: what its rules describe. The IBAN and BIC rules are not tied to a language pack, so they do not depend on which language a document is in; the language sets add e-mail addresses, telephone numbers, tax and social-insurance numbers, customer, contract and employee references, dates of birth, people, companies and addresses — and every value you have taught it is matched wherever it appears. All of that depends on two things upstream of any rule: that the text reached the scanner as it reads on the page, and that the value is written in a form the rules describe. Anything it is unsure of becomes a suggestion that waits for your word, and the law «nothing leaves while a suggestion is unanswered» is asked of every door that takes text out of the app: sending to a model, copying the protected text, copying the chat, and saving a protected PDF. Those doors are not a list somebody keeps up to date — they are counted from what the functions do, so a new one is caught by the count rather than remembered. What the scanner still misses is written down rather than left to be found: a typographic ligature, a date of birth written out in words, and a payment card from a network whose prefix is not in the published table.</p>
+  </section>
+  <section aria-labelledby="q20">
+    <h2 class="q" id="q20">Which file types and languages does it support?</h2>
+    <p class="a">Files: plain text (<code>.txt</code>, <code>.md</code>, <code>.csv</code>), Word documents (<code>.docx</code>) and PDFs. A PDF with no text layer — a photograph of a document — is refused by name rather than guessed at, and so is an encrypted one. Detection has four language packs today — English, German, Swedish and Arabic — beside rule sets that are not bound to a language, and the interface itself speaks those four. Arabic inside a PDF is a case of its own: a file that carries its text in the shapes a layout program drew is refused by name, because the order read would be the drawing’s and the words would come out backwards, and you are pointed to <code>.docx</code> or <code>.txt</code>; an Arabic PDF with a sound text layer in logical order is not refused for this reason, and in the cases tested it reads as the same text as plain text, though such a file may still be refused for another reason, such as encryption or a missing text layer. Two limits remain there: a file drawn backwards that still carries ordinary letters is not caught by this, and a protected PDF that Z&nbsp;Privacy itself wrote in Arabic can no longer be brought in as a document to protect.</p>
+  </section>
+  <section aria-labelledby="q21">
+    <h2 class="q" id="q21">Is Z&nbsp;Privacy free?</h2>
+    <p class="a">Yes. There is no paid tier, no account and nothing to subscribe to, and the source is under the Apache License 2.0. What can cost money is the model you choose: a credential from OpenAI or Anthropic is billed by them at their prices, and a model running on your own computer costs nothing at all.</p>
+  </section>
+  <section aria-labelledby="q22">
+    <h2 class="q" id="q22">Is it open source, and can companies use it?</h2>
+    <p class="a">Yes — Apache License 2.0, with the source repository linked from this site. Use it as you like, in a company or alone, and ask nobody. This project ships a <code>NOTICE</code> file, and §4(d) of the licence says what a distributed derivative work must do with the notices such a file contains; the licence and the file are both published here, and they are the text that governs rather than anything said on this page. It is attribution carried forward, not an advertisement you owe us.</p>
+  </section>
+  <section aria-labelledby="q23">
+    <h2 class="q" id="q23">How can I check Z&nbsp;Privacy's claims myself?</h2>
+    <p class="a"><code>docs/CLAIMS.md</code> lists every claim with the same four lines each: the sentence we actually show, what it does <b>not</b> cover, the test or gate that proves it, and the command you run yourself. It is worth knowing what those two kinds of proof are: a <b>test</b> runs this product's code and measures what it does, while a <b>gate</b> reads the source and measures its shape — that there is one network client, that the interface cannot open a socket, that every door obeys a law. A shape check shows that the code satisfies the constraint it checks; it is not a recording of the program running, and no number of them adds up to a network capture, an installation or a security audit — which is why some claims in that file carry the word «unproven» rather than being removed from it.</p>
+  </section>
+  <section aria-labelledby="q24">
+    <h2 class="q" id="q24">Which operating systems does it run on, and why does Windows warn me?</h2>
+    <p class="a">Linux x86_64 with GTK3, and Windows 10 or 11 on x86_64; macOS, iOS and Android are not built. On Windows the first start shows a blue «Windows protected your PC» page, because nothing has signed this installer: that page means Windows has no basis to treat the file as trusted, not that it has examined it and found it safe or unsafe. The SHA-256 printed on the download page tells you the file you have is the file that fingerprint describes, provided the fingerprint itself comes from a source you trust — it says nothing about who published the file, and if the site serving both were compromised both could change together. It is not a substitute for a signature, and the download page's own paragraph says what the screen looks like and how it is got through.</p>
+  </section>
+  <section aria-labelledby="q25">
+    <h2 class="q" id="q25">Who makes Z&nbsp;Privacy?</h2>
+    <p class="a">Faruk AB, Aktiebolag (AB), Sweden. Company registration (Org.nr) 559473-3494. Hotellgatan 3, 311 31 Falkenberg, Sweden. Contact and support: zprivacy@mono-peak.com — there is no form and nothing is collected on this site.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="foot-grid">
+    <div>
+      <h2 class="fh">Feedback</h2>
+      <p class="mail"><a href="mailto:zprivacy@mono-peak.com" dir="ltr">zprivacy@mono-peak.com</a></p>
+      <p class="note">Feedback by e-mail only. No form, no backend, nothing collected on this site.</p>
+      <h2 class="fh">Be told when a new version is out</h2>
+      <p class="mail"><a href="mailto:zprivacy@mono-peak.com?subject=Updates" dir="ltr">zprivacy@mono-peak.com</a></p>
+      <p class="note">Write with the subject «Updates». We write back only when a release is out, and we delete your address when you reply «stop». No form, no list service and no third party: the address stays in that mailbox and nowhere else.</p>
+    </div>
+    <div>
+      <h2 class="fh">Publisher</h2>
+      <div class="legal"><div>Faruk AB</div><div>Aktiebolag (AB), Sweden</div><div>Company registration (Org.nr) 559473-3494</div><div>Hotellgatan 3, 311 31 Falkenberg, Sweden</div></div>
+      <p class="legal-contact"><a href="/en/privacy/">Privacy and data protection</a></p>
+      <p class="legal-contact"><a href="/en/terms/">Terms of use</a></p>
+      <p class="legal-contact">Contact and support: <a href="mailto:zprivacy@mono-peak.com" dir="ltr">zprivacy@mono-peak.com</a></p>
+    </div>
+  </div>
+  <p class="copy">© 2026 Faruk AB. Licensed under the Apache License 2.0.</p>
+  <p class="colophon" lang="en">Z Privacy &#183; A mono-peak project by Faruk AB &#183; Apache-2.0</p>
+</footer>
+</body>
+</html>
