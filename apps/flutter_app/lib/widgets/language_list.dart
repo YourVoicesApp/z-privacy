@@ -59,7 +59,13 @@ import 'package:zprivacy/widgets/bits.dart';
 /// absent from Settings, the session room and the bar (which read that one).
 /// The core is where that was fixed, and this is the note for the next
 /// language that arrives in only one of the two registers.
-const offeredLanguages = <String>['ar', 'de', 'en', 'sv'];
+///
+/// **And French and Spanish since paper 120** (2 November 2026): the core
+/// carries a pack for each — numbers by their check, names by their shape —
+/// and rule 56 says every pack this build carries is offered. Their words
+/// are paper 121's; until they are written, `theListIsWrittenIn` answers «no»
+/// for both and the interface stays in English, which is that function's law.
+const offeredLanguages = <String>['ar', 'de', 'en', 'es', 'fr', 'sv'];
 
 /// The sheet after a file was chosen is **gone** — 080. It asked «which
 /// language is this document?», which the owner replaced with two sources and

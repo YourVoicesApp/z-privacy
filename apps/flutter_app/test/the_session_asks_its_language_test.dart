@@ -86,7 +86,8 @@ void main() {
     final offered = ground.packs.where((p) => offeredLanguages.contains(p.id)).toList();
     expect(
       offered.map((p) => p.id).toList()..sort(),
-      ['ar', 'de', 'en', 'sv'],
+      // French and Spanish since paper 120: the core carries both packs.
+      ['ar', 'de', 'en', 'es', 'fr', 'sv'],
       reason: 'the languages offered on the glass are ${offered.map((p) => p.id).toList()}',
     );
     expect(
