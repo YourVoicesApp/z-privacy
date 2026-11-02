@@ -1,0 +1,42 @@
+# «/» is answered by the server, not by a page — paper 121, the owner's ruling
+# of 2 November 2026: «نلغي الشاشة الأولى ونجعل المستخدم يدخل مباشرة… بلغة
+# متصفحه إن وُجد، أو إنكليزية».
+#
+# **This file is not served and is not read by anything in this repository.**
+# Like `_headers` beside it, it is the record of what the server is told, kept
+# with the pages so the intent is reviewable with them. The lead puts these
+# lines on the server at the publish; keep the two in step.
+#
+# Why the server: the language chooser that stood at «/» is retired (moved,
+# not deleted, to `packaging/retired/site-index-the-language-chooser.html`),
+# and a page cannot choose a language for the visitor without a script, which
+# this site's Content-Security-Policy forbids (`default-src 'none'`, no
+# `script-src`). So the choice is made where the browser already says it:
+# `Accept-Language`.
+#
+# The rule: **the first of our five languages the browser names, in the order
+# it names them; English when it names none of them.** The regex is searched,
+# so it finds the leftmost of ours in the header — «fr-CH, fr;q=0.9, en;q=0.8»
+# answers fr, «sv-SE, de;q=0.7» answers de, «ja-JP» answers en. Quality values
+# are not ranked: every browser sends its list already in its own order, and
+# ranking them would be a parser in a config file for no visitor we know of.
+
+# In the `http {}` block (once):
+map $http_accept_language $zprivacy_lang {
+    default                                         en;
+    "~*(?:^|,)\s*(?<zp>ar|de|fr|es|en)(?:[-;,\s]|$)" $zp;
+}
+
+# In the z-privacy.com `server {}` block:
+location = / {
+    # A redirect, not a page: nothing at «/» to keep in step with five
+    # languages. 302 and `Vary`, because the answer depends on the visitor and
+    # must not be cached as one answer for everybody.
+    #
+    # `add_header` in a location replaces the server's headers rather than
+    # adding to them, so the headers record is included again here — without
+    # it this one response would go out without the CSP.
+    include snippets/zprivacy-headers.conf;
+    add_header Vary Accept-Language always;
+    return 302 /$zprivacy_lang/;
+}

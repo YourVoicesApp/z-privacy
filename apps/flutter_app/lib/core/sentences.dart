@@ -142,6 +142,17 @@ bool theListIsWrittenIn(String code) {
       t.theseRulesWillBeEnabled != en.theseRulesWillBeEnabled;
 }
 
+/// **The lists written with AI, and the subject a correction carries** — paper
+/// 121, the owner's ruling of 2 November 2026: French and Spanish were
+/// translated with AI, and the screen that chooses them says so, with the
+/// address and a subject the mailbox can be filtered by. A list a person wrote
+/// is not in this set; a list added the same way joins it.
+const theListsWrittenWithAi = {'fr', 'es'};
+
+/// «Translation (FR)», «Translation (ES)» — the subject is the same in every
+/// interface language on purpose: it is what the lead filters the mailbox by.
+String theCorrectionSubject(String code) => sentences.theCorrectionSubject(code.toUpperCase());
+
 /// The locale a language code names, for the one place that applies it.
 ///
 /// The code is the core's — `settings.zcfg`'s `ui_language`, which reaches the

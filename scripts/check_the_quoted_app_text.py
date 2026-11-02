@@ -44,8 +44,16 @@ import subprocess
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-LANGS = ('en', 'de', 'ar')
-TAG = {'en': 'EN', 'de': 'DE', 'ar': 'AR'}
+LANGS = ('en', 'de', 'ar', 'fr', 'es')
+TAG = {'en': 'EN', 'de': 'DE', 'ar': 'AR', 'fr': 'FR', 'es': 'ES'}
+
+# **A language the released build does not speak yet** — paper 121, 2 November
+# 2026. French and Spanish were written after build 50270fd, so that build has
+# no list to quote from: there is no screen anywhere showing those sentences
+# yet. Their FAQ quotes the **tree's** list instead, said as a NOTE on every
+# run, and the day a build carrying them is published the download pages' sha
+# moves and the ordinary rule above takes them over with no edit here.
+NOT_YET_RELEASED = ('fr', 'es')
 
 # question -> the arb keys its answer quotes, in the order they appear.
 QUOTED = {
@@ -124,12 +132,16 @@ def main():
         print('  FAIL   the download pages offer build %s and this repository has '
               'no such commit' % sha)
         return 1
-    print('  PASS   the three download pages agree: the released build is %s' % sha)
+    print('  PASS   the download pages agree: the released build is %s' % sha)
 
     bad = 0
     checked = 0
     for lang in LANGS:
         shipped = at(sha, lang)
+        if shipped is None and lang in NOT_YET_RELEASED and in_the_tree(lang):
+            print('  NOTE   %s is not in build %s; its quotations follow the tree\u2019s '
+                  'list until a build carrying it is published' % (TAG[lang], sha))
+            shipped = in_the_tree(lang)
         if shipped is None:
             print('  FAIL   %s has no %s, so that language has no released '
                   'sentences to quote' % (sha, ARB % lang))

@@ -336,7 +336,7 @@
   "refusalUnreadableStructure": "Page {page} is built in a way this build cannot read.",
   "refusalTextInDisplayForms": "{percent}% of this text's Arabic is written in the display forms a layout program draws, so what Z read is in the order it was drawn and not the order it was written — the words and the numbers come out backwards. Z will not protect a text it has read backwards: a name read backwards is a name it cannot protect. A Word file or a plain-text file is read in the order it was written.",
   "@refusalTextInDisplayForms": {
-    "description": "Why a document was refused: its Arabic stands in Unicode's compatibility blocks (U+FB50\u2013FDFF, U+FE70\u2013FEFF), which a layout engine emits once it has chosen each letter's shape \u2014 and an engine that chose the shapes chose the order, so the extracted text is the drawing's order and comes out reversed. Paper 119, the owner's rule of 26 October 2026. The number is the share, measured over the whole document; the two sides of it were 0.2% and 96% on the five fixtures of paper 118.",
+    "description": "Why a document was refused: its Arabic stands in Unicode's compatibility blocks (U+FB50–FDFF, U+FE70–FEFF), which a layout engine emits once it has chosen each letter's shape — and an engine that chose the shapes chose the order, so the extracted text is the drawing's order and comes out reversed. Paper 119, the owner's rule of 26 October 2026. The number is the share, measured over the whole document; the two sides of it were 0.2% and 96% on the five fixtures of paper 118.",
     "placeholders": {
       "percent": {
         "type": "int"
@@ -3734,5 +3734,23 @@
   "couldNotOpenYourBrowser": "Z Privacy could not open your browser. The address on the press opens in any browser by hand.",
   "@couldNotOpenYourBrowser": {
     "description": "The opener could not be started — no desktop opener on this machine, or the platform is one this build does not know. A press that does nothing and says nothing is a dead control (rule 35), and the address is on the press for exactly this case."
+  },
+  "thisTranslationWasMadeWithAi": "This translation was made with AI. To report a mistake, write to zprivacy@mono-peak.com with the subject “{subject}”.",
+  "@thisTranslationWasMadeWithAi": {
+    "description": "Paper 121, the owner's ruling of 2 November 2026: under the language choice in the Language room, when the chosen language is one whose list was translated with AI (French, Spanish). {subject} is «Translation (FR)» or «Translation (ES)» and is not translated: it is what the lead filters the mailbox by. The subject is ours, not a word of the person's own, so it is quoted with “” and not with the «» the house keeps for a person's word (G44).",
+    "placeholders": {
+      "subject": {
+        "type": "String"
+      }
+    }
+  },
+  "theCorrectionSubject": "Translation ({code})",
+  "@theCorrectionSubject": {
+    "description": "Paper 121: the subject of a mail correcting an AI translation — «Translation (FR)», «Translation (ES)». The same English words in every list on purpose: it is what the lead filters the mailbox by, so it is never translated.",
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
   }
 }

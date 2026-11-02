@@ -575,6 +575,19 @@ class _LanguageRoom extends StatelessWidget {
               // with nothing on the screen saying so. The setting still keeps
               // their choice — `theLocaleOf` is what falls back — and this
               // line is the screen saying both facts instead of one.
+              // **A list written with AI says so, under the choice** — paper
+              // 121: the owner's word for French and Spanish. Only for the
+              // language that is chosen, because that is the list the person
+              // is reading now; the line is in that list too.
+              if (theListsWrittenWithAi.contains(c.language) && theListIsWrittenIn(c.language))
+                Padding(
+                  padding: const EdgeInsets.only(top: 9),
+                  child: Text(
+                    sentences.thisTranslationWasMadeWithAi(theCorrectionSubject(c.language)),
+                    key: const ValueKey('the-translation-was-made-with-ai'),
+                    style: Zc.tiny.copyWith(letterSpacing: 0),
+                  ),
+                ),
               for (final p in ground.packs.where(
                   (p) => offeredLanguages.contains(p.id) && !theListIsWrittenIn(p.id)))
                 Padding(

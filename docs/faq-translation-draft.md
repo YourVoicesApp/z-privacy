@@ -46,6 +46,10 @@ English one means is a judgement, and for Arabic the owner is the reader.
 
 </div>
 
+**FR (draft, made with AI, read by the lead).** Cela dépend de votre contrat avec le service et de ce que contient le document, et c’est une question qui les concerne, eux, plutôt que nous. Ce qui est certain dans tous les cas, c’est que le document entier quitte votre machine : les noms, les numéros de compte et les adresses partent avec la partie pour laquelle vous vouliez réellement de l’aide. La question utile est de savoir lesquelles de ces valeurs le modèle nécessite pour la tâche que vous lui soumettez — pour certaines tâches, il en a bel et bien besoin — et Z Privacy est conçu pour que vous en décidiez valeur par valeur et voyiez le résultat avant tout envoi.
+
+**ES (draft, made with AI, read by the lead).** Depende de su acuerdo con el servicio y de lo que contenga el documento, y es una pregunta sobre ellos más que sobre nosotros. Lo que es seguro en cualquier caso es que el documento entero sale de su equipo: los nombres, los números de cuenta y las direcciones viajan con la parte con la que realmente quería ayuda. La pregunta útil es cuáles de esos valores necesita el modelo para la tarea sobre la que pregunta — para algunas tareas sí los necesita — y Z Privacy está hecho para que usted lo decida valor por valor y vea el resultado antes de que se envíe nada.
+
 **Limits to watch — certainty.** depends on your agreement / for some tasks it does need them
 
 ## Q2 · Do AI services use my conversations or files for training? And do they keep them?
@@ -59,6 +63,10 @@ English one means is a judgement, and for Arabic the owner is the reader.
 هذان سؤالان مختلفان، وكلُّ مزوّدٍ يجيب عنهما على حدة: التدريبُ هو هل تُستعمل محتوياتُك في تحسين نموذج، والاحتفاظُ هو كم تبقى النسخةُ ومن يجوز له النظرُ فيها. والأجوبةُ تختلف بالمزوّد، وبالاشتراك — فحسابُ المستهلك وحسابُ الواجهة البرمجيّة ليسا الشيءَ نفسَه غالباً — وتتغيّر مع الزمن؛ فالمصدرُ الموثوقُ الوحيد هو شروطُ المزوّد نفسِه السارية. وZ Privacy لا يغيّر واحداً منهما؛ ما يغيّره هو ما في النصّ الذي ترسله.
 
 </div>
+
+**FR (draft, made with AI, read by the lead).** Ce sont deux questions différentes, et chaque fournisseur y répond séparément : l’entraînement, c’est la question de savoir si votre contenu sert à améliorer un modèle ; la conservation, c’est la durée pendant laquelle une copie est gardée et qui peut la voir. Les réponses varient selon le fournisseur et selon l’offre — un compte grand public et un compte API ne sont souvent pas la même chose — et elles évoluent dans le temps ; la seule source fiable est donc les conditions actuelles du fournisseur lui-même. Z Privacy ne change ni l’une ni l’autre ; ce qu’il change, c’est ce que contient le texte que vous envoyez.
+
+**ES (draft, made with AI, read by the lead).** Son dos preguntas distintas y cada proveedor las responde por separado: el entrenamiento es si su contenido se usa para mejorar un modelo; la conservación es cuánto tiempo se guarda una copia y quién puede verla. Las respuestas varían según el proveedor y según el plan — una cuenta de consumidor y una cuenta de API a menudo no son lo mismo — y cambian con el tiempo, así que la única fuente fiable son las condiciones vigentes del propio proveedor. Z Privacy no cambia ninguna de las dos cosas; lo que cambia es lo que contiene el texto que usted envía.
 
 **Limits to watch — certainty.** differ by provider, by plan … and they change over time
 
@@ -74,6 +82,10 @@ English one means is a judgement, and for Arabic the owner is the reader.
 
 </div>
 
+**FR (draft, made with AI, read by the lead).** Vous remplacez chaque valeur par un jeton avant que le texte ne parte, et vous remettez les vraies valeurs en place quand la réponse revient. Dans Z Privacy, c’est tout le parcours — Importer, Analyser, Vérifier, Protéger, Choisir qui répond, IA, Restaurer — et avant tout envoi, on vous montre exactement ce qui va partir. La correspondance entre le jeton et la valeur réside dans votre coffre et nulle part ailleurs ; seule votre machine peut donc l’inverser. Ce n’est pas la même chose que d’être impossible à relier : ce qui reste d’un document peut encore désigner une personne par son seul contenu (voir « anonymisation ou pseudonymisation » et « Z me rend-il anonyme »).
+
+**ES (draft, made with AI, read by the lead).** Usted sustituye cada valor por un marcador antes de que el texto salga, y vuelve a poner los valores reales cuando llega la respuesta. En Z Privacy ese es todo el camino — Importar, Escanear, Revisar, Proteger, Elegir quién responde, IA, Restaurar — y antes de que se envíe nada se le muestra exactamente qué saldrá. La correspondencia entre el marcador y el valor vive en su bóveda y en ningún otro lugar, así que solo su equipo puede invertirla. Eso no es lo mismo que ser imposible de vincular: lo que queda de un documento todavía puede señalar a una persona solo por su contenido (véase «anonimización o seudonimización» y «si Z me hace anónimo»).
+
 **Limits to watch — protection limits.** that is not the same as being unlinkable
 
 ## Q4 · What should I consider under GDPR before sending client data to AI?
@@ -87,6 +99,10 @@ English one means is a judgement, and for Arabic the owner is the reader.
 ثلاثةُ أشياءَ منفصلة، ولا يُغني واحدٌ منها عن الآخر. **تقليلُ البيانات** (المادّة ٥/١/ج) يسأل: هل يحتاج النموذجُ هذه القيمةَ أصلاً؟ وهذا هو السؤالُ الذي تُعين فيه أداةٌ مثل Z Privacy. و**التزاماتُك القانونيّة** — أساسٌ قانونيّ، وسجلّاتُك، وعقودُ المعالجة لديك، والنقلُ إلى الخارج — هي التزاماتُك، ولا تغيّرها أداة. و**ما يفعله Z Privacy** هو استبدالُ قيمٍ في النصّ الذي ترسله، وهذا ترميزٌ (Pseudonymisation) لا إخفاءٌ للهويّة: فهو بنفسه لا يجعل البياناتِ مجهولةً بحكم اللائحة، وقد يبقى النصُّ بياناتٍ شخصيّةً تبعاً لما بقي فيه (المادّة ٤/٥ والحيثيّة ٢٦). وهذه معلومةٌ لا استشارةٌ قانونيّة؛ والقرارُ لمسؤول المعالجة عندك أو لمسؤول حماية البيانات.
 
 </div>
+
+**FR (draft, made with AI, read by the lead).** Trois choses distinctes, et aucune ne remplace l’autre. La minimisation des données (art. 5(1)(c)) demande si le modèle a seulement besoin d’une valeur donnée — c’est la question à laquelle un outil comme Z Privacy aide à répondre. Vos obligations légales — une base juridique, vos registres, vos contrats de sous-traitance, les transferts — sont les vôtres, et aucun outil ne les change. Et ce que fait Z Privacy, c’est remplacer des valeurs dans le texte que vous envoyez, ce qui est une pseudonymisation : au sens du RGPD, cela ne rend pas à soi seul les données anonymes, et le texte peut rester une donnée personnelle selon ce qu’il contient encore (art. 4(5), considérant 26). Ceci est une information, pas un conseil juridique ; c’est votre responsable du traitement ou votre DPO qui décide.
+
+**ES (draft, made with AI, read by the lead).** Tres cosas distintas, y ninguna sustituye a otra. La minimización de datos (Art. 5(1)(c)) pregunta si el modelo necesita siquiera un valor concreto — esa es la pregunta con la que ayuda una herramienta como Z Privacy. Sus obligaciones legales — una base jurídica, sus registros, sus contratos de encargo del tratamiento, las transferencias — son suyas, y ninguna herramienta las cambia. Y lo que hace Z Privacy es sustituir valores en el texto que usted envía, lo cual es seudonimización: según el RGPD, eso no hace anónimos los datos por sí solo, y el texto puede seguir siendo un dato personal según lo que quede en él (Art. 4(5), considerando 26). Esto es información, no asesoramiento jurídico; decide su responsable del tratamiento o su delegado de protección de datos.
 
 **Limits to watch — certainty.** does not make data anonymous by itself … may still be personal data
 
@@ -102,6 +118,10 @@ English one means is a judgement, and for Arabic the owner is the reader.
 
 </div>
 
+**FR (draft, made with AI, read by the lead).** La pseudonymisation remplace les valeurs identifiantes par des substituts, tandis qu’une correspondance capable de l’inverser existe encore quelque part ; les données peuvent rester des données personnelles (art. 4(5)). Des données ne sont considérées comme anonymes que lorsque la personne ne peut plus être identifiée par des moyens raisonnablement susceptibles d’être utilisés — un critère qui tient compte de ce que d’autres pourraient raisonnablement faire, et pas seulement de ce que vous feriez — et le RGPD cesse alors de s’y appliquer (considérant 26). Z Privacy fait la première : la correspondance, c’est votre coffre, sur votre machine. Et un texte dont tous les noms ont été retirés peut encore porter sur une seule personne identifiable — la lettre d’une clinique concernant un seul patient en est l’exemple type.
+
+**ES (draft, made with AI, read by the lead).** La seudonimización sustituye los valores identificativos por sustitutos mientras en algún lugar sigue existiendo una correspondencia que permite invertirla; los datos pueden seguir siendo datos personales (Art. 4(5)). Los datos solo cuentan como anónimos cuando la persona ya no puede ser identificada por medios que razonablemente puedan utilizarse — un criterio que tiene en cuenta lo que otros podrían hacer razonablemente, y no solo lo que haría usted — y entonces el RGPD deja de aplicarse a ellos (considerando 26). Z Privacy hace lo primero: la correspondencia es su bóveda, en su equipo. Y un texto del que se han quitado todos los nombres todavía puede tratar de una persona identificable — una carta clínica sobre un único paciente es el ejemplo clásico.
+
 **Limits to watch — certainty.** can remain personal data / means reasonably likely to be used
 
 ## Q6 · How can an accountant use AI without exposing clients' financial data?
@@ -115,6 +135,10 @@ English one means is a judgement, and for Arabic the owner is the reader.
 اعمل على الوثيقة داخل Z Privacy: يحدّد الفحصُ والقيمُ التي علّمتَها لـZ Privacy سابقاً ما يستطيعان اكتشافه، وتضيف أنت ما لم يُكتشف، ويخرج السؤالُ وفي مواضع تلك القيم رموز. والمستبدَلُ هو ما كشفه Z Privacy أو ما وسمتَه أنت؛ وكلُّ ما عدا ذلك يبقى في النصّ كما أقررتَه تماماً — ولهذا توجد خطوةُ المراجعة، ولهذا تُعرَض عليك قبل أن يُرسَل شيء. ولا تتغيّر بهذا التزاماتُك المهنيّة: فZ Privacy يُقلّل ما ترسله، ولا يجعل الإرسالَ جائزاً.
 
 </div>
+
+**FR (draft, made with AI, read by the lead).** Travaillez sur le document dans Z Privacy : l’analyse et les valeurs que vous lui avez apprises trouvent ce qu’elles peuvent, vous ajoutez ce qu’elles n’ont pas trouvé, et la question part avec des jetons à la place de ces valeurs. Ce qui est remplacé, c’est ce que Z Privacy a détecté ou ce que vous avez marqué ; tout le reste demeure dans le texte exactement tel que vous l’avez approuvé, et c’est pourquoi l’étape de vérification existe et pourquoi elle vous est présentée avant tout envoi. Vos obligations professionnelles n’en sont pas modifiées : Z Privacy réduit ce que vous envoyez, il ne rend pas l’envoi permis.
+
+**ES (draft, made with AI, read by the lead).** Trabaje con el documento dentro de Z Privacy: el análisis y los valores que usted le ha enseñado encuentran lo que pueden, usted añade lo que no encontraron, y la pregunta sale con marcadores en lugar de esos valores. Lo que se sustituye es lo que Z Privacy detectó o usted marcó; todo lo demás permanece en el texto exactamente como usted lo aprobó, y por eso existe el paso de revisión y por eso se le muestra antes de que se envíe nada. Sus obligaciones profesionales no cambian con esto: Z Privacy reduce lo que usted envía, no hace que el envío esté permitido.
 
 **Limits to watch — protection limits.** what Z Privacy detected or you marked — never «all sensitive data»
 
@@ -130,6 +154,10 @@ English one means is a judgement, and for Arabic the owner is the reader.
 
 </div>
 
+**FR (draft, made with AI, read by the lead).** Le même parcours : ce que Z Privacy a détecté et ce que vous avez choisi de protéger est remplacé avant que quoi que ce soit ne parte, le reste du texte part tel que vous l’avez approuvé, et la réponse est restaurée sur votre machine. Z Privacy ne décide pas si vos règles professionnelles autorisent seulement un modèle externe à voir une affaire — ce jugement vous appartient et il varie selon la juridiction. Ce qu’il change, c’est la quantité de détails identifiants dans ce que vous envoyez, et il vous montre le texte exact avant son départ.
+
+**ES (draft, made with AI, read by the lead).** El mismo camino: lo que Z Privacy detectó y lo que usted eligió proteger se sustituye antes de que salga nada, el resto del texto sale como usted lo aprobó, y la respuesta se restaura en su equipo. Z Privacy no decide si sus normas profesionales permiten siquiera que un modelo externo vea un asunto — ese juicio es suyo y varía según la jurisdicción. Lo que cambia es cuánto detalle identificativo hay en lo que usted envía, y le muestra el texto exacto antes de que salga.
+
 **Limits to watch — protection limits.** what Z Privacy detected and what you chose to protect
 
 ## Q8 · Can I use AI on medical or HR documents without revealing who they are about?
@@ -143,6 +171,10 @@ English one means is a judgement, and for Arabic the owner is the reader.
 نعم من جهة الآليّة — فالأسماءُ والمعرِّفات والعناوين يمكن استبدالُها قبل أن يغادر النصّ. لكنّهما نوعا الوثائق اللذان يُستدَلّ فيهما على الهويّة من المحتوى نفسِه أكثرَ من غيرهما، ولا يُصلح ذلك أيُّ استبدال. والبياناتُ الصحّيّة فئةٌ خاصّةٌ بالمادّة ٩، ولبيانات الموظّفين التزاماتُها؛ وقرارُ معالجتها بنموذجٍ خارجيٍّ أصلاً هو لمسؤول المعالجة لا لأداة. وإن فعلتَ، فالترميزُ تدبيرٌ لا إذن.
 
 </div>
+
+**FR (draft, made with AI, read by the lead).** Mécaniquement, oui — les noms, les identifiants et les adresses peuvent être remplacés avant que le texte ne parte. Mais ce sont précisément les deux types de documents où l’identité se déduit le plus souvent du contenu lui-même, et aucun remplacement n’y remédie. Les données de santé sont une catégorie particulière au sens de l’art. 9, et les données RH comportent leurs propres obligations ; la décision de les traiter ou non avec un modèle externe appartient au responsable du traitement, pas à un outil. Si vous le faites, la pseudonymisation est une mesure, pas une autorisation.
+
+**ES (draft, made with AI, read by the lead).** Mecánicamente, sí — los nombres, los identificadores y las direcciones pueden sustituirse antes de que el texto salga. Pero estos son los dos tipos de documento en los que la identidad se deduce con más frecuencia del propio contenido, y ninguna sustitución lo remedia. Los datos de salud son una categoría especial según el Art. 9 y los datos de recursos humanos conllevan sus propias obligaciones; tratarlos o no con un modelo externo es decisión del responsable del tratamiento, no de una herramienta. Si lo hace, la seudonimización es una medida, no un permiso.
 
 **Limits to watch — protection limits.** the identity is often inferable from the content itself
 
@@ -158,6 +190,10 @@ English one means is a judgement, and for Arabic the owner is the reader.
 
 </div>
 
+**FR (draft, made with AI, read by the lead).** Le fichier quitte votre machine et il est traité sur les serveurs du fournisseur ; ce qui se passe ensuite — combien de temps une copie est conservée, qui peut la consulter, si elle sert à améliorer un modèle — est fixé par les conditions de ce fournisseur et par votre offre, et ne se voit pas depuis le fichier. Ce qui mérite d’être remarqué, c’est qu’un PDF emporte toutes ses pages, y compris celles pour lesquelles vous n’aviez pas besoin d’aide. La réponse de Z Privacy est d’envoyer le texte, avec les valeurs remplacées, plutôt que le fichier.
+
+**ES (draft, made with AI, read by the lead).** El archivo sale de su equipo y se procesa en los servidores del proveedor; lo que ocurre después — cuánto tiempo se guarda una copia, quién puede verla, si se usa para mejorar un modelo — lo fijan las condiciones de ese proveedor y su plan, y no es visible desde el archivo. Lo que conviene notar es que un PDF lleva todas las páginas, incluidas aquellas con las que no necesitaba ayuda. La respuesta de Z Privacy es enviar el texto con los valores sustituidos, en lugar del archivo.
+
 **Limits to watch — certainty.** is set by that provider’s terms and your plan
 
 ## Q10 · Can I use an AI model on my own computer instead of a cloud service?
@@ -171,6 +207,10 @@ English one means is a judgement, and for Arabic the owner is the reader.
 نعم. يتحدّث Z Privacy إلى أيّ خادمٍ يجيب طلباً متوافقاً مع OpenAI، ومنها خادمٌ على جهازك أنت — llama.cpp أو Ollama أو LM Studio — والنموذجُ المحلّيّ لا يحتاج مفتاحاً أصلاً. ولا يُقبل `http` العاديّ إلّا لعنوان loopback **حرفيّ**، ولا يُقبل لاسمٍ مثل «localhost»، حتّى لا يكون ملفُّ hosts هو ما يقرّر أنّ النصّ الصريح آمن. وعلى هذا الطريق يذهب طلبُ Z Privacy إلى النموذج عند ذلك العنوان ولا يتجاوزه؛ ولا يقول شيئاً عمّا تفعله البرامجُ الأخرى على جهازك.
 
 </div>
+
+**FR (draft, made with AI, read by the lead).** Oui. Z Privacy communique avec tout serveur qui répond à une requête compatible OpenAI, y compris un serveur sur votre propre machine — llama.cpp, Ollama, LM Studio — et un modèle local n’a besoin d’aucune clé. Le simple http n’est accepté que pour une adresse IP de bouclage écrite littéralement, jamais pour un nom comme « localhost » ; un fichier hosts ne peut donc pas être ce qui décide que le texte en clair est sûr. Sur ce chemin, la requête de Z Privacy au modèle va à cette adresse et pas plus loin ; cela ne dit rien de ce que font les autres programmes de votre ordinateur.
+
+**ES (draft, made with AI, read by the lead).** Sí. Z Privacy habla con cualquier servidor que responda a una solicitud compatible con OpenAI, incluido uno en su propio equipo — llama.cpp, Ollama, LM Studio — y un modelo local no necesita ninguna clave. El http sin cifrar solo se acepta para una dirección IP de loopback literal, nunca para un nombre como «localhost», de modo que un archivo hosts no puede ser lo que decida que el texto sin cifrar es seguro. En ese camino, la solicitud de Z Privacy al modelo va a esa dirección y no más allá; no dice nada sobre lo que hagan otros programas de su ordenador.
 
 **Limits to watch — claim limits.** goes to that address and no further; it says nothing about other programs
 
@@ -186,6 +226,10 @@ English one means is a judgement, and for Arabic the owner is the reader.
 
 </div>
 
+**FR (draft, made with AI, read by the lead).** Vous ouvrez un document ou vous écrivez une question. Z Privacy l’analyse avec ses règles, ses modules de langue et les valeurs que vous lui avez apprises, et vous montre deux colonnes : votre original, et ce qui partirait. Vous protégez ce qui ne doit pas partir — par ce que l’analyse a elle-même trouvé, en cliquant sur un mot, ou en sélectionnant à la main un passage de texte — et rien ne part tant qu’une suggestion reste sans réponse. Ensuite, vous choisissez qui répond, vous voyez le texte exact avant son envoi, et la réponse revient avec vos noms restaurés sur cette machine.
+
+**ES (draft, made with AI, read by the lead).** Usted abre un documento o escribe una pregunta. Z Privacy lo analiza con sus reglas, sus paquetes de idioma y los valores que usted le ha enseñado, y le muestra dos columnas: su original y lo que saldría. Usted protege lo que no debe salir — por lo que encontró el propio análisis, pulsando una palabra o seleccionando un tramo de texto con la mano — y no sale nada mientras haya una sugerencia sin responder. Luego elige quién responde, ve el texto exacto antes de que se envíe, y la respuesta vuelve con sus nombres restaurados en este equipo.
+
 **Limits to watch — protection limits.** nothing leaves while a suggestion is unanswered
 
 ## Q12 · What does the AI actually receive?
@@ -199,6 +243,10 @@ English one means is a judgement, and for Arabic the owner is the reader.
 ثلاثةُ أشياءَ يجدر فصلُها. **ما يُرسله Z Privacy** هو طلبٌ واحدٌ إلى العنوان الذي أعددتَه: اسمُ النموذج، ونصُّك المحميّ، و— داخل التطبيق، ابتداءً من السؤال الثاني — التبادلُ الذي قبله بالصورة المحميّة التي غادر بها. وهذا النصُّ المحميّ هو الوثيقةُ والسؤالُ كما أقررتَهما، فما لم يجده الفحصُ ولم تَسِمْه أنت موجودٌ فيه، والتبادلُ السابق يحمل ما كان يحمله. ويحمل الطلبُ أيضاً بيانَ الاعتماد الذي أعطيتَه لتلك الخدمة. و**ما يستطيع المزوّد ملاحظتَه على كلّ حال**، كما مع أيّ برنامجٍ يتّصل به، هو عنوانُك الشبكيّ، والوقت، وحجمُ الطلب، وكم مرّةً تسأل. و**ما قِسناه نحن**، بالضبط: طلبٌ واحدٌ سُجّل بايتاً بايتاً أمام خادمٍ على هذا الجهاز، مع إثباتِ أنّ محتوى الجسم هو الحمولةُ المحميّة حرفاً بحرف، وأنّه لا تظهر قيمةٌ أصليّةٌ ولا قيمةٌ من الخزنة في الجسم ولا في الترويسات ولا في العنوان. وهذا قياسُ محتوى طلبٍ واحد، لا برهانٌ على أنّه لا يوجد برنامجٌ آخرُ ولا طريقٌ آخر.
 
 </div>
+
+**FR (draft, made with AI, read by the lead).** Il vaut la peine de distinguer trois choses. Ce que Z Privacy envoie, c’est une seule requête à l’adresse que vous avez configurée : le nom du modèle, votre texte protégé et — dans l’application, à partir de la deuxième question — l’échange qui la précède, sous la forme protégée dans laquelle il est parti. Ce texte protégé est le document et la question tels que vous les avez approuvés ; tout ce que l’analyse n’a pas trouvé et que vous n’avez pas marqué s’y trouve donc, et l’échange précédent emporte ce qu’il emportait. La requête porte aussi l’identifiant d’accès que vous avez fourni pour ce service. Ce que le fournisseur peut observer de toute façon, comme avec tout programme qui s’y connecte, c’est votre adresse réseau, l’heure, la taille de la requête et la fréquence de vos questions. Et ce que nous avons mesuré, exactement : une requête enregistrée octet par octet face à un serveur sur cette machine, en vérifiant que le contenu du corps est la charge protégée caractère par caractère et qu’aucune valeur originale ni aucune valeur du coffre n’apparaît dans le corps, les en-têtes ou l’URL. C’est la mesure du contenu d’une requête, pas la preuve qu’aucun autre programme ou chemin n’existe.
+
+**ES (draft, made with AI, read by the lead).** Conviene separar tres cosas. Lo que envía Z Privacy es una solicitud a la dirección que usted configuró: el nombre del modelo, su texto protegido y — dentro de la app, a partir de la segunda pregunta — el intercambio anterior, en la forma protegida en que salió. Ese texto protegido es el documento y la pregunta tal como usted los aprobó, así que todo lo que el análisis no encontró y usted no marcó está en él, y el intercambio anterior lleva lo que llevaba. La solicitud también lleva la credencial que usted dio para ese servicio. Lo que el proveedor puede observar de todos modos, como con cualquier programa que se conecte a él, es su dirección de red, la hora, el tamaño de la solicitud y la frecuencia con que usted pregunta. Y lo que medimos, exactamente: una solicitud registrada byte a byte contra un servidor en este equipo, comprobando que el contenido del cuerpo es la carga protegida carácter por carácter y que ningún valor original ni ningún valor de la bóveda aparece en el cuerpo, en las cabeceras ni en la URL. Eso es una medición del contenido de una solicitud, no una prueba de que no exista ningún otro programa ni ningún otro camino.
 
 **Limits to watch — claim limits.** a measurement of one request’s content, not a proof that no other path exists
 
@@ -214,6 +262,10 @@ English one means is a judgement, and for Arabic the owner is the reader.
 
 </div>
 
+**FR (draft, made with AI, read by the lead).** Sur votre machine, à partir de votre coffre. Dans l’application, la réponse est restaurée à mesure qu’elle arrive ; si vous avez porté vous-même la question à un modèle, « Ajouter une réponse » rapporte le texte et chaque jeton que cette conversation a porté redevient son nom. Un PDF protégé a sa propre porte : « z-pdf », dans les Paramètres, relit un tel fichier en y remettant ses noms et indique de quelle session chacun provient. Un jeton dont ce coffre ne détient pas la clé reste du texte, et l’application le dit au lieu de deviner.
+
+**ES (draft, made with AI, read by the lead).** En su equipo, desde su bóveda. Dentro de la app, la respuesta se restaura a medida que llega; si usted mismo llevó la pregunta a un modelo, «Añadir una respuesta» trae el texto de vuelta y cada marcador que ese chat ha llevado vuelve a ser su nombre. Un PDF protegido tiene su propia puerta: «z-pdf» en Ajustes vuelve a leer un archivo así con sus nombres e indica de qué sesión procede cada uno. Un marcador cuya clave no tiene esta bóveda se queda como texto, y la app lo dice en lugar de adivinar.
+
 **Limits to watch — protection limits.** a token whose key this vault does not hold stays as text
 
 ## Q14 · Does Z Privacy see or store my documents?
@@ -227,6 +279,10 @@ English one means is a judgement, and for Arabic the owner is the reader.
 لا حساب في Z Privacy، ولا خادم لZ Privacy، ولا تحليلات: الشيفرةُ تحمل عميلَ شبكةٍ واحداً وطريقَ إرسالٍ واحداً، والواجهةُ لا تستطيع فتح مقبسٍ أصلاً، ولا يظهر في الشيفرة أيُّ عنوانٍ لZ Privacy — فالعنوانُ الوحيد الذي بُني هذا البرنامج ليتحدّث إليه هو المزوّد الذي أعددتَه، ببيان الاعتماد الذي أعطيتَه. وعلى جهازك أنت، **في هذا البناء، ومقروءاً من شيفرته لا مُراقَباً على تثبيتٍ يعمل**، يكتب مجموعةً معروفةً من الملفّات ولا يكتب غيرها: الخزنةَ المشفّرة، وملفّاً مشفّراً لكلّ جلسة، وقفلاً بجانبها، وملفَّ إعداداتٍ لا يحمل عملَك أبداً — ومعها الوثيقتان اللتان تطلبهما باسمهما: نسخةٌ محميّة، وملفُّ PDF عاديٌّ مُستعاد. والوثيقةُ التي في المعاينة تبقى في ملفّ جلستها المشفّر حتّى تخرج من بابٍ من الأبواب التي تُخرج النصّ، وخروجُها يأخذ النسخةَ معه. وبالقراءة نفسِها للشيفرة: الملفُّ وهو يُكتَب يوجد لحظةً باسمٍ ثانٍ بجانب الملفّ التامّ، في المجلّد نفسِه، ثمّ يُعاد تسميتُه في موضعه؛ ولا يُكتب شيءٌ في المجلّد المؤقّت للنظام، ولا يُكتب ملفُّ سجلٍّ البتّة.
 
 </div>
+
+**FR (draft, made with AI, read by the lead).** Il n’y a ni compte Z Privacy, ni serveur Z Privacy, ni outil de mesure d’audience : le code source comporte un seul client réseau et un seul chemin d’envoi, l’interface ne peut ouvrir aucun socket, et aucune adresse de Z Privacy n’y figure nulle part — la seule adresse avec laquelle ce programme est conçu pour communiquer est donc celle du fournisseur que vous avez configuré, avec l’identifiant d’accès que vous lui avez fourni. Sur votre propre machine, dans cette version et d’après la lecture de son code source, et non d’après l’observation d’une installation en fonctionnement, il écrit un ensemble connu de fichiers et aucun autre : le coffre chiffré, un fichier chiffré par session, un verrou à côté d’eux, et un fichier de paramètres qui ne contient jamais votre travail — plus les deux documents que vous demandez nommément, une copie protégée et un PDF ordinaire restauré. Le document de l’aperçu est conservé dans le fichier chiffré propre à sa session jusqu’à ce qu’il parte par l’une des portes qui font sortir le texte, et ce départ emporte la copie avec lui. Selon cette même lecture du code source : un fichier en cours d’écriture existe brièvement sous un second nom à côté du fichier terminé, dans le même dossier, puis il est renommé à sa place ; rien n’est écrit dans le répertoire temporaire du système, et aucun fichier journal n’est écrit.
+
+**ES (draft, made with AI, read by the lead).** No hay cuenta de Z Privacy, ni servidor de Z Privacy, ni analítica: el código fuente contiene un único cliente de red y un único camino de envío, la interfaz no puede abrir ningún socket, y ninguna dirección de Z Privacy aparece en ninguna parte de él — así que la única dirección con la que este programa está hecho para hablar es la del proveedor que usted configuró, con la credencial que usted le dio. En su propio equipo, en esta versión y según se lee en su código fuente, no observado en una instalación en funcionamiento, escribe un conjunto conocido de archivos y ningún otro: la bóveda cifrada, un archivo cifrado por sesión, un bloqueo junto a ellos y un archivo de configuración que nunca contiene su trabajo — además de los dos documentos que usted pide por su nombre, una copia protegida y un PDF normal restaurado. El documento de la vista previa se guarda en el propio archivo cifrado de su sesión hasta que sale por una de las puertas que sacan texto, y al salir se lleva la copia consigo. Según esa misma lectura del código fuente: un archivo que se está escribiendo existe brevemente con un segundo nombre junto al terminado, en la misma carpeta, y se renombra en su lugar; no se escribe nada en el directorio temporal del sistema, y no se escribe ningún archivo de registro.
 
 **Limits to watch — claim limits.** **in this build and as read from its source code rather than watched on a running installation**
 
@@ -242,6 +298,10 @@ English one means is a judgement, and for Arabic the owner is the reader.
 
 </div>
 
+**FR (draft, made with AI, read by the lead).** Dans un seul fichier de coffre chiffré sur votre appareil, un bloc par valeur protégée, ouvert par une phrase secrète qui ne quitte jamais la machine — un test cherche dans le fichier écrit les noms qu’on lui a appris et n’en trouve aucun. Le chiffrement ne vaut que ce que vaut la phrase secrète que vous choisissez, et un coffre déverrouillé est lisible par tout ce qui s’exécute sous votre compte sur cette machine : nous protégeons un fichier au repos, pas une machine déjà compromise. Sous Linux, l’accès au dossier est restreint à vous seul et le cœur refuse d’écrire si cette restriction est impossible ; sous Windows, le dossier est ce qu’en font les propres permissions de cette machine.
+
+**ES (draft, made with AI, read by the lead).** En un único archivo de bóveda cifrado en su dispositivo, un bloque por valor protegido, que se abre con una frase de contraseña que nunca sale del equipo — una prueba busca en el archivo escrito los nombres que se le enseñaron y no encuentra ninguno. El cifrado es tan fuerte como la frase de contraseña que usted elija, y una bóveda desbloqueada puede leerla cualquier cosa que se ejecute como usted en ese equipo: protegemos un archivo en reposo, no un equipo ya tomado. En Linux, la carpeta se restringe a usted y el núcleo se niega a escribir si no puede restringirse; en Windows, la carpeta es lo que hagan de ella los propios permisos de ese equipo.
+
 **Limits to watch — claim limits.** only as strong as the passphrase you choose / we protect a file at rest
 
 ## Q16 · What happens if I forget my passphrase?
@@ -255,6 +315,10 @@ English one means is a judgement, and for Arabic the owner is the reader.
 لا تُفتَح الخزنة — لا منك ولا منّا. وهذا البناءُ ليس فيه أيُّ آليّة استرجاع: لا إعادةَ ضبط، ولا إيداعَ لدى أحد، ولا مفتاحَ ثانياً، ولا نسخةً محفوظةً في أيّ مكان، ولا شيءَ في جهتنا يستطيع استرجاع الخزنة بغير عبارة المرور. ويقول التطبيقُ ذلك قبل أن تضع واحدة: «لا طريقَ للعودة. لا أحد يحمل نسخةً من هذه، ولا توجد إعادةُ ضبط — فعبارةُ المرور لا تغادر هذا الجهاز، ولا شيء في جهتنا يستطيع استرجاع الخزنة بدونها.»
 
 </div>
+
+**FR (draft, made with AI, read by the lead).** Le coffre ne peut pas être ouvert — ni par vous, ni par nous. Cette version n’a aucun mécanisme de récupération, de quelque nature que ce soit : pas de réinitialisation, pas de dépôt chez un tiers, pas de seconde clé et aucune copie détenue où que ce soit, et rien de notre côté ne pourrait récupérer le coffre sans la phrase secrète. L’application le dit avant que vous n’en choisissiez une : « Aucun retour en arrière n’est possible. Personne n’en détient de copie, et aucune réinitialisation n’existe — la phrase secrète ne quitte jamais cet appareil et rien de notre côté ne pourrait récupérer le coffre sans elle. »
+
+**ES (draft, made with AI, read by the lead).** La bóveda no se puede abrir — ni usted ni nosotros. Esta versión no tiene ningún mecanismo de recuperación de ningún tipo: ni restablecimiento, ni depósito en custodia, ni segunda clave, ni copia guardada en ningún sitio, y nada de nuestro lado podría recuperar la bóveda sin la frase de contraseña. La app lo dice antes de que usted la establezca: «No hay vuelta atrás. Nadie guarda una copia de esto, y no existe ningún restablecimiento — la frase de contraseña nunca sale de este dispositivo y nada de nuestro lado podría recuperar la bóveda sin ella.»
 
 **Limits to watch — certainty.** this build has no recovery mechanism of any kind
 
@@ -270,6 +334,10 @@ English one means is a judgement, and for Arabic the owner is the reader.
 
 </div>
 
+**FR (draft, made with AI, read by the lead).** Deux sont pris en charge et ont été utilisés avec le service réel : OpenAI et Anthropic. Quatre autres figurent au catalogue — xAI, DeepSeek, Moonshot et Google — et n’ont pas été testés avec une connexion réelle ; un fournisseur sans identifiant d’accès se signale comme indisponible plutôt que comme prêt. Cinq des six passent par la même forme de requête chat/completions, et Anthropic a la sienne ; un service qui ne répond à aucune de ces deux formes n’est donc pas joint par cette version, quelle que soit l’ouverture du champ d’adresse. Chaque connexion se fait à une adresse que vous pouvez modifier, et un modèle sur votre propre ordinateur n’a besoin d’aucune clé.
+
+**ES (draft, made with AI, read by the lead).** Dos son compatibles y se han usado contra el servicio real: OpenAI y Anthropic. Otros cuatro están en el catálogo — xAI, DeepSeek, Moonshot y Google — y no se han probado con una conexión real; un proveedor sin credencial se presenta como no disponible en lugar de como listo. Cinco de los seis salen por la misma forma de solicitud chat/completions y Anthropic tiene la suya propia, así que esta versión no llega a un servicio que no responda a ninguna de las dos formas, por muy abierto que esté el campo de dirección. Cada conexión se hace a una dirección que usted puede cambiar, y un modelo en su propio ordenador no necesita ninguna clave.
+
 **Limits to watch — certainty.** have not been tested with a live connection — never «supported»
 
 ## Q18 · Does Z Privacy make me anonymous to the AI provider?
@@ -283,6 +351,10 @@ English one means is a judgement, and for Arabic the owner is the reader.
 لا. أنت تشترك باسمك وببيان اعتمادك، وللمزوّد أن يعرف من هو زبونُه؛ وعنوانُك الشبكيّ والوقتُ وحجمُ كلّ طلبٍ ظاهرةٌ له كما تظهر لأيّ خدمةٍ تتّصل بها. وZ Privacy يزيل قيماً من داخل النصّ — ولا يزيلك أنت. والذي يحميه هم الناسُ الذين في وثائقك، ولم يتّفقوا مع مزوّدك على شيء.
 
 </div>
+
+**FR (draft, made with AI, read by the lead).** Non. Vous vous inscrivez sous votre propre nom avec votre propre identifiant d’accès, et le fournisseur est en droit de savoir qui est son client ; votre adresse réseau, l’heure et la taille de chaque requête lui sont visibles, comme à tout service auquel vous vous connectez. Z Privacy retire des valeurs de l’intérieur du texte — il ne vous retire pas, vous. Ce qu’il protège, ce sont les personnes qui figurent dans vos documents et qui n’ont rien convenu avec votre fournisseur.
+
+**ES (draft, made with AI, read by the lead).** No. Usted se registra con su propio nombre y su propia credencial, y el proveedor tiene derecho a saber quién es su cliente; su dirección de red, la hora y el tamaño de cada solicitud son visibles para él, como lo son para cualquier servicio al que usted se conecte. Z Privacy quita valores del interior del texto — no lo quita a usted. Lo que protege es a las personas de sus documentos, que no acordaron nada con su proveedor.
 
 **Limits to watch — protection limits.** removes values from inside the text — it does not remove you
 
@@ -298,19 +370,27 @@ English one means is a judgement, and for Arabic the owner is the reader.
 
 </div>
 
+**FR (draft, made with AI, read by the lead).** Automatiquement : ce que décrivent ses règles. Les règles IBAN et BIC ne sont liées à aucun module de langue ; elles ne dépendent donc pas de la langue du document. Les ensembles propres à chaque langue ajoutent les adresses e-mail, les numéros de téléphone, les numéros fiscaux et de sécurité sociale, les références de client, de contrat et d’employé, les dates de naissance, les personnes, les entreprises et les adresses — et chaque valeur que vous lui avez apprise est reconnue partout où elle apparaît. Tout cela dépend de deux conditions situées en amont de toute règle : que le texte soit parvenu à l’analyseur tel qu’il se lit sur la page, et que la valeur soit écrite sous une forme que les règles décrivent. Tout ce dont il n’est pas sûr devient une suggestion qui attend votre avis, et la loi « rien ne part tant qu’une suggestion reste sans réponse » s’impose à chaque porte qui fait sortir du texte de l’application : l’envoi à un modèle, la copie du texte protégé, la copie de la conversation et l’enregistrement d’un PDF protégé. Ces portes ne sont pas une liste que quelqu’un tient à jour — elles sont comptées d’après ce que font les fonctions ; une nouvelle porte est donc détectée par le comptage plutôt que par la mémoire de quelqu’un. Ce que l’analyseur manque encore est consigné par écrit plutôt que laissé à découvrir : une ligature typographique, une date de naissance écrite en toutes lettres, et une carte de paiement d’un réseau dont le préfixe ne figure pas dans la table publiée.
+
+**ES (draft, made with AI, read by the lead).** Automáticamente: lo que describen sus reglas. Las reglas de IBAN y BIC no están ligadas a un paquete de idioma, así que no dependen del idioma en que esté un documento; los conjuntos de idioma añaden direcciones de correo electrónico, números de teléfono, números fiscales y de la seguridad social, referencias de cliente, de contrato y de empleado, fechas de nacimiento, personas, empresas y direcciones — y cada valor que usted le ha enseñado se reconoce dondequiera que aparezca. Todo eso depende de dos cosas previas a cualquier regla: que el texto haya llegado al analizador tal como se lee en la página, y que el valor esté escrito en una forma que las reglas describan. Todo aquello de lo que no está seguro se convierte en una sugerencia que espera su decisión, y la ley «no sale nada mientras haya una sugerencia sin responder» se exige a cada puerta que saca texto de la app: enviar a un modelo, copiar el texto protegido, copiar el chat y guardar un PDF protegido. Esas puertas no son una lista que alguien mantiene al día — se cuentan a partir de lo que hacen las funciones, de modo que una nueva la detecta el recuento en lugar de depender de que alguien la recuerde. Lo que el analizador todavía no detecta está escrito en lugar de dejarse por descubrir: una ligadura tipográfica, una fecha de nacimiento escrita en palabras y una tarjeta de pago de una red cuyo prefijo no está en la tabla publicada.
+
 **Limits to watch — protection limits.** depends on two things upstream of any rule
 
 ## Q20 · Which file types and languages does it support?
 
-**EN (written from 119's measurement, awaiting the owner's word).** Files: plain text (`.txt`, `.md`, `.csv`), Word documents (`.docx`) and PDFs. A PDF with no text layer — a photograph of a document — is refused by name rather than guessed at, and so is an encrypted one. Detection has four language packs today — English, German, Swedish and Arabic — beside rule sets that are not bound to a language, and the interface itself speaks those four. Arabic inside a PDF is a case of its own: a file that carries its text in the shapes a layout program drew is refused by name, because the order read would be the drawing’s and the words would come out backwards, and you are pointed to `.docx` or `.txt`; an Arabic PDF with a sound text layer in logical order is not refused for this reason, and in the cases tested it reads as the same text as plain text, though such a file may still be refused for another reason, such as encryption or a missing text layer. Two limits remain there: a file drawn backwards that still carries ordinary letters is not caught by this, and a protected PDF that Z Privacy itself wrote in Arabic can no longer be brought in as a document to protect.
+**EN (written from 119's measurement, awaiting the owner's word).** Files: plain text (`.txt`, `.md`, `.csv`), Word documents (`.docx`) and PDFs. A PDF with no text layer — a photograph of a document — is refused by name rather than guessed at, and so is an encrypted one. Detection has six language packs today — English, German, Swedish, Arabic, French and Spanish — beside rule sets that are not bound to a language, and the interface itself speaks those six. In French and Spanish the packs recognise numbers only: in French the social-security number (NIR), SIREN and SIRET, the VAT number and telephone numbers, and the tax number (numéro fiscal), which is only suggested unless its label stands beside it; in Spanish the DNI and the NIE, the company CIF/NIF, the VAT number, the Social Security number and telephone numbers — each checked wherever a check exists. A person’s name in French or Spanish is only suggested, by its shape, and kept in your vault once you accept it; there is no French or Spanish names library yet — that is a later update. Arabic inside a PDF is a case of its own: a file that carries its text in the shapes a layout program drew is refused by name, because the order read would be the drawing’s and the words would come out backwards, and you are pointed to `.docx` or `.txt`; an Arabic PDF with a sound text layer in logical order is not refused for this reason, and in the cases tested it reads as the same text as plain text, though such a file may still be refused for another reason, such as encryption or a missing text layer. Two limits remain there: a file drawn backwards that still carries ordinary letters is not caught by this, and a protected PDF that Z Privacy itself wrote in Arabic can no longer be brought in as a document to protect.
 
-**DE (draft).** Dateien: reiner Text (`.txt`, `.md`, `.csv`), Word-Dokumente (`.docx`) und PDFs. Eine PDF-Datei ohne Textebene — ein Foto eines Dokuments — wird mit Namen zurückgewiesen statt erraten, und eine verschlüsselte ebenso. Die Erkennung hat heute vier Sprachpakete — Englisch, Deutsch, Schwedisch und Arabisch — neben Regelsätzen, die an keine Sprache gebunden sind, und die Oberfläche selbst spricht diese vier. Arabisch in einer PDF-Datei ist ein Fall für sich: Eine Datei, die ihren Text in den Anzeigeformen führt, die ein Layoutprogramm gezeichnet hat, wird mit Namen zurückgewiesen — die gelesene Reihenfolge wäre die der Zeichnung und die Wörter kämen rückwärts heraus —, und Sie werden auf `.docx` oder `.txt` verwiesen; eine arabische PDF-Datei mit einer tragfähigen Textebene in logischer Reihenfolge wird aus diesem Grund nicht zurückgewiesen, und in den geprüften Fällen wird sie wie derselbe Text als reiner Text gelesen — aus einem anderen Grund kann eine solche Datei weiterhin zurückgewiesen werden, etwa wenn sie verschlüsselt ist oder keine brauchbare Textebene hat. Zwei Einschränkungen bleiben dort: eine rückwärts gezeichnete Datei, die dennoch gewöhnliche Buchstaben führt, wird davon nicht erfasst, und eine geschützte PDF-Datei, die Z Privacy selbst auf Arabisch geschrieben hat, kann nicht mehr als zu schützendes Dokument hereingeholt werden.
+**DE (draft).** Dateien: reiner Text (`.txt`, `.md`, `.csv`), Word-Dokumente (`.docx`) und PDFs. Eine PDF-Datei ohne Textebene — ein Foto eines Dokuments — wird mit Namen zurückgewiesen statt erraten, und eine verschlüsselte ebenso. Die Erkennung hat heute sechs Sprachpakete — Englisch, Deutsch, Schwedisch, Arabisch, Französisch und Spanisch — neben Regelsätzen, die an keine Sprache gebunden sind, und die Oberfläche selbst spricht diese sechs. Im Französischen und Spanischen erkennen die Pakete nur Nummern: im Französischen die Sozialversicherungsnummer (NIR), SIREN und SIRET, die Umsatzsteuer-Identifikationsnummer und Telefonnummern sowie die Steuernummer (numéro fiscal), die nur vorgeschlagen wird, solange ihre Bezeichnung nicht danebensteht; im Spanischen DNI und NIE, die CIF/NIF eines Unternehmens, die Umsatzsteuer-Identifikationsnummer, die Sozialversicherungsnummer und Telefonnummern — jede mit ihrer Prüfung, wo es eine gibt. Ein Personenname auf Französisch oder Spanisch wird nur vorgeschlagen, nach seiner Form, und in Ihrem Tresor behalten, sobald Sie ihn annehmen; eine französische oder spanische Namensbibliothek gibt es noch nicht — sie kommt mit einem späteren Update. Arabisch in einer PDF-Datei ist ein Fall für sich: Eine Datei, die ihren Text in den Anzeigeformen führt, die ein Layoutprogramm gezeichnet hat, wird mit Namen zurückgewiesen — die gelesene Reihenfolge wäre die der Zeichnung und die Wörter kämen rückwärts heraus —, und Sie werden auf `.docx` oder `.txt` verwiesen; eine arabische PDF-Datei mit einer tragfähigen Textebene in logischer Reihenfolge wird aus diesem Grund nicht zurückgewiesen, und in den geprüften Fällen wird sie wie derselbe Text als reiner Text gelesen — aus einem anderen Grund kann eine solche Datei weiterhin zurückgewiesen werden, etwa wenn sie verschlüsselt ist oder keine brauchbare Textebene hat. Zwei Einschränkungen bleiben dort: eine rückwärts gezeichnete Datei, die dennoch gewöhnliche Buchstaben führt, wird davon nicht erfasst, und eine geschützte PDF-Datei, die Z Privacy selbst auf Arabisch geschrieben hat, kann nicht mehr als zu schützendes Dokument hereingeholt werden.
 
 **AR (draft).** <div dir="rtl" lang="ar">
 
-الملفّات: النصّ العاديّ (`.txt` و`.md` و`.csv`)، ووثائق Word (`.docx`)، وملفّات PDF. وملفّ PDF بلا طبقة نصّ — صورةٌ لوثيقة — يُرفض باسمِه لا يُخمّن، وكذلك الملفّ المشفّر. وللكشف اليوم أربعُ حزم لغويّة — الإنجليزيّة والألمانيّة والسويديّة والعربيّة — إلى جانب مجموعات قواعدَ غيرِ مرتبطةٍ بلغة، والواجهةُ نفسُها تتكلّم هذه الأربع. والعربيّة داخل ملفّ PDF حالةٌ قائمةٌ بذاتِها: فالملفّ الذي يحمل نصَّه بأشكال العرض التي رسمها برنامجُ التنسيق يُرفض باسمِه، لأنّ الترتيبَ المقروء سيكون ترتيبَ الرسم وتخرج الكلماتُ مقلوبةً، وتُوجَّه إلى `.docx` أو `.txt`؛ أمّا ملفّ PDF عربيٌّ له طبقةُ نصٍّ سليمةٌ بترتيبٍ منطقيّ فلا يُرفض لهذا السبب، وفي الحالات المختبَرة يُقرأ كما يُقرأ النصُّ نفسُه نصّاً عاديّاً — وقد يُرفض مثلُ هذا الملفّ لسببٍ آخر، كأن يكون مشفّراً أو بلا طبقةِ نصٍّ صالحة. ويبقى هناك حدّان: ملفٌّ مرسومٌ مقلوباً ومع ذلك يحمل حروفاً عاديّةً لا يلتقطُه هذا، وملفّ PDF محميّ كتبه Z Privacy نفسُه بالعربيّة لم يعد يُمكن إدخالُه وثيقةً لتُحمى.
+الملفّات: النصّ العاديّ (`.txt` و`.md` و`.csv`)، ووثائق Word (`.docx`)، وملفّات PDF. وملفّ PDF بلا طبقة نصّ — صورةٌ لوثيقة — يُرفض باسمِه لا يُخمّن، وكذلك الملفّ المشفّر. وللكشف اليوم ستُّ حزم لغويّة — الإنجليزيّة والألمانيّة والسويديّة والعربيّة والفرنسيّة والإسبانيّة — إلى جانب مجموعات قواعدَ غيرِ مرتبطةٍ بلغة، والواجهةُ نفسُها تتكلّم هذه الستّ. وفي الفرنسيّة والإسبانيّة لا تتعرّف الحزمتان إلّا على الأرقام: في الفرنسيّة رقمُ الضمان الاجتماعيّ (NIR) ورقما SIREN وSIRET ورقمُ ضريبة القيمة المضافة وأرقامُ الهواتف، والرقمُ الضريبيّ (numéro fiscal) الذي يُقترح فقط ما لم تقف تسميتُه بجانبه؛ وفي الإسبانيّة DNI وNIE ورقمُ الشركات CIF/NIF ورقمُ ضريبة القيمة المضافة ورقمُ الضمان الاجتماعيّ وأرقامُ الهواتف — وكلٌّ منها يُتحقَّق منه حيث يوجد تحقّق. واسمُ الشخص بالفرنسيّة أو الإسبانيّة يُقترح فقط، بشكله، ويُحفظ في خزنتك متى قبلتَه؛ ولا مكتبةَ أسماءٍ فرنسيّةً أو إسبانيّةً بعد — فتلك في تحديثٍ لاحق. والعربيّة داخل ملفّ PDF حالةٌ قائمةٌ بذاتِها: فالملفّ الذي يحمل نصَّه بأشكال العرض التي رسمها برنامجُ التنسيق يُرفض باسمِه، لأنّ الترتيبَ المقروء سيكون ترتيبَ الرسم وتخرج الكلماتُ مقلوبةً، وتُوجَّه إلى `.docx` أو `.txt`؛ أمّا ملفّ PDF عربيٌّ له طبقةُ نصٍّ سليمةٌ بترتيبٍ منطقيّ فلا يُرفض لهذا السبب، وفي الحالات المختبَرة يُقرأ كما يُقرأ النصُّ نفسُه نصّاً عاديّاً — وقد يُرفض مثلُ هذا الملفّ لسببٍ آخر، كأن يكون مشفّراً أو بلا طبقةِ نصٍّ صالحة. ويبقى هناك حدّان: ملفٌّ مرسومٌ مقلوباً ومع ذلك يحمل حروفاً عاديّةً لا يلتقطُه هذا، وملفّ PDF محميّ كتبه Z Privacy نفسُه بالعربيّة لم يعد يُمكن إدخالُه وثيقةً لتُحمى.
 
 </div>
+
+**FR (draft, made with AI, read by the lead).** Fichiers : texte brut (.txt, .md, .csv), documents Word (.docx) et PDF. Un PDF sans couche de texte — la photographie d’un document — est refusé nommément plutôt que deviné, de même qu’un PDF chiffré. La détection dispose aujourd’hui de six modules de langue — anglais, allemand, suédois, arabe, français et espagnol — à côté d’ensembles de règles qui ne sont liés à aucune langue, et l’interface elle-même parle ces six langues. En français et en espagnol, les modules ne reconnaissent que des numéros : en français, le numéro de sécurité sociale (NIR), le SIREN et le SIRET, le numéro de TVA et les numéros de téléphone, ainsi que le numéro fiscal, qui n’est que suggéré sauf si son libellé figure à côté ; en espagnol, le DNI et le NIE, le CIF/NIF des entreprises, le numéro de TVA, le numéro de sécurité sociale et les numéros de téléphone — chacun étant contrôlé partout où un contrôle existe. Le nom d’une personne en français ou en espagnol n’est que suggéré, d’après sa forme, et conservé dans votre coffre une fois que vous l’acceptez ; il n’existe pas encore de bibliothèque de noms français ou espagnols — ce sera une mise à jour ultérieure. L’arabe dans un PDF est un cas à part : un fichier qui porte son texte sous la forme des tracés qu’un logiciel de mise en page a dessinés est refusé nommément, parce que l’ordre lu serait celui du dessin et que les mots sortiraient à l’envers, et vous êtes orienté vers .docx ou .txt ; un PDF arabe doté d’une couche de texte saine, dans l’ordre logique, n’est pas refusé pour cette raison, et dans les cas testés il se lit comme le même texte que le texte brut, même si un tel fichier peut encore être refusé pour une autre raison, comme un chiffrement ou l’absence de couche de texte. Deux limites demeurent sur ce point : un fichier dessiné à l’envers qui porte encore des lettres ordinaires n’est pas détecté par ce contrôle, et un PDF protégé que Z Privacy a lui-même écrit en arabe ne peut plus être importé comme document à protéger.
+
+**ES (draft, made with AI, read by the lead).** Archivos: texto plano (.txt, .md, .csv), documentos de Word (.docx) y PDF. Un PDF sin capa de texto — una fotografía de un documento — se rechaza de forma expresa en lugar de interpretarse a ciegas, y lo mismo uno cifrado. La detección tiene hoy seis paquetes de idioma — inglés, alemán, sueco, árabe, francés y español — junto a conjuntos de reglas que no están ligados a un idioma, y la propia interfaz habla esos seis. En francés y en español los paquetes solo reconocen números: en francés, el número de la seguridad social (NIR), el SIREN y el SIRET, el número de IVA y los números de teléfono, y el número fiscal (numéro fiscal), que solo se sugiere salvo que su etiqueta esté al lado; en español, el DNI y el NIE, el CIF/NIF de empresa, el número de IVA, el número de la Seguridad Social y los números de teléfono — cada uno comprobado allí donde existe una comprobación. Un nombre de persona en francés o en español solo se sugiere, por su forma, y se guarda en su bóveda una vez que usted lo acepta; todavía no hay una biblioteca de nombres franceses ni españoles — eso es una actualización posterior. El árabe dentro de un PDF es un caso aparte: un archivo que lleva su texto en las formas que dibujó un programa de maquetación se rechaza de forma expresa, porque el orden leído sería el del dibujo y las palabras saldrían al revés, y se le remite a .docx o .txt; un PDF en árabe con una capa de texto sana en orden lógico no se rechaza por este motivo, y en los casos probados se lee como el mismo texto que el texto plano, aunque un archivo así puede seguir rechazándose por otro motivo, como el cifrado o la falta de una capa de texto. Ahí quedan dos límites: un archivo dibujado al revés que aun así lleva letras normales no se detecta con esto, y un PDF protegido que el propio Z Privacy escribió en árabe ya no puede traerse como documento para proteger.
 
 **Limits to watch — protection limits and certainty.** «is refused by name» must stay a refusal and not become «is handled»; «not refused **for this reason**» must stay not-refused-for-this and never become guaranteed acceptance, and «in the cases tested» must not be dropped for flow — without the first half the answer condemns a format that works, and without the second it promises more than five fixtures can carry; and the two remaining limits must not be softened into a reassurance. **Not stated in any language:** whether the z-pdf read-back door returns reversed Arabic — paper 119 says «may» and calls it another door and another paper, so it is an acknowledged unknown and writing it down would be inventing a measurement.
 
@@ -326,6 +406,10 @@ English one means is a judgement, and for Arabic the owner is the reader.
 
 </div>
 
+**FR (draft, made with AI, read by the lead).** Oui. Il n’y a ni formule payante, ni compte, ni abonnement, et le code source est publié sous l’Apache License 2.0. Ce qui peut coûter de l’argent, c’est le modèle que vous choisissez : un identifiant d’accès d’OpenAI ou d’Anthropic vous est facturé par eux, à leurs tarifs, et un modèle qui tourne sur votre propre ordinateur ne coûte rien du tout.
+
+**ES (draft, made with AI, read by the lead).** Sí. No hay ningún nivel de pago, ninguna cuenta ni nada a lo que suscribirse, y el código fuente está bajo la Apache License 2.0. Lo que puede costar dinero es el modelo que usted elija: una credencial de OpenAI o de Anthropic la facturan ellos a sus precios, y un modelo que se ejecute en su propio ordenador no cuesta nada.
+
 **Limits to watch — certainty.** what can cost money is the model you choose
 
 ## Q22 · Is it open source, and can companies use it?
@@ -339,6 +423,10 @@ English one means is a judgement, and for Arabic the owner is the reader.
 نعم — رخصةُ أباتشي ٢٫٠، ومستودعُ الشيفرة موصولٌ من هذا الموقع. استعمله كما تشاء، في شركةٍ أو وحدك، ولا تستأذن أحداً. ويشحن هذا المشروعُ ملفَّ `NOTICE`، والبندُ ٤(د) من الرخصة يقول ما على العمل المشتقّ المنشور أن يفعله بالإشعارات التي يحويها مثلُ هذا الملفّ؛ والرخصةُ والملفُّ منشوران هنا كلاهما، وهما النصُّ الحاكم لا ما يُقال في هذه الصفحة. وهي نسبةٌ تُحمَل إلى الأمام، لا إعلانٌ تدين لنا به.
 
 </div>
+
+**FR (draft, made with AI, read by the lead).** Oui — Apache License 2.0, avec un lien vers le dépôt du code source depuis ce site. Utilisez-le comme vous le souhaitez, en entreprise ou seul, sans rien demander à personne. Ce projet est livré avec un fichier NOTICE, et le §4(d) de la licence dit ce qu’une œuvre dérivée distribuée doit faire des mentions qu’un tel fichier contient ; la licence et le fichier sont tous deux publiés ici, et ce sont eux qui font foi, plutôt que quoi que ce soit dit sur cette page. Il s’agit d’une attribution transmise, pas d’une publicité que vous nous devriez.
+
+**ES (draft, made with AI, read by the lead).** Sí — Apache License 2.0, con el repositorio del código fuente enlazado desde este sitio. Úselo como quiera, en una empresa o por su cuenta, y sin pedir permiso a nadie. Este proyecto incluye un archivo NOTICE, y el §4(d) de la licencia dice qué debe hacer una obra derivada que se distribuya con los avisos que contiene un archivo así; la licencia y el archivo están publicados aquí, y son el texto que rige, no lo que se diga en esta página. Es una atribución que se transmite, no un anuncio que usted nos deba.
 
 **Limits to watch — certainty.** they are the text that governs rather than anything said on this page
 
@@ -354,6 +442,10 @@ English one means is a judgement, and for Arabic the owner is the reader.
 
 </div>
 
+**FR (draft, made with AI, read by the lead).** docs/CLAIMS.md énumère chaque affirmation avec, pour chacune, les mêmes quatre lignes : la phrase que nous affichons réellement, ce qu’elle ne couvre pas, le test ou le contrôle qui la prouve, et la commande que vous exécutez vous-même. Il est utile de savoir ce que sont ces deux types de preuve : un test exécute le code de ce produit et mesure ce qu’il fait, tandis qu’un contrôle lit le code source et en mesure la forme — qu’il y a un seul client réseau, que l’interface ne peut ouvrir aucun socket, que chaque porte obéit à une loi. Un contrôle de forme montre que le code satisfait la contrainte qu’il vérifie ; ce n’est pas un enregistrement du programme en fonctionnement, et aucun nombre de ces contrôles n’équivaut à une capture réseau, à une installation ou à un audit de sécurité — c’est pourquoi certaines affirmations de ce fichier portent la mention « non prouvé » au lieu d’en être retirées.
+
+**ES (draft, made with AI, read by the lead).** docs/CLAIMS.md enumera cada afirmación con las mismas cuatro líneas: la frase que realmente mostramos, lo que no cubre, el test o el control que la demuestra, y el comando que usted mismo ejecuta. Conviene saber qué son esos dos tipos de prueba: un test ejecuta el código de este producto y mide lo que hace, mientras que un control lee el código fuente y mide su forma — que hay un único cliente de red, que la interfaz no puede abrir un socket, que cada puerta obedece una ley. Una comprobación de forma muestra que el código cumple la restricción que comprueba; no es una grabación del programa en ejecución, y ninguna cantidad de ellas equivale a una captura de red, a una instalación ni a una auditoría de seguridad — por eso algunas afirmaciones de ese archivo llevan la palabra «unproven» en lugar de eliminarse de él.
+
 **Limits to watch — claim limits.** satisfies the constraint it checks — never «cannot be»
 
 ## Q24 · Which operating systems does it run on, and why does Windows warn me?
@@ -368,6 +460,10 @@ English one means is a judgement, and for Arabic the owner is the reader.
 
 </div>
 
+**FR (draft, made with AI, read by the lead).** Linux x86_64 avec GTK3, et Windows 10 ou 11 sur x86_64 ; macOS, iOS et Android ne sont pas construits. Sous Windows, le premier lancement affiche une page bleue « Windows a protégé votre ordinateur », parce que rien n’a signé ce programme d’installation : cette page signifie que Windows n’a aucune raison de considérer le fichier comme fiable, non qu’il l’a examiné et l’a jugé sûr ou dangereux. Le SHA-256 imprimé sur la page de téléchargement vous indique que le fichier que vous avez est celui que décrit cette empreinte, à condition que l’empreinte elle-même provienne d’une source en laquelle vous avez confiance — elle ne dit rien de l’éditeur du fichier, et si le site qui sert les deux était compromis, les deux pourraient changer ensemble. Elle ne remplace pas une signature, et le paragraphe de la page de téléchargement dit à quoi ressemble cet écran et comment le franchir.
+
+**ES (draft, made with AI, read by the lead).** Linux x86_64 con GTK3, y Windows 10 u 11 en x86_64; no se construyen versiones para macOS, iOS ni Android. En Windows, el primer inicio muestra una página azul «Windows protegió su PC», porque nadie ha firmado este instalador: esa página significa que Windows no tiene base para tratar el archivo como de confianza, no que lo haya examinado y lo haya encontrado seguro o inseguro. El SHA-256 impreso en la página de descarga le dice que el archivo que tiene es el archivo que describe esa huella, siempre que la propia huella proceda de una fuente en la que usted confíe — no dice nada sobre quién publicó el archivo, y si el sitio que sirve ambos estuviera comprometido, ambos podrían cambiar a la vez. No sustituye a una firma, y el propio párrafo de la página de descarga explica cómo es la pantalla y cómo se supera.
+
 **Limits to watch — certainty.** provided the fingerprint itself comes from a source you trust
 
 ## Q25 · Who makes Z Privacy?
@@ -381,6 +477,10 @@ English one means is a judgement, and for Arabic the owner is the reader.
 Faruk AB، شركةُ مساهمةٍ (Aktiebolag) في السويد. رقمُ السجلّ التجاريّ (Org.nr) ‏559473-3494. Hotellgatan 3, 311 31 Falkenberg, Sweden. للتواصل والدعم: zprivacy@mono-peak.com — لا يوجد نموذجُ إرسال، ولا يُجمَع شيءٌ في هذا الموقع.
 
 </div>
+
+**FR (draft, made with AI, read by the lead).** Faruk AB, Aktiebolag (AB), Suède. Numéro d’immatriculation de la société (Org.nr) 559473-3494. Hotellgatan 3, 311 31 Falkenberg, Suède. Contact et assistance : zprivacy@mono-peak.com — il n’y a aucun formulaire et rien n’est collecté sur ce site.
+
+**ES (draft, made with AI, read by the lead).** Faruk AB, Aktiebolag (AB), Suecia. Número de registro mercantil (Org.nr) 559473-3494. Hotellgatan 3, 311 31 Falkenberg, Suecia. Contacto y soporte: zprivacy@mono-peak.com — no hay ningún formulario y no se recoge nada en este sitio.
 
 **Limits to watch — certainty.** nothing is collected on this site
 
@@ -398,126 +498,176 @@ can hold the pages to them.
 
 - **DE** — Ist es sicher, Mandantendokumente in ChatGPT einzufügen?
 - **AR** — <span dir="rtl" lang="ar">هل من الآمن لصقُ وثائق العملاء في ChatGPT؟</span>
+- **FR** — Est-il sûr de coller des documents de clients dans ChatGPT ?
+- **ES** — ¿Es seguro pegar documentos de clientes en ChatGPT?
 
 **Q2.** Do AI services use my conversations or files for training? And do they keep them?
 
 - **DE** — Verwenden KI-Dienste meine Unterhaltungen oder Dateien zum Training? Und bewahren sie sie auf?
 - **AR** — <span dir="rtl" lang="ar">هل تستعمل خدماتُ الذكاء الاصطناعيّ محادثاتي أو ملفّاتي في التدريب؟ وهل تحتفظ بها؟</span>
+- **FR** — Les services d’IA utilisent-ils mes conversations ou mes fichiers pour l’entraînement ? Et les conservent-ils ?
+- **ES** — ¿Usan los servicios de IA mis conversaciones o mis archivos para entrenar? ¿Y los conservan?
 
 **Q3.** How can I use AI on documents with personal data without sending the names?
 
 - **DE** — Wie kann ich KI auf Dokumente mit personenbezogenen Daten anwenden, ohne die Namen zu senden?
 - **AR** — <span dir="rtl" lang="ar">كيف أستعمل الذكاءَ الاصطناعيّ على وثائقَ فيها بياناتٌ شخصيّة دون إرسال الأسماء؟</span>
+- **FR** — Comment utiliser l’IA sur des documents contenant des données personnelles sans envoyer les noms ?
+- **ES** — ¿Cómo puedo usar la IA con documentos que contienen datos personales sin enviar los nombres?
 
 **Q4.** What should I consider under GDPR before sending client data to AI?
 
 - **DE** — Was muss ich nach der DSGVO bedenken, bevor ich Mandantendaten an eine KI sende?
 - **AR** — <span dir="rtl" lang="ar">ما الذي ينبغي أن أنظر فيه بحكم اللائحة (GDPR) قبل إرسال بيانات العملاء إلى الذكاء الاصطناعيّ؟</span>
+- **FR** — Que dois-je prendre en compte au titre du RGPD avant d’envoyer des données de clients à une IA ?
+- **ES** — ¿Qué debo tener en cuenta según el RGPD antes de enviar datos de clientes a la IA?
 
 **Q5.** What is the difference between anonymisation and pseudonymisation?
 
 - **DE** — Was ist der Unterschied zwischen Anonymisierung und Pseudonymisierung?
 - **AR** — <span dir="rtl" lang="ar">ما الفرق بين إخفاء الهويّة والترميز؟</span>
+- **FR** — Quelle est la différence entre anonymisation et pseudonymisation ?
+- **ES** — ¿Cuál es la diferencia entre anonimización y seudonimización?
 
 **Q6.** How can an accountant use AI without exposing clients' financial data?
 
 - **DE** — Wie lässt sich KI in der Buchhaltung nutzen, ohne die Finanzdaten von Mandanten preiszugeben?
 - **AR** — <span dir="rtl" lang="ar">كيف يستعمل المحاسبُ الذكاءَ الاصطناعيّ دون أن يكشف بيانات عملائه الماليّة؟</span>
+- **FR** — Comment un expert-comptable peut-il utiliser l’IA sans exposer les données financières de ses clients ?
+- **ES** — ¿Cómo puede un contable usar la IA sin exponer los datos financieros de sus clientes?
 
 **Q7.** How can a lawyer use AI on case files confidentially?
 
 - **DE** — Wie lässt sich KI in einer Kanzlei vertraulich auf Fallakten anwenden?
 - **AR** — <span dir="rtl" lang="ar">كيف يستعمل المحامي الذكاءَ الاصطناعيّ على ملفّات القضايا بسرّيّة؟</span>
+- **FR** — Comment un avocat peut-il utiliser l’IA sur des dossiers en toute confidentialité ?
+- **ES** — ¿Cómo puede un abogado usar la IA con expedientes de forma confidencial?
 
 **Q8.** Can I use AI on medical or HR documents without revealing who they are about?
 
 - **DE** — Kann ich KI auf medizinische oder Personaldokumente anwenden, ohne preiszugeben, um wen es geht?
 - **AR** — <span dir="rtl" lang="ar">هل يمكنني أن أستعمل الذكاءَ الاصطناعيّ على وثائقَ طبّيّة أو وثائق موظّفين دون الكشف عمّن تتحدّث عنه؟</span>
+- **FR** — Puis-je utiliser l’IA sur des documents médicaux ou RH sans révéler de qui ils parlent ?
+- **ES** — ¿Puedo usar la IA con documentos médicos o de recursos humanos sin revelar de quién tratan?
 
 **Q9.** What happens to my data when I upload a PDF to an AI chatbot?
 
 - **DE** — Was geschieht mit meinen Daten, wenn ich ein PDF in einen KI-Chatbot hochlade?
 - **AR** — <span dir="rtl" lang="ar">ماذا يجري لبياناتي حين أرفع ملفّ PDF إلى محادثةٍ مع ذكاءٍ اصطناعيّ؟</span>
+- **FR** — Que deviennent mes données lorsque je téléverse un PDF dans un chatbot d’IA ?
+- **ES** — ¿Qué pasa con mis datos cuando subo un PDF a un chatbot de IA?
 
 **Q10.** Can I use an AI model on my own computer instead of a cloud service?
 
 - **DE** — Kann ich ein KI-Modell auf meinem eigenen Rechner statt in einem Cloud-Dienst nutzen?
 - **AR** — <span dir="rtl" lang="ar">هل يمكنني أن أستعمل نموذجَ ذكاءٍ اصطناعيّ على جهازي بدل خدمةٍ سحابيّة؟</span>
+- **FR** — Puis-je utiliser un modèle d’IA sur mon propre ordinateur au lieu d’un service dans le cloud ?
+- **ES** — ¿Puedo usar un modelo de IA en mi propio ordenador en lugar de un servicio en la nube?
 
 **Q11.** What does Z Privacy do, in one minute?
 
 - **DE** — Was macht Z Privacy, in einer Minute?
 - **AR** — <span dir="rtl" lang="ar">ماذا يفعل Z Privacy، في دقيقة؟</span>
+- **FR** — Que fait Z Privacy, en une minute ?
+- **ES** — ¿Qué hace Z Privacy, en un minuto?
 
 **Q12.** What does the AI actually receive?
 
 - **DE** — Was bekommt die KI tatsächlich?
 - **AR** — <span dir="rtl" lang="ar">ما الذي يصل الذكاءَ الاصطناعيّ فعلاً؟</span>
+- **FR** — Que reçoit réellement l’IA ?
+- **ES** — ¿Qué recibe realmente la IA?
 
 **Q13.** How do the real names come back into the answer?
 
 - **DE** — Wie kommen die echten Namen in die Antwort zurück?
 - **AR** — <span dir="rtl" lang="ar">كيف تعود الأسماءُ الحقيقيّة إلى الجواب؟</span>
+- **FR** — Comment les vrais noms reviennent-ils dans la réponse ?
+- **ES** — ¿Cómo vuelven los nombres reales a la respuesta?
 
 **Q14.** Does Z Privacy see or store my documents?
 
 - **DE** — Sieht oder speichert Z Privacy meine Dokumente?
 - **AR** — <span dir="rtl" lang="ar">هل يرى Z Privacy وثائقي أو يحفظُها؟</span>
+- **FR** — Z Privacy voit-il ou stocke-t-il mes documents ?
+- **ES** — ¿Ve o guarda Z Privacy mis documentos?
 
 **Q15.** Where are my names kept, and how are they protected?
 
 - **DE** — Wo werden meine Namen aufbewahrt, und wie sind sie geschützt?
 - **AR** — <span dir="rtl" lang="ar">أين تُحفظ أسمائي، وكيف تُحمى؟</span>
+- **FR** — Où mes noms sont-ils conservés, et comment sont-ils protégés ?
+- **ES** — ¿Dónde se guardan mis nombres y cómo están protegidos?
 
 **Q16.** What happens if I forget my passphrase?
 
 - **DE** — Was geschieht, wenn ich meine Passphrase vergesse?
 - **AR** — <span dir="rtl" lang="ar">ماذا يحدث إن نسيتُ عبارةَ المرور؟</span>
+- **FR** — Que se passe-t-il si j’oublie ma phrase secrète ?
+- **ES** — ¿Qué pasa si olvido mi frase de contraseña?
 
 **Q17.** Which AI services work with Z Privacy?
 
 - **DE** — Welche KI-Dienste funktionieren mit Z Privacy?
 - **AR** — <span dir="rtl" lang="ar">أيُّ خدمات الذكاء الاصطناعيّ تعمل مع Z Privacy؟</span>
+- **FR** — Quels services d’IA fonctionnent avec Z Privacy ?
+- **ES** — ¿Qué servicios de IA funcionan con Z Privacy?
 
 **Q18.** Does Z Privacy make me anonymous to the AI provider?
 
 - **DE** — Macht Z Privacy mich gegenüber dem KI-Anbieter anonym?
 - **AR** — <span dir="rtl" lang="ar">هل يجعلني Z Privacy مجهولَ الهويّة عند مزوّد الذكاء الاصطناعيّ؟</span>
+- **FR** — Z Privacy me rend-il anonyme vis-à-vis du fournisseur d’IA ?
+- **ES** — ¿Me hace Z Privacy anónimo frente al proveedor de IA?
 
 **Q19.** What does Z Privacy detect automatically, and what must I mark myself?
 
 - **DE** — Was erkennt Z Privacy automatisch, und was muss ich selbst markieren?
 - **AR** — <span dir="rtl" lang="ar">ما الذي يكشفُه Z Privacy تلقائيّاً، وما الذي عليّ أن أسِمَه بنفسي؟</span>
+- **FR** — Que détecte Z Privacy automatiquement, et que dois-je marquer moi-même ?
+- **ES** — ¿Qué detecta Z Privacy automáticamente y qué debo marcar yo?
 
 **Q20.** Which file types and languages does it support?
 
 - **DE** — Welche Dateitypen und Sprachen werden unterstützt?
 - **AR** — <span dir="rtl" lang="ar">أيُّ أنواع الملفّات واللغات يدعمُها؟</span>
+- **FR** — Quels types de fichiers et quelles langues prend-il en charge ?
+- **ES** — ¿Qué tipos de archivo e idiomas admite?
 
 **Q21.** Is Z Privacy free?
 
 - **DE** — Ist Z Privacy kostenlos?
 - **AR** — <span dir="rtl" lang="ar">هل Z Privacy مجانيّ؟</span>
+- **FR** — Z Privacy est-il gratuit ?
+- **ES** — ¿Es gratuito Z Privacy?
 
 **Q22.** Is it open source, and can companies use it?
 
 - **DE** — Ist es quelloffen, und dürfen Unternehmen es nutzen?
 - **AR** — <span dir="rtl" lang="ar">هل هو مفتوحُ المصدر، وهل تستطيع الشركاتُ استعمالَه؟</span>
+- **FR** — Est-il open source, et les entreprises peuvent-elles l’utiliser ?
+- **ES** — ¿Es de código abierto, y pueden usarlo las empresas?
 
 **Q23.** How can I check Z Privacy's claims myself?
 
 - **DE** — Wie kann ich die Aussagen von Z Privacy selbst prüfen?
 - **AR** — <span dir="rtl" lang="ar">كيف أتحقّق من ادّعاءات Z Privacy بنفسي؟</span>
+- **FR** — Comment vérifier moi-même les affirmations de Z Privacy ?
+- **ES** — ¿Cómo puedo comprobar yo mismo las afirmaciones de Z Privacy?
 
 **Q24.** Which operating systems does it run on, and why does Windows warn me?
 
 - **DE** — Auf welchen Betriebssystemen läuft es, und warum warnt mich Windows?
 - **AR** — <span dir="rtl" lang="ar">على أيّ أنظمة التشغيل يعمل، ولماذا يُحذّرُني ويندوز؟</span>
+- **FR** — Sur quels systèmes d’exploitation fonctionne-t-il, et pourquoi Windows m’avertit-il ?
+- **ES** — ¿En qué sistemas operativos funciona, y por qué me avisa Windows?
 
 **Q25.** Who makes Z Privacy?
 
 - **DE** — Wer macht Z Privacy?
 - **AR** — <span dir="rtl" lang="ar">من يصنع Z Privacy؟</span>
+- **FR** — Qui fait Z Privacy ?
+- **ES** — ¿Quién hace Z Privacy?
 
 ---
 

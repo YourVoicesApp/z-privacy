@@ -59,6 +59,12 @@ import 'package:zprivacy/widgets/bits.dart';
 /// absent from Settings, the session room and the bar (which read that one).
 /// The core is where that was fixed, and this is the note for the next
 /// language that arrives in only one of the two registers.
+///
+/// **French and Spanish are not here yet, on purpose** (paper 121, 2 November
+/// 2026): their lists are written, but a language is offered when the core
+/// carries its pack, and the packs are paper 120's, built in another tree. The
+/// tree that holds both adds `'es'` and `'fr'` here — G38 compares this list
+/// with `z_core/src/scanner/packs/` and names the two the day they arrive.
 const offeredLanguages = <String>['ar', 'de', 'en', 'sv'];
 
 /// The sheet after a file was chosen is **gone** — 080. It asked «which

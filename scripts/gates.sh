@@ -442,10 +442,17 @@ LANGS=$FLUTTER_LIB/widgets/language_list.dart
 
 G38_OFFERED=$(grep -oE "offeredLanguages = <String>\[[^]]*\]" "$LANGS" \
               | grep -oE "'[a-z]{2}'" | tr -d "'" | tr '\n' ' ' | sed 's/ $//')
-if [ "$G38_OFFERED" = "ar de en sv" ]; then
-  pass "G38 the languages offered are the measured four: ar de en sv (every pack this build carries)"
+# **Measured against the core, since paper 121** (2 November 2026): French and
+# Spanish arrive as packs in paper 120 and as lists in paper 121, in two trees,
+# so the four the line was written for are no longer the only right answer.
+# What rule 56 says has not moved — every pack this build carries is offered,
+# and nothing is offered that the core cannot scan — so the answer is read off
+# the packs folder: a language pack is a `<code>.rs` with two letters.
+G38_PACKS=$(ls z_core/src/scanner/packs/ 2>/dev/null | grep -oE '^[a-z]{2}\.rs$' | sed 's/\.rs$//' | sort | tr '\n' ' ' | sed 's/ $//')
+if [ -n "$G38_PACKS" ] && [ "$G38_OFFERED" = "$G38_PACKS" ]; then
+  pass "G38 the languages offered are the packs this build carries: $G38_OFFERED"
 else
-  fail "G38 the offered languages are «$G38_OFFERED» — expected «ar de en sv» (rule 56)"
+  fail "G38 the offered languages are «$G38_OFFERED» and the core carries «$G38_PACKS» (rule 56)"
 fi
 
 # One list, every reader. A second literal pair is the «two copies of de, en»

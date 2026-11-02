@@ -2801,4 +2801,14 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get couldNotOpenYourBrowser =>
       'Z Privacy konnte Ihren Browser nicht öffnen. Die Adresse auf der Schaltfläche lässt sich in jedem Browser von Hand öffnen.';
+
+  @override
+  String thisTranslationWasMadeWithAi(String subject) {
+    return 'Diese Übersetzung wurde mit KI erstellt. Einen Fehler melden Sie an zprivacy@mono-peak.com mit dem Betreff «$subject».';
+  }
+
+  @override
+  String theCorrectionSubject(String code) {
+    return 'Translation ($code)';
+  }
 }

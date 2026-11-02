@@ -701,5 +701,7 @@
   "describeTheProblemNotYourDocuments": "صِفِ المشكلة، ولا تُرسِل وثائقك: فما يصل إلى صندوقنا ليس شيئاً نستطيع حمايته. و«انسخ التقرير»، على الشريط فوق عملك، تكتب أرقاماً عن الوثيقة ولا كلمةً منها.",
   "howToUseZPrivacy": "طريقة استخدام Z Privacy",
   "theGuideOpensInYourBrowser": "تُفتح الصفحةُ في متصفّحك، باللغة التي عليها هذه الواجهة. ولا يذهب شيءٌ من وثيقتك أو خزنتك مع الضغطة: متصفّحك يطلب من الموقع صفحةً، كأيّ زيارةٍ أخرى.",
-  "couldNotOpenYourBrowser": "لم يستطع Z Privacy فتحَ متصفّحك. والعنوانُ على الضغطة يُفتح في أيّ متصفّحٍ باليد."
+  "couldNotOpenYourBrowser": "لم يستطع Z Privacy فتحَ متصفّحك. والعنوانُ على الضغطة يُفتح في أيّ متصفّحٍ باليد.",
+  "thisTranslationWasMadeWithAi": "صُنعت هذه الترجمة بالذكاء الاصطناعي. للإبلاغ عن خطأ، اكتب إلى zprivacy@mono-peak.com بالموضوع «{subject}».",
+  "theCorrectionSubject": "Translation ({code})"
 }

@@ -84,9 +84,13 @@ void main() {
     // that was always the point — **every pack this build carries is
     // offered**, and nothing is offered that the core cannot scan.
     final offered = ground.packs.where((p) => offeredLanguages.contains(p.id)).toList();
+    // **At least these four, and French and Spanish where the core carries
+    // their packs** — paper 121 put `es` and `fr` in `offeredLanguages` the
+    // same day paper 120 builds the packs, in another tree. Either tree alone
+    // is measured by the line below this one: every pack is offered.
     expect(
-      offered.map((p) => p.id).toList()..sort(),
-      ['ar', 'de', 'en', 'sv'],
+      offered.map((p) => p.id).toSet().containsAll({'ar', 'de', 'en', 'sv'}),
+      isTrue,
       reason: 'the languages offered on the glass are ${offered.map((p) => p.id).toList()}',
     );
     expect(

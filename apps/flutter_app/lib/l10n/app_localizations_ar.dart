@@ -2807,4 +2807,14 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get couldNotOpenYourBrowser =>
       'لم يستطع Z Privacy فتحَ متصفّحك. والعنوانُ على الضغطة يُفتح في أيّ متصفّحٍ باليد.';
+
+  @override
+  String thisTranslationWasMadeWithAi(String subject) {
+    return 'صُنعت هذه الترجمة بالذكاء الاصطناعي. للإبلاغ عن خطأ، اكتب إلى zprivacy@mono-peak.com بالموضوع «$subject».';
+  }
+
+  @override
+  String theCorrectionSubject(String code) {
+    return 'Translation ($code)';
+  }
 }

@@ -701,5 +701,7 @@
   "describeTheProblemNotYourDocuments": "Beskriv problemet, och skicka inte med dina dokument: det som kommer in i vår brevlåda kan vi inte skydda. «Kopiera rapporten» i listen över ditt arbete skriver tal om ett dokument och inte ett ord ur det.",
   "howToUseZPrivacy": "Så använder du Z Privacy",
   "theGuideOpensInYourBrowser": "Sidan öppnas i din webbläsare, på det språk det här gränssnittet är på. Med trycket går ingenting från ditt dokument och ingenting från ditt valv med: din webbläsare ber webbplatsen om en sida, som vid vilket annat besök som helst.",
-  "couldNotOpenYourBrowser": "Z Privacy kunde inte öppna din webbläsare. Adressen på knappen går att öppna i vilken webbläsare som helst för hand."
+  "couldNotOpenYourBrowser": "Z Privacy kunde inte öppna din webbläsare. Adressen på knappen går att öppna i vilken webbläsare som helst för hand.",
+  "thisTranslationWasMadeWithAi": "Den här översättningen gjordes med AI. Rapportera ett fel till zprivacy@mono-peak.com med ämnet «{subject}».",
+  "theCorrectionSubject": "Translation ({code})"
 }

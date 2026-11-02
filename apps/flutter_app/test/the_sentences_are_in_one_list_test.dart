@@ -21,6 +21,8 @@ import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/l10n/app_localizations_ar.dart';
 import 'package:zprivacy/l10n/app_localizations_de.dart';
 import 'package:zprivacy/l10n/app_localizations_en.dart';
+import 'package:zprivacy/l10n/app_localizations_es.dart';
+import 'package:zprivacy/l10n/app_localizations_fr.dart';
 import 'package:zprivacy/l10n/app_localizations_sv.dart';
 import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
@@ -197,7 +199,7 @@ void main() {
 
     // An unknown code is English, not a refusal — the source list is the
     // honest answer for a language nobody has translated.
-    expect(theLocaleOf('fr'), const Locale('en'));
+    expect(theLocaleOf('it'), const Locale('en'));
     expect(theLocaleOf('de'), const Locale('de'));
 
     // Left as English, so no guard after this one meets a German glass it did
@@ -350,7 +352,7 @@ void main() {
   // — seven sentences compared with the English — so Svenska began carrying
   // the interface because the sentences differ, and the Language room's «the
   // interface is English until its sentences are translated» stopped being
-  // drawn for it by the same reading. `fr` stays as the control: a code with
+  // drawn for it by the same reading. `it` stays as the control (it was `fr` until paper 121): a code with
   // no list at all is still English, and the law still bites somewhere.
   //
   // What this guard does **not** say is that the Swedish is good: the owner is
@@ -368,20 +370,25 @@ void main() {
         reason: 'the Swedish values read as the English again — then a person '
             'who chooses Svenska would read English promises, which is the '
             'whole of what 56-أ forbade');
-    // A code nobody has a file for at all — the law's remaining subject.
-    expect(theListIsWrittenIn('fr'), isFalse);
+    // A code nobody has a file for at all — the law's remaining subject. It
+    // was `fr` until paper 121 wrote the French list on 2 November 2026.
+    expect(theListIsWrittenIn('it'), isFalse);
+    expect(theListIsWrittenIn('fr'), isTrue);
+    expect(theListIsWrittenIn('es'), isTrue);
 
     // **And the fallback.** The locale the root applies is a language the glass
     // can speak, never the one it merely has a file for.
     expect(theLocaleOf('de'), const Locale('de'));
     expect(theLocaleOf('sv'), const Locale('sv'),
         reason: 'the Swedish list is written, so the root draws it');
-    expect(theLocaleOf('fr'), const Locale('en'));
+    expect(theLocaleOf('it'), const Locale('en'));
+    expect(theLocaleOf('fr'), const Locale('fr'));
+    expect(theLocaleOf('es'), const Locale('es'));
 
     // The holder, asked the same question the root asks it: a code whose list
     // is not written reaches the English sentences and not an empty screen —
-    // `fr` is that code now, and Swedish answers in Swedish beside it.
-    theSentencesAreNow(theLocaleOf('fr'));
+    // `it` is that code now, and Swedish answers in Swedish beside it.
+    theSentencesAreNow(theLocaleOf('it'));
     addTearDown(() => theSentencesAreNow(const Locale('en')));
     expect(sentences.noAccount, AppLocalizationsEn().noAccount);
     theSentencesAreNow(theLocaleOf('sv'));
@@ -436,4 +443,67 @@ void main() {
         isNot(AppLocalizationsEn().taughtOnUnknown));
   });
 
+
+  // ------------------------------------------------------------------ guard 8
+  //
+  // **French and Spanish, written with AI on 2 November 2026** — paper 121.
+  // The same six sentences every list is held to, the same rule that a value
+  // may not be the English again, and the glossary the two chose — a token is
+  // a «jeton» and a «marcador», a vault a «coffre» and a «bóveda» — so a word
+  // that holds in one screen holds in the next. What this does not say is that
+  // either is good: nobody native has read them, and the Language room says
+  // so under the choice.
+  test('the French and the Spanish lists say every sentence, in their own words', () {
+    final en = AppLocalizationsEn();
+    for (final (name, t) in <(String, dynamic)>[
+      ('French', AppLocalizationsFr()),
+      ('Spanish', AppLocalizationsEs()),
+    ]) {
+      for (final sentence in <String>[
+        t.theKeyIsBehindTheLockedVault,
+        t.theChatKeepsNothing,
+        t.unnamedTrouble,
+        t.troubleVaultLocked,
+        t.refusalEncryptedPdf,
+        t.networkUnreachable,
+      ]) {
+        expect(sentence.trim(), isNotEmpty, reason: 'a $name sentence is empty');
+      }
+      expect(t.theChatKeepsNothing, isNot(en.theChatKeepsNothing),
+          reason: 'the $name value is the English again — 56-أ');
+      expect(t.noAccount, isNot(en.noAccount));
+    }
+    expect(AppLocalizationsFr().vaultLabel, 'Coffre');
+    expect(AppLocalizationsFr().tokenRow, 'Jeton');
+    expect(AppLocalizationsEs().vaultLabel, 'Bóveda');
+    expect(AppLocalizationsEs().tokenRow, 'Marcador');
+    expect(AppLocalizationsFr().thisLanguageName, 'Français');
+    expect(AppLocalizationsEs().thisLanguageName, 'Español');
+  });
+
+  // **And the line under the choice** — the owner's word: a list written with
+  // AI says so, with the address and a subject the mailbox is filtered by. The
+  // subject is English in every list; the sentence is the list's own.
+  test('a list written with AI says so, with the address and the subject', () {
+    expect(theListsWrittenWithAi, {'fr', 'es'});
+    for (final code in theListsWrittenWithAi) {
+      expect(theListIsWrittenIn(code), isTrue, reason: code);
+    }
+    theSentencesAreNow(const Locale('fr'));
+    addTearDown(() => theSentencesAreNow(const Locale('en')));
+    expect(theCorrectionSubject('fr'), 'Translation (FR)');
+    final fr = sentences.thisTranslationWasMadeWithAi(theCorrectionSubject('fr'));
+    expect(fr, contains('zprivacy@mono-peak.com'));
+    expect(fr, contains('Translation (FR)'));
+    expect(fr, contains('IA'));
+    theSentencesAreNow(const Locale('es'));
+    final es = sentences.thisTranslationWasMadeWithAi(theCorrectionSubject('es'));
+    expect(es, contains('zprivacy@mono-peak.com'));
+    expect(es, contains('Translation (ES)'));
+    expect(es, isNot(fr));
+    // German, Swedish and Arabic were written by people and carry no such line.
+    for (final code in <String>['de', 'sv', 'ar', 'en']) {
+      expect(theListsWrittenWithAi.contains(code), isFalse, reason: code);
+    }
+  });
 }

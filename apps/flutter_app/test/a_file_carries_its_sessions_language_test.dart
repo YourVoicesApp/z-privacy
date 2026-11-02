@@ -129,13 +129,18 @@ void main() {
     // **An unwritten list is English, by the one law and not a second one** —
     // and since paper 106 (23 October 2026) Swedish is not one of them: a file
     // that leaves a Swedish session is worded in Swedish, by the same reading
-    // of the same law. `fr` below is the law's remaining subject, which is why
-    // it is here and not only for symmetry.
+    // of the same law. `it` below is the law's remaining subject, which is why
+    // it is here and not only for symmetry — it was `fr` until paper 121 wrote
+    // the French list, and then a French session's file is worded in French.
     expect(theSentencesAFileCarries('sv').zPdfProtectedCopy,
         isNot(none.zPdfProtectedCopy),
         reason: 'the Swedish list is written, so a file from a Swedish session '
             'may not carry the source list words');
     expect(theSentencesAFileCarries('fr').zPdfProtectedCopy,
+        isNot(none.zPdfProtectedCopy),
+        reason: 'the French list is written (paper 121), so a file from a French '
+            'session may not carry the source list words');
+    expect(theSentencesAFileCarries('it').zPdfProtectedCopy,
         none.zPdfProtectedCopy,
         reason: 'a code with no list at all refused instead of answering English');
   });
