@@ -572,7 +572,7 @@ fn is_a_long_date(eight: &str) -> bool {
 /// nineteen digits, so the standard reading is the one written here, and the
 /// ten-digit caller gets the identical answer it got before (its callers keep
 /// their own length checks).
-fn luhn_ok(digits: &str) -> bool {
+pub(crate) fn luhn_ok(digits: &str) -> bool {
     if digits.len() < 2 {
         return false;
     }

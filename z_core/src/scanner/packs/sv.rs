@@ -188,6 +188,7 @@ pub(crate) fn pack() -> LanguagePack {
         order: NameOrder::GivenThenFamily,
         names: CSV,
         provenance: "Wikidata (CC0) — given and family names of people recorded as Swedish citizens; see z_core/assets/licenses/swedish_names_sources.md",
+        names_by_shape: false,
         extra: &[],
     }
 }

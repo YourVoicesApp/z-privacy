@@ -224,6 +224,22 @@ pub(crate) struct LanguagePack {
     /// `z_core/assets/licenses/`, and this is the pointer a report prints.
     pub provenance: &'static str,
 
+    /// **Names by their shape, and only ever offered** — paper 120.
+    ///
+    /// French and Spanish ship with no name list: the owner's ruling of 2
+    /// November 2026 is that a names vault for them is a later update, and
+    /// that until then «a word that begins with a capital is put forward as a
+    /// name» — **Suggested**, so that an accepted one is kept in Z's vault.
+    ///
+    /// So a pack with this set gets one reading the others do not: two or three
+    /// capitalised words in a row are offered as a person with no dictionary
+    /// behind them (`people::names_by_their_shape`). And every person such a
+    /// pack finds, by that reading or by any other, is **capped at Suggest**:
+    /// a title or a closing is evidence, and without a library behind it it is
+    /// not proof. `false` for every pack that has a library, so German,
+    /// Swedish, English and Arabic are left exactly where they were.
+    pub names_by_shape: bool,
+
     /// Rules this language needs that no other language can use.
     ///
     /// A national vehicle plate, a national way of writing a local telephone
