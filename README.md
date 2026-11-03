@@ -15,16 +15,16 @@ here, locally.
 ## Download
 
 The first public beta was published on 25 October 2026, and Arabic joined it
-the same day. Download it from
+the same day; French and Spanish joined it on 3 November 2026. Download it from
 https://z-privacy.com/en/download/, or from this repository's
 [Releases](https://github.com/YourVoicesApp/z-privacy/releases).
 
 | File | SHA-256 |
 |---|---|
-| `zprivacy-v1-linux-x86_64.tar.gz` — Linux x86_64 (GTK3) | `baaca7a4efa84bb9386f96f78d5620a81706c9dc4dc18dd5309309891d07432c` |
-| `zprivacy-v1-windows-x86_64-setup.exe` — Windows 10/11 x86_64 | `906d9adfd299a5bc8f16fbef97b46fb80bdf80c7a9331753bb8bd94c8ff709ee` |
+| `zprivacy-v1-linux-x86_64.tar.gz` — Linux x86_64 (GTK3) | `2fa9d56943c714eef00b38e87b1dd730f59af83c7cbfd2726f808d1e477ba68f` |
+| `zprivacy-v1-windows-x86_64-setup.exe` — Windows 10/11 x86_64 | `f42445a3b02a2f99aa291dee5a12f478c0469794b94cbbfbc9617cd138c079c3` |
 
-Both were built from `50270fd`. The Windows installer is not signed yet, so
+Both were built from `a74057c`. The Windows installer is not signed yet, so
 Windows shows «Windows protected your PC» the first time: «More info», then
 «Run anyway». The fingerprint is what says the file is ours.
 
@@ -60,21 +60,24 @@ in one list, and no screen writes one of its own: the count is
 `python3 scripts/check_the_one_list.py`, where it is measured rather than
 remembered — C-15 in `docs/CLAIMS.md` is the one other place it is written
 down, and a gate holds that place to this command. The interface is English,
-German, Swedish and Arabic: the Swedish words were written on 23 October 2026
-and the Arabic words on 25 October 2026, and the first screen offers both
+German, Swedish, Arabic, French and Spanish: the Swedish words were written on
+23 October 2026, the Arabic words on 25 October 2026 and the French and Spanish
+words on 2 November 2026, with AI, and the language choice offers them all
 because the gates measure that their sentences are not the English ones —
-**neither has been read by a native speaker yet**, and that review is a round
+**none has been read by a native speaker yet**, and that review is a round
 of its own. The Arabic is measured the same way as the Swedish: 696 of 702
 values say something other than the English, and the six that do not are names
 and product spellings the law allows in every language. **Arabic is the first
 language here that is read right to left**, so choosing it mirrors every
 screen; the document keeps its own direction, which is the text's and not the
-interface's. The detection packs are German, English, Swedish and Arabic.
+interface's. The detection packs are German, English, Swedish, Arabic, French and Spanish;
+the French and Spanish packs read numbers by their checks and only suggest a
+name by its shape, with no names library yet.
 
 Windows is built from git by `.github/workflows/windows-core.yml`, by hand from
 the Actions tab. The core's tests, the nine storage contracts, the one-writer
 measurement and the whole Dart suite run there, and the job writes a zip, an
-installer and an MSIX. The published installer comes from run 40319351680, on
+installer and an MSIX. The published installer comes from run 41600789541, on
 the same commit as the Linux archive. The MSIX is not distributed: it does not
 yet carry every file the installer does, and the workflow says so. What is
 still Linux's alone is `docs/MEASURED_ON_LINUX.txt`, the numbers every gate run
@@ -83,7 +86,7 @@ There is no macOS, iOS or Android build. A port is a platform, not a
 repackaging.
 
 The site that carries the release is built in `site/` and is served at
-z-privacy.com: static pages in English, German and Arabic, no JavaScript,
+z-privacy.com: static pages in English, German, Arabic, French and Spanish, no JavaScript,
 no analytics, and no third-party request.
 
 ## Build from source
@@ -158,7 +161,7 @@ scripts/gen_mirrors.py   regenerates the bridge mirrors from the contract
 docs/                    the working record, including the human run
 boards/                  the design boards the product was drawn on
 redteam/                 the attacker, kept as it was written and guarded by G21
-site/                    z-privacy.com, static, three languages
+site/                    z-privacy.com, static, five languages
 ```
 
 ## Licence
