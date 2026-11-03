@@ -641,7 +641,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String protectedAutomaticallyNeedYourWord(int auto, int open, int normal) {
-    return '$auto protégés automatiquement · $open attendent votre avis · $normal normaux';
+    return '$auto protégés automatiquement · $open attendent votre accord · $normal normaux';
   }
 
   @override
@@ -1941,7 +1941,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get suggestMarksAndWaits =>
-      'Suggérer : Z le marque et attend votre avis.';
+      'Suggérer : Z le marque et attend votre accord.';
 
   @override
   String get addAct => 'Ajouter';
@@ -2293,7 +2293,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String scannedAgainReport(int auto, int byYou, int waiting, int normal) {
-    return 'Nouvelle analyse : $auto protégés automatiquement · $byYou par vous · $waiting attendent votre avis · $normal normaux.';
+    return 'Nouvelle analyse : $auto protégés automatiquement · $byYou par vous · $waiting attendent votre accord · $normal normaux.';
   }
 
   @override
@@ -2354,7 +2354,7 @@ class AppLocalizationsFr extends AppLocalizations {
       other: '$count endroits se trouvent',
       one: 'Un endroit se trouve',
     );
-    return '$_temp0 dans des mots qui attendent encore votre avis : $list. Protéger les laisse à la vérification.';
+    return '$_temp0 dans des mots qui attendent encore votre accord : $list. Protéger les laisse à la vérification.';
   }
 
   @override
@@ -2376,8 +2376,8 @@ class AppLocalizationsFr extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count éléments attendent votre avis.',
-      one: 'Un élément attend votre avis.',
+      other: '$count éléments attendent votre accord.',
+      one: 'Un élément attend votre accord.',
     );
     return '$_temp0';
   }
