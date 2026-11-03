@@ -120,7 +120,8 @@ header.top {
 .menu-item.on { font-weight: 600; background: #EFEAE0; }
 .menu-item[lang="ar"] { font-family: var(--arab); }
 
-/* The vocabulary is a table of twenty-nine rows in three columns, not a list
+/* The vocabulary is a table of twenty-nine rows in five columns (three until
+   paper 121 added French and Spanish), not a list
    of links, so its panel takes the width the page can spare and scrolls inside
    itself. It may not run off the glass at any width, and the guard measures
    that with the menu open rather than trusting this line. */
@@ -247,7 +248,7 @@ html[dir="rtl"] .chain { justify-content: flex-end; }
 /* ---------------------------------------------------------------- vocabulary */
 .vocab { border-top: 1px solid var(--line); }
 .vrow {
-  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+  display: grid; grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 0 18px; padding: 8px 0; border-bottom: 1px solid var(--line2);
 }
 .vrow.vhead {
@@ -258,7 +259,7 @@ html[dir="rtl"] .chain { justify-content: flex-end; }
 .vrow.vhead [lang="ar"] { font-family: var(--arab); letter-spacing: 0; text-transform: none; }
 .vrow > div { font-size: 14px; }
 .ven { font-weight: 500; }
-.vde { color: var(--ink2); }
+.vde, .vfr, .ves { color: var(--ink2); }
 .var { color: var(--ink2); font-family: var(--arab); text-align: right; }
 .vhead [dir="rtl"] { text-align: right; }
 .vlab { display: none; }

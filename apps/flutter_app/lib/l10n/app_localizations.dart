@@ -8,6 +8,8 @@ import 'package:intl/intl.dart' as intl;
 import 'app_localizations_ar.dart';
 import 'app_localizations_de.dart';
 import 'app_localizations_en.dart';
+import 'app_localizations_es.dart';
+import 'app_localizations_fr.dart';
 import 'app_localizations_sv.dart';
 
 // ignore_for_file: type=lint
@@ -99,6 +101,8 @@ abstract class AppLocalizations {
     Locale('ar'),
     Locale('de'),
     Locale('en'),
+    Locale('es'),
+    Locale('fr'),
     Locale('sv'),
   ];
 
@@ -4330,6 +4334,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Z Privacy could not open your browser. The address on the press opens in any browser by hand.'**
   String get couldNotOpenYourBrowser;
+
+  /// Paper 121, the owner's ruling of 2 November 2026: under the language choice in the Language room, when the chosen language is one whose list was translated with AI (French, Spanish). {subject} is «Translation (FR)» or «Translation (ES)» and is not translated: it is what the lead filters the mailbox by. The subject is ours, not a word of the person's own, so it is quoted with “” and not with the «» the house keeps for a person's word (G44).
+  ///
+  /// In en, this message translates to:
+  /// **'This translation was made with AI. To report a mistake, write to zprivacy@mono-peak.com with the subject “{subject}”.'**
+  String thisTranslationWasMadeWithAi(String subject);
+
+  /// Paper 121: the subject of a mail correcting an AI translation — «Translation (FR)», «Translation (ES)». The same English words in every list on purpose: it is what the lead filters the mailbox by, so it is never translated.
+  ///
+  /// In en, this message translates to:
+  /// **'Translation ({code})'**
+  String theCorrectionSubject(String code);
 }
 
 class _AppLocalizationsDelegate
@@ -4342,8 +4358,14 @@ class _AppLocalizationsDelegate
   }
 
   @override
-  bool isSupported(Locale locale) =>
-      <String>['ar', 'de', 'en', 'sv'].contains(locale.languageCode);
+  bool isSupported(Locale locale) => <String>[
+    'ar',
+    'de',
+    'en',
+    'es',
+    'fr',
+    'sv',
+  ].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
@@ -4358,6 +4380,10 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
       return AppLocalizationsDe();
     case 'en':
       return AppLocalizationsEn();
+    case 'es':
+      return AppLocalizationsEs();
+    case 'fr':
+      return AppLocalizationsFr();
     case 'sv':
       return AppLocalizationsSv();
   }

@@ -211,7 +211,22 @@ OWED: dict[str, int] = {}
 SAME_IN_EVERY_LANGUAGE = re.compile(
     r'^(?:OK|Z Privacy|z-pdf|Grok|xAI|Person|Passphrase|Name'
     r'|Nordstern Consulting GmbH|Mandantenkennung|Herr Müller|Lindqvist'
-    r'|\{act\} · \{needs\}|Z-pdf : \{token\}|\d+|[-—·]|)$'
+    r'|\{act\} · \{needs\}|Z-pdf : \{token\}|Translation \(\{code\}\)|\d+|[-—·]|)$'
+)
+# (**`Translation ({code})`** joined on 2 November 2026, paper 121: the subject of
+# a mail correcting an AI translation. It is English in every list because the
+# lead filters the mailbox by it — a subject that changed with the interface
+# language would be five subjects for one mailbox.)
+
+# **And the French shares these with the English, by name** — paper 121, each
+# one a French word spelt as the English is, not a skipped line: «page» and
+# «pages» (and the lines built of them), «Sessions», «Client» and «Client
+# Nordstern», «Documents», and «Session {number}» for the same reason the
+# Swedish keeps it — it is the name the core writes. The Spanish shares none.
+SAME_IN_FRENCH = re.compile(
+    r'^(?:1 page|\{pages\} pages|Page \{page\}|Page|Sessions|Client|Client Nordstern'
+    r'|\{count, plural, =1\{1 page\} other\{\{count\} pages\}\}|Session \{number\}'
+    r'|Documents|Page \{page\} · ¶\{paragraph\})$'
 )
 
 # **And the four the Swedish adds, by name** — paper 106, each with the reason
@@ -569,6 +584,11 @@ def g50() -> list[str]:
     de = json.loads((L10N / 'app_de.arb').read_text(encoding='utf-8'))
     sv = json.loads((L10N / 'app_sv.arb').read_text(encoding='utf-8'))
     ar = json.loads((L10N / 'app_ar.arb').read_text(encoding='utf-8'))
+    # **French and Spanish, since paper 121** — written with AI, and held to the
+    # same two laws as the three before them: every key, and no English value
+    # left standing as if it were the translation.
+    fr = json.loads((L10N / 'app_fr.arb').read_text(encoding='utf-8'))
+    es = json.loads((L10N / 'app_es.arb').read_text(encoding='utf-8'))
     keys = [k for k in en if not k.startswith('@')]
     for k in keys:
         if k not in de:
@@ -582,6 +602,10 @@ def g50() -> list[str]:
         # a red line gets, and each one names its own file.
         if k not in ar:
             bad.append(f'«{k}» is in the English list and not in the Arabic')
+        if k not in fr:
+            bad.append(f'«{k}» is in the English list and not in the French')
+        if k not in es:
+            bad.append(f'«{k}» is in the English list and not in the Spanish')
     for k in keys:
         if k in de and de[k] == en[k] and not SAME_IN_EVERY_LANGUAGE.match(en[k]):
             bad.append(f'«{k}» is the English sentence in the German file — '
@@ -596,10 +620,20 @@ def g50() -> list[str]:
         if k in ar and ar[k] == en[k] and not SAME_IN_EVERY_LANGUAGE.match(en[k]):
             bad.append(f'«{k}» is the English sentence in the Arabic file — '
                        f'nobody translated it (paper 115 wrote the Arabic)')
+        if (k in fr and fr[k] == en[k] and not SAME_IN_EVERY_LANGUAGE.match(en[k])
+                and not SAME_IN_FRENCH.match(en[k])):
+            bad.append(f'«{k}» is the English sentence in the French file — '
+                       f'nobody translated it (paper 121 wrote the French)')
+        if k in es and es[k] == en[k] and not SAME_IN_EVERY_LANGUAGE.match(en[k]):
+            bad.append(f'«{k}» is the English sentence in the Spanish file — '
+                       f'nobody translated it (paper 121 wrote the Spanish)')
     for extra in [k for k in de if not k.startswith('@') and k not in en]:
         bad.append(f'«{extra}» is in the German file and in no English key')
     for extra in [k for k in ar if not k.startswith('@') and k not in en]:
         bad.append(f'«{extra}» is in the Arabic file and in no English key')
+    for name, other in (('French', fr), ('Spanish', es)):
+        for extra in [k for k in other if not k.startswith('@') and k not in en]:
+            bad.append(f'«{extra}» is in the {name} file and in no English key')
     return bad
 
 
@@ -662,7 +696,7 @@ def main() -> int:
         # from the English, with the handful that legitimately do not named
         # above — so these two numbers are «written», never «reviewed».
         en_v = json.loads((L10N / 'app_en.arb').read_text(encoding='utf-8'))
-        for code in ('de', 'sv', 'ar'):
+        for code in ('de', 'sv', 'ar', 'fr', 'es'):
             other = json.loads((L10N / f'app_{code}.arb').read_text(encoding='utf-8'))
             written = sum(1 for k in keys if other.get(k) != en_v.get(k))
             print(f'  {code}: {written} of {len(keys)} values say something other '

@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Confidentialité — Z Privacy</title>
+<meta name="description" content="Z Privacy fonctionne sur votre ordinateur et ne nous envoie rien. Ce site est statique et ne compte personne.">
+<meta name="referrer" content="no-referrer">
+<link rel="icon" href="../../assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="icon" href="../../assets/favicon-16.png" sizes="16x16" type="image/png">
+<link rel="apple-touch-icon" href="../../assets/apple-touch-icon.png">
+<link rel="stylesheet" href="../../assets/fonts.css">
+<link rel="stylesheet" href="../../assets/site.css">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Z Privacy">
+<meta property="og:title" content="Confidentialité">
+<meta property="og:description" content="Z Privacy fonctionne sur votre ordinateur et ne nous envoie rien. Ce site est statique et ne compte personne.">
+<meta property="og:url" content="https://z-privacy.com/fr/privacy/">
+<meta property="og:image" content="https://z-privacy.com/assets/logo-512.png">
+<meta property="og:image:width" content="512">
+<meta property="og:image:height" content="512">
+<meta name="twitter:card" content="summary">
+<link rel="canonical" href="https://z-privacy.com/fr/privacy/">
+<link rel="alternate" hreflang="en" href="https://z-privacy.com/en/privacy/">
+<link rel="alternate" hreflang="de" href="https://z-privacy.com/de/privacy/">
+<link rel="alternate" hreflang="ar" href="https://z-privacy.com/ar/privacy/">
+<link rel="alternate" hreflang="fr" href="https://z-privacy.com/fr/privacy/">
+<link rel="alternate" hreflang="es" href="https://z-privacy.com/es/privacy/">
+</head>
+<body>
+<!-- The privacy page, 9 October 2026.
+     Built on the structure of the Mono Peak Mail page, and on the one idea that
+     makes a page like this worth reading: **every promise names the file where
+     it can be checked.** `scripts/check_site.sh` reads those paths back out of
+     this page and asks the repository for each one, and requires the three
+     languages to name the same set — a promise dropped in translation is the
+     oldest way for two pages to disagree about one product.
+
+     The publisher block below is not written here. It is the one in the footer
+     of this language's own first page, copied byte for byte, and the guard
+     compares them: wherever two places can disagree about a fact, one of them
+     is already wrong. -->
+<header class="top">
+  <a class="mark" href="/fr/"><img class="z" src="../../assets/logo-512.png" width="30" height="30" alt="" aria-hidden="true"><span class="wm" lang="en" dir="ltr">Z Privacy</span></a>
+  <nav class="menus" aria-label="Langue et aide">
+    <details class="menu" name="topmenu">
+      <summary lang="fr">Français</summary>
+      <div class="menu-panel"><a class="menu-item" href="/en/privacy/" lang="en" hreflang="en">English</a><a class="menu-item" href="/de/privacy/" lang="de" hreflang="de">Deutsch</a><a class="menu-item" href="/ar/privacy/" lang="ar" dir="rtl" hreflang="ar">العربية</a><a class="menu-item on" href="/fr/privacy/" lang="fr" hreflang="fr" aria-current="page">Français</a><a class="menu-item" href="/es/privacy/" lang="es" hreflang="es">Español</a></div>
+    </details>
+    <details class="menu" name="topmenu">
+      <summary>Aide</summary>
+      <div class="menu-panel"><a class="menu-item" href="/fr/">Z Privacy — la première page</a><a class="menu-item" href="/fr/guide/">Comment utiliser Z Privacy</a><a class="menu-item" href="/fr/faq/">Questions et réponses</a><a class="menu-item" href="/fr/download/">Télécharger Z Privacy</a><a class="menu-item" href="/fr/privacy/">Confidentialité et protection des données</a><a class="menu-item" href="/fr/terms/">Conditions d’utilisation</a><a class="menu-item" href="/license/">Licence</a><a class="menu-item" href="/third-party/">Mentions relatives aux tiers</a></div>
+    </details>
+  </nav>
+</header>
+
+<main>
+  <h1 class="doc-h">Confidentialité</h1>
+  <p class="note" data-fact="an-ai-translation">Le texte anglais de cette page est le texte de référence. Cette traduction a été réalisée avec l’IA&#160;; pour signaler une erreur, écrivez à <a href="mailto:zprivacy@mono-peak.com?subject=Translation%20(FR)">zprivacy@mono-peak.com</a> avec l’objet «&#160;Translation (FR)&#160;».</p>
+  <p class="hero-word">Z Privacy fonctionne sur votre ordinateur. Il n’y a pas de compte, pas de serveur à nous, et rien de votre travail ne nous parvient. Ce site est une poignée de fichiers statiques qui ne compte personne. Ci-dessous, chaque promesse nomme le fichier où vous pouvez la vérifier.</p>
+
+  <section aria-labelledby="h-pub">
+    <h2 id="h-pub">Qui publie ceci</h2>
+    <p class="lead">Faruk AB publie Z Privacy et ce site web, et est le responsable du traitement des éventuelles données personnelles que ce site implique. Le droit suédois et le Règlement général sur la protection des données s’appliquent, et l’autorité de contrôle est l’IMY, Integritetsskyddsmyndigheten. La société, son numéro d’immatriculation et l’adresse de son siège figurent dans le pied de cette page, et l’adresse à laquelle vous pouvez écrire est <a href="mailto:zprivacy@mono-peak.com" dir="ltr">zprivacy@mono-peak.com</a>.</p>
+  </section>
+
+  <section aria-labelledby="h-app">
+    <h2 id="h-app">L’application fonctionne sur votre ordinateur</h2>
+    <ul class="promises">
+      <li class="promise" data-fact="what-an-in-app-chat-sends">Ce qu’envoie une conversation dans l’application, dit simplement, parce que c’est ce qui quitte cette machine : votre question est protégée, et cette question protégée est tout ce qui part. Posée à nouveau dans Z Privacy, elle part avec une seule chose en plus — l’échange qui la précède, la question précédente et sa réponse, sous la forme protégée dans laquelle elles sont parties — et jamais avec le document, qui est envoyé une seule fois, avec la question qui l’a emporté la première. Rien de plus ancien n’est envoyé, et rien de plus ancien n’est perdu : chaque tour précédent reste dans le fichier scellé de votre propre session. Ce que « Copier la discussion » met dans votre presse-papiers est cette même question protégée et rien de plus ancien, parce que la conversation que vous menez avec un modèle de votre choix garde son propre fil ; une réponse que vous rapportez à la main restaure toujours chaque nom que la conversation a jamais porté. Ce que cela vous coûte est dit ici aussi : une question de suivi parvient à un modèle qui ne voit plus le document, et aucune porte ici ne remet à qui que ce soit la conversation entière.<span class="proof"><code>z_core/tests/the_chat_remembers.rs</code> mesure ce qu’une question ultérieure emporte et ce qu’elle n’emporte pas, et c’est C-13 dans <code>docs/CLAIMS.md</code> qui consigne cette mesure.</span></li>
+      <li class="promise">Vos documents sont ouverts sur votre appareil, et rien d’eux ne nous est transmis — parce que le produit ne contient absolument aucune adresse à nous. Les seules adresses qu’il contient sont celles des six services d’IA que vous pouvez choisir et une adresse de bouclage pour un modèle qui tourne sur votre propre machine.<span class="proof">Chercher nos propres domaines dans le produit ne donne rien, et la même recherche trouve les six fournisseurs avec lesquels il communique bel et bien : <code>docs/THE_PROVIDERS.md</code>, <code>z_core/src/providers/http.rs</code></span></li>
+      <li class="promise">Ce qui part est ce qu’on vous a montré, caractère par caractère.<span class="proof"><code>z_core/tests/wire_capture.rs</code> enregistre la requête octet par octet sur un serveur de votre propre machine, et prouve que le corps est littéralement le texte que vous avez vérifié et qu’aucune valeur originale n’apparaît ni dans ce corps, ni dans un en-tête, ni dans l’adresse.</span></li>
+      <li class="promise">Rien ne part sans votre accord.<span class="proof"><code>z_core/src/payload.rs</code>, <code>z_core/tests/the_send_door_is_a_sessions_door.rs</code></span></li>
+      <li class="promise">La réponse est restaurée sur votre appareil, à partir d’un stockage qui ne l’a jamais quitté.<span class="proof"><code>z_core/tests/round_trip.rs</code></span></li>
+      <li class="promise">Ce que Z apprend est conservé dans un coffre chiffré sur votre machine, et le fichier du coffre ne nomme personne.<span class="proof"><code>z_core/src/vault/crypto.rs</code> — ChaCha20-Poly1305 avec Argon2id. <code>z_core/tests/the_vault_file_says_nothing.rs</code> lit les octets mêmes du fichier du coffre à la recherche du nom d’un client, d’une deuxième graphie de ce nom, d’un numéro de compte et de la phrase secrète : il n’en trouve aucun, et un contrôle dans le même test prouve que la recherche les trouve tous lorsqu’ils y figurent en clair.</span></li>
+      <li class="promise">Le seul fichier qui n’est pas chiffré est le fichier de paramètres, et ce qui ne doit jamais y entrer est testé.<span class="proof"><code>z_core/tests/zcfg_leak.rs</code></span></li>
+      <li class="promise">Les fichiers sont créés privés, réservés à votre propre compte, et un lien symbolique à leur place est refusé plutôt que suivi.<span class="proof"><code>scripts/check_storage_contracts.sh</code> nomme six contrats et exige que chacun soit mesuré sur la plateforme où vous vous trouvez.</span></li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="h-limit">
+    <h2 id="h-limit">Ce que nous ne promettons pas</h2>
+    <p class="honest">Z Privacy réduit ce que vous envoyez. <b>Il ne vous rend pas anonyme vis-à-vis du fournisseur d’IA.</b> Si un texte protégé décrit encore la seule usine de son genre dans un petit village, un modèle peut tout de même deviner de quelle entreprise il s’agit. Ce que Z offre, c’est la minimisation des données et un remplacement que vous pouvez voir et vérifier avant son départ — pas l’anonymat. Cette phrase figure dans le contrat propre au produit, <code>docs/SECURITY_INVARIANTS.md</code>, qui exige qu’elle soit dite sur chaque page comme celle-ci.</p>
+    <p class="honest">Z ne s’interpose pas entre vous et l’entreprise dont vous utilisez le modèle. Il ne modifie, ne contourne ni ne commente les conditions d’aucun fournisseur. Vous vous inscrivez en votre propre nom, et votre fournisseur est en droit de savoir qui est son client et à quoi celui-ci l’utilise. Ce qu’il n’apprend pas, c’est à qui appartiennent les noms et les comptes qui figurent dans vos documents : ces personnes n’ont rien signé avec lui — <code>docs/THE_PROVIDERS.md</code>.</p>
+    <p class="honest">Une requête a une heure, une taille et une adresse. Z protège ce qui est dans le document, pas le fait que vous avez posé la question. Et dès que vous copiez un texte protégé ou restauré hors de l’application, le presse-papiers est hors de Z Privacy.</p>
+  </section>
+
+  <section aria-labelledby="h-site">
+    <h2 id="h-site">Ce site</h2>
+    <p class="lead">Une poignée de fichiers statiques. Aucun script ne s’y exécute, il ne dépose aucun cookie, il ne compte personne, et il ne demande à votre navigateur rien qui vienne d’ailleurs : les polices et la feuille de style sont servies d’ici. Le navigateur reçoit l’instruction de refuser tout le reste — la politique de sécurité du contenu est <code>default-src ‘none’</code>, consignée dans <code>site/_headers</code>, et <code>scripts/check_site.sh</code> refuse de déclarer le site publiable si une requête devait en sortir ou si un script apparaissait sur une page.</p>
+    <p class="lead">Comme tout serveur web, celui qui sert cette page voit la requête à laquelle il répond. Il s’agit de nginx, hébergé sur des serveurs Hetzner en Finlande — dans l’EEE — avec Cloudflare devant lui comme réseau. Nous n’y ajoutons rien : aucun compte de mesure d’audience, aucune balise, aucun pixel. Il n’y a aucun formulaire sur ce site ; il n’y a donc rien ici qui permette de nous envoyer quoi que ce soit.</p>
+  </section>
+
+  <section aria-labelledby="h-hold">
+    <h2 id="h-hold">Ce que nous détenons sur vous</h2>
+    <p class="lead">Rien de votre travail. Si vous écrivez à zprivacy@mono-peak.com, nous avons votre message et l’adresse d’où il vient, parce que c’est ce qu’est un e-mail, et il reste dans cette boîte aux lettres et nulle part ailleurs. Si vous écrivez « Updates » à zprivacy@mono-peak.com, nous conservons votre adresse dans cette boîte aux lettres et nulle part ailleurs, nous n’y écrivons que lorsqu’une version est publiée, et nous la supprimons lorsque vous répondez « stop ». Il n’y a pas de lettre d’information au-delà de cela, ni de liste de clients. Nous ne pouvons pas supprimer un document que nous n’avons jamais eu — et pour la même raison, nous ne pouvons en remettre aucun à qui que ce soit qui le demanderait.</p>
+  </section>
+
+  <section aria-labelledby="h-rights">
+    <h2 id="h-rights">Vos droits</h2>
+    <p class="lead">En vertu du RGPD, vous pouvez demander ce que nous détenons sur vous, le faire rectifier ou effacer, vous opposer à son utilisation, en demander une copie, et introduire une réclamation auprès d’une autorité de contrôle. En pratique, la seule chose que nous puissions détenir est un e-mail que vous avez choisi de nous envoyer ; un seul message à la même adresse règle donc tout cela. Pour une société suédoise, l’autorité est l’IMY, Integritetsskyddsmyndigheten, et vous pouvez aussi introduire une réclamation auprès de l’autorité du lieu où vous vivez.</p>
+  </section>
+
+  <section class="card soft" aria-labelledby="h-blanks">
+    <h2 id="h-blanks">Deux blancs que nous nommons au lieu de les remplir de mots</h2>
+    <ul class="promises">
+      <li class="promise"><b>Une version suédoise de cette page.</b> La société est suédoise, l’autorité aussi ; cette page existe aujourd’hui en anglais, en allemand, en arabe, en français et en espagnol.</li>
+      <li class="promise"><b>Une durée de conservation mesurée pour la boîte aux lettres.</b> Le courrier que vous nous envoyez reste jusqu’à ce qu’il soit supprimé à la main. Aucun chiffre n’est écrit ici parce qu’aucun n’a été mesuré, et un chiffre sans mesure derrière lui est précisément ce que ce produit existe pour refuser.</li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="h-when">
+    <h2 id="h-when">Quand cette page a changé</h2>
+    <p class="note">Rédigée le 9 octobre 2026. Cette page est un fichier du dépôt propre au produit, sous <code>site/</code>, un par langue ; la promesse et la page évoluent donc dans le même commit. Z Privacy est open source sous l’Apache License 2.0 — <a href="https://github.com/YourVoicesApp/z-privacy">le dépôt du code source</a>.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="foot-grid">
+    <div>
+      <h2 class="fh">Vos retours</h2>
+      <p class="mail"><a href="mailto:zprivacy@mono-peak.com" dir="ltr">zprivacy@mono-peak.com</a></p>
+      <p class="note">Retours par e-mail uniquement. Aucun formulaire, aucun backend, rien n’est collecté sur ce site.</p>
+      <h2 class="fh">Être prévenu lorsqu’une nouvelle version sort</h2>
+      <p class="mail"><a href="mailto:zprivacy@mono-peak.com?subject=Updates" dir="ltr">zprivacy@mono-peak.com</a></p>
+      <p class="note">Écrivez avec l’objet « Updates ». Nous ne vous répondons que lorsqu’une version est publiée, et nous supprimons votre adresse lorsque vous répondez « stop ». Aucun formulaire, aucun service de listes et aucun tiers : l’adresse reste dans cette boîte aux lettres et nulle part ailleurs.</p>
+    </div>
+    <div>
+      <h2 class="fh">Éditeur</h2>
+      <div class="legal"><div>Faruk AB</div><div>Aktiebolag (AB), Suède</div><div>Numéro d’immatriculation de la société (Org.nr) 559473-3494</div><div>Hotellgatan 3, 311 31 Falkenberg, Suède</div></div>
+      <p class="legal-contact"><a href="/fr/privacy/">Confidentialité et protection des données</a></p>
+      <p class="legal-contact"><a href="/fr/terms/">Conditions d’utilisation</a></p>
+      <p class="legal-contact">Contact et assistance : <a href="mailto:zprivacy@mono-peak.com" dir="ltr">zprivacy@mono-peak.com</a></p>
+    </div>
+  </div>
+  <p class="copy">© 2026 Faruk AB. Sous licence Apache License 2.0.</p>
+  <p class="colophon" lang="en">Z Privacy &#183; A mono-peak project by Faruk AB &#183; Apache-2.0</p>
+</footer>
+</body>
+</html>

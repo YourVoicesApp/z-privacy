@@ -208,13 +208,30 @@ def path(lits):
 # Arabic joins the three lists below and the retired sentence joins the
 # register under them. French is untouched by that: it is still the language
 # this tree does not speak, which is the whole of why it was chosen.
+#
+# **And on 2 November 2026 French stopped being the control** — paper 121 wrote
+# `app_fr.arb` and `app_es.arb` with AI, both cross the line with most of their
+# values, and the five home pages name them. The control moves to Italian, which
+# no page names and no list holds: the same reason French was chosen, one
+# language further on.
 SPEAKS = {
-    'en': ('English', 'German', 'Swedish', 'Arabic'),
-    'de': ('Englisch', 'Deutsch', 'Schwedisch', 'Arabisch'),
-    'ar': ('الإنجليزيّة', 'الألمانيّة', 'السويديّة', 'العربيّة'),
+    'en': ('English', 'German', 'Swedish', 'Arabic', 'French', 'Spanish'),
+    'de': ('Englisch', 'Deutsch', 'Schwedisch', 'Arabisch', 'Französisch', 'Spanisch'),
+    'ar': ('الإنجليزيّة', 'الألمانيّة', 'السويديّة', 'العربيّة', 'الفرنسيّة', 'الإسبانيّة'),
+    'fr': ('anglais', 'allemand', 'suédois', 'arabe', 'français', 'espagnol'),
+    'es': ('inglés', 'alemán', 'sueco', 'árabe', 'francés', 'español'),
 }
-NOT_SPOKEN = {'en': ('French',), 'de': ('Französisch',), 'ar': ('الفرنسيّة',)}
-TRANSLATED = {'ar': 'Arabic', 'de': 'German', 'sv': 'Swedish'}   # what the measurement must come back with
+NOT_SPOKEN = {'en': ('Italian',), 'de': ('Italienisch',), 'ar': ('الإيطاليّة',),
+              'fr': ('italien',), 'es': ('italiano',)}
+#: The note a page translated with AI carries (paper 121), which is a fact
+#: about the page and not one the English states — so the sets compared across
+#: languages leave it out, and `check_site.sh` holds it where it belongs.
+AI_TRANSLATION_NOTE = 'an-ai-translation'
+
+#: The site's languages, named once (paper 121, when French and Spanish made five).
+SITE_LANGS = ('en', 'de', 'ar', 'fr', 'es')
+TRANSLATED = {'ar': 'Arabic', 'de': 'German', 'sv': 'Swedish',
+              'fr': 'French', 'es': 'Spanish'}   # what the measurement must come back with
 
 
 # **The sentence that stopped being true** — 116, 25 October 2026.
@@ -302,11 +319,17 @@ THE_NARROWED = {
         'en': 'works with any AI service',
         'de': 'arbeitet mit jedem KI-Dienst',
         'ar': 'يعمل مع أيّ خدمة ذكاء',
+        # Paper 121: the retired wording as French and Spanish would put it,
+        # so a translation that falls back to the old claim reds too.
+        'fr': 'fonctionne avec n’importe quel service d’IA',
+        'es': 'funciona con cualquier servicio de IA',
     }),
     'site/%s/guide/index.html': ('a-vault-write-is-not-lost-in-silence', {
         'en': 'nothing is lost silently',
         'de': 'nichts geht stillschweigend verloren',
         'ar': 'ولا يُفقَد شيءٌ في صمت',
+        'fr': 'rien ne se perd en silence',
+        'es': 'no se pierde nada en silencio',
     }),
 }
 
@@ -401,6 +424,10 @@ THE_CHAT_SENDS_WORDS = {
            '\u062a\u064f\u0631\u0633\u064e\u0644 \u0645\u0631\u0651\u0629\u064b \u0648\u0627\u062d\u062f\u0629',
            '\u0648\u0644\u0627 \u064a\u064f\u0641\u0642\u064e\u062f',
            '\u0644\u0627 \u0634\u064a\u0621\u064e \u0642\u0628\u0644\u0647'),
+    'fr': ('l’échange qui la précède', 'envoyé une seule fois', 'rien de plus ancien n’est perdu',
+           'rien de plus ancien'),
+    'es': ('el intercambio anterior', 'se envía una sola vez', 'nada más antiguo se pierde',
+           'nada anterior'),
 }
 
 # **The states are read off the register, not off this table.** Filling
@@ -504,6 +531,8 @@ THE_ONE_CONDITION = ('the-one-condition-on-the-code', {
     'en': ('\u00a74(d)', 'does not mean advertising'),
     'de': ('\u00a74(d)', 'nicht gemeint ist Werbung'),
     'ar': ('\u00a74(d)', '\u0648\u0644\u064a\u0633 \u0627\u0644\u0645\u0642\u0635\u0648\u062f\u064e \u0627\u0644\u0625\u0639\u0644\u0627\u0646\u0627\u062a'),
+    'fr': ('\u00a74(d)', 'ne vise pas la publicité'),
+    'es': ('\u00a74(d)', 'no significa publicidad'),
 })
 
 
@@ -525,7 +554,7 @@ def the_one_condition():
         say('FAIL', 'NOTICE carries no «Copyright …» line, so there is nothing for the pages to '
                     'quote')
         return 1
-    where = ['site/%s/index.html' % lang for lang in ('en', 'de', 'ar')]
+    where = ['site/%s/index.html' % lang for lang in SITE_LANGS]
     where.append('site/license/index.html')
     for rel in where:
         if not os.path.exists(os.path.join(ROOT, rel)):
@@ -582,7 +611,7 @@ def the_one_condition():
                         '(a missing or extra line)')))
             bad = 1
     if not bad:
-        say('PASS', 'the one condition on the code stands on all four pages that name the '
+        say('PASS', 'the one condition on the code stands on all six pages that name the '
                     'licence, each quoting NOTICE\u2019s own \u00ab%s\u00bb and naming the clause '
                     'that binds it, and the license page serves the file\u2019s own six lines '
                     'byte for byte' % whose)
@@ -607,6 +636,8 @@ THE_TWO_COLUMNS = ('what-the-two-columns-are', {
     'en': ('not a preview of it', '#h-ask'),
     'de': ('keine Vorschau davon', '#h-ask'),
     'ar': ('not a preview of it', '#h-ask'),
+    'fr': ('pas un aperçu', '#h-ask'),
+    'es': ('no una vista previa de ella', '#h-ask'),
 })
 
 
@@ -781,7 +812,7 @@ def the_interface():
     spec.loader.exec_module(one)
     owed, owed_files = sum(one.OWED.values()), len(one.OWED)
 
-    for lang in ('en', 'de', 'ar'):
+    for lang in SITE_LANGS:
         page = read('site', lang, 'index.html')
         for cls, want, what in (('owed', owed, 'sentences still owed'),
                                 ('owed-files', owed_files, 'screens they are in')):
@@ -804,10 +835,10 @@ def the_interface():
                 say('FAIL', 'site/%s/index.html names «%s», and that list is still the English source'
                     % (lang, word))
                 bad = 1
-    bad |= a_narrowed_sentence('site/%s/index.html', ('en', 'de', 'ar'))
-    bad |= the_arabic_claim(('en', 'de', 'ar'))
+    bad |= a_narrowed_sentence('site/%s/index.html', SITE_LANGS)
+    bad |= the_arabic_claim(SITE_LANGS)
     if not bad:
-        say('PASS', 'the interface speaks what the lists really hold (%s), the three pages name the '
+        say('PASS', 'the interface speaks what the lists really hold (%s), the five pages name the '
                     'services this tree really speaks to, and they owe the one list\u2019s own numbers: '
                     '%d sentences in %d screens'
             % (', '.join('%s %d values' % (c, n) for c, n in sorted(speaks.items())), owed, owed_files))
@@ -839,7 +870,7 @@ def the_interface():
 # for them. What it does ask is that no `<img>` on a guide page points at a file
 # that is not in the tree, which is what turns the day they arrive from a hope
 # into a measurement.
-THE_GUIDE_SPEAKS = ('en', 'de', 'ar')
+THE_GUIDE_SPEAKS = SITE_LANGS
 HOST = 'https://z-privacy.com'
 
 
@@ -962,10 +993,10 @@ def the_guide():
         waiting = sum(1 for shot in every
                       if not os.path.exists(os.path.join(
                           ROOT, 'site', 'assets', 'guide', shot)))
-        say('PASS', 'the guide is one text in one place: %d controls named by key on three '
+        say('PASS', 'the guide is one text in one place: %d controls named by key on five '
                     'pages, every one of them a sentence the application has, one spelling '
                     'of the address in the app and on the site, the write sentence carrying its '
-                    'measured boundary on all three, and %d of %d pictures still to be taken'
+                    'measured boundary on all five, and %d of %d pictures still to be taken'
             % (len(sets[THE_GUIDE_SPEAKS[0]]), waiting, len(every)))
     return bad
 
@@ -1003,7 +1034,7 @@ def the_guide():
 # a half-filled download section may not go live, and the only way to make it
 # green is to put the real files in the deploy tree and the real fingerprints
 # on the pages.
-THE_DOWNLOAD_SPEAKS = ('en', 'de', 'ar')
+THE_DOWNLOAD_SPEAKS = SITE_LANGS
 
 # The two files, and the other place each name is written down: the script that
 # writes it. Checked in that direction on purpose — the build is the fact and
@@ -1061,6 +1092,8 @@ NOT_RELEASED = {
     'en': 'not yet released',
     'de': 'noch nicht veröffentlicht',
     'ar': 'لم تُطلَق بعد',
+    'fr': 'pas encore publiée',
+    'es': 'aún no publicada',
 }
 
 
@@ -1181,6 +1214,9 @@ def the_download(tree_only):
         for tag, key, inner in re.findall(
                 r'<(\w+)[^>]*data-fact="([^"]+)"[^>]*>(.*?)</\1>', page, re.S):
             said[key] = re.sub(r'<[^>]+>', '', inner).strip()
+        # The AI-translation note is about the page, not about the download:
+        # `check_site.sh` holds it on every French and Spanish page (paper 121).
+        said.pop(AI_TRANSLATION_NOTE, None)
         for key in sorted(wanted - set(said)):
             say('FAIL', '%s says nothing for «%s» — %s'
                 % (rel, key, dict(THE_HONEST_SENTENCES)[key]))
@@ -1306,7 +1342,8 @@ def the_download(tree_only):
     # cannot be forgotten this way.
     if not standing and len(facts) == len(THE_DOWNLOAD_SPEAKS):
         for lang in THE_DOWNLOAD_SPEAKS:
-            for rel in ('site/%s/index.html' % lang, 'site/index.html'):
+            # «/» is no page since paper 121, so only the language homes.
+            for rel in ('site/%s/index.html' % lang,):
                 line = re.search(r'<p class="beta"[^>]*>(.*?)</p>', read(rel), re.S)
                 if line and NOT_RELEASED[lang] in line.group(1):
                     say('FAIL', '%s still says the build is «%s» while /%s/download/ '
@@ -1319,7 +1356,7 @@ def the_download(tree_only):
         say('PASS', 'the builds the pages name were not checked against the history, '
                     'because git cannot be asked in this tree')
     if not bad:
-        say('PASS', 'the download is one section in three languages: %d files named by '
+        say('PASS', 'the download is one section in five languages: %d files named by '
                     'the scripts that build them and by the commit they came from, %d '
                     'honest sentences on each page, %d of %d fingerprints measured '
                     'against the file in %s/, and %d markers still saying the numbers '

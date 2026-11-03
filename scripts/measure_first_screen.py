@@ -62,13 +62,13 @@ SITE = os.path.join(ROOT, 'site')
 WIDTHS = [(1366, 768), (1280, 800), (390, 844)]
 
 # page : the parts its first screen must hold
+#
+# **The chooser at «/» is not here any more** — paper 121, the owner's ruling of
+# 2 November 2026: «نلغي الشاشة الأولى». It was moved out of `site/` (to
+# `packaging/retired/`) and «/» is the server's redirect by the browser's
+# language, so the first screen a stranger sees is one of the five language
+# homes, and those are what is measured.
 PAGES = {
-    'index.html': {
-        'mark': '.hero-mark',
-        'title': 'h1',
-        'languages': '.picks',
-        'state': '.beta',
-    },
     'en/index.html': {
         'mark': 'header.top .z',
         'title': 'h1',
@@ -80,8 +80,8 @@ PAGES = {
         'address': '.cta .btn[href^="mailto:"]',
     },
 }
-PAGES['de/index.html'] = PAGES['en/index.html']
-PAGES['ar/index.html'] = PAGES['en/index.html']
+for _lang in ('de', 'ar', 'fr', 'es'):
+    PAGES['%s/index.html' % _lang] = PAGES['en/index.html']
 
 PROBE = """
 <script>
@@ -175,7 +175,11 @@ def main():
             with open(path, encoding='utf-8') as fh:
                 html = fh.read()
             assert html.count('</body>') == 1, page
-            assert '<script' not in html, '%s already carries a script' % page
+            # A declared data block is not a script a browser runs (paper 118
+            # put a SoftwareApplication on the homes, and this assertion had
+            # been refusing it since); anything else is.
+            assert not re.search(r'<script(?![^>]*type="application/ld\+json")', html), \
+                '%s already carries a script' % page
             with open(path, 'w', encoding='utf-8') as fh:
                 fh.write(html.replace('</body>', PROBE % json.dumps(want)))
 

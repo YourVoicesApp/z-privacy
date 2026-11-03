@@ -49,7 +49,11 @@ import 'dart:io';
 /// nothing reached is the branch that needed no edit — which is the whole of
 /// why it was written early, and the reason it is still worth saying out loud
 /// for `sv`, whose page does not exist and whose code is therefore not here.
-const theGuideSpeaks = {'de', 'en', 'ar'};
+///
+/// **French and Spanish joined on 2 November 2026** (paper 121): the site
+/// serves `/fr/guide/` and `/es/guide/`, so a French or Spanish glass opens
+/// its own page and not the English one.
+const theGuideSpeaks = {'de', 'en', 'ar', 'fr', 'es'};
 
 /// **The guide's own address, in the language the glass is in** — paper 100.
 ///

@@ -24,6 +24,8 @@
 <link rel="alternate" hreflang="en" href="https://z-privacy.com/en/privacy/">
 <link rel="alternate" hreflang="de" href="https://z-privacy.com/de/privacy/">
 <link rel="alternate" hreflang="ar" href="https://z-privacy.com/ar/privacy/">
+<link rel="alternate" hreflang="fr" href="https://z-privacy.com/fr/privacy/">
+<link rel="alternate" hreflang="es" href="https://z-privacy.com/es/privacy/">
 </head>
 <body>
 <!-- The privacy page, 9 October 2026.
@@ -43,7 +45,7 @@
   <nav class="menus" aria-label="Language and help">
     <details class="menu" name="topmenu">
       <summary lang="ar" dir="rtl">العربية</summary>
-      <div class="menu-panel"><a class="menu-item" href="/en/privacy/" lang="en" hreflang="en">English</a><a class="menu-item" href="/de/privacy/" lang="de" hreflang="de">Deutsch</a><a class="menu-item on" href="/ar/privacy/" lang="ar" dir="rtl" hreflang="ar" aria-current="page">العربية</a></div>
+      <div class="menu-panel"><a class="menu-item" href="/en/privacy/" lang="en" hreflang="en">English</a><a class="menu-item" href="/de/privacy/" lang="de" hreflang="de">Deutsch</a><a class="menu-item on" href="/ar/privacy/" lang="ar" dir="rtl" hreflang="ar" aria-current="page">العربية</a><a class="menu-item" href="/fr/privacy/" lang="fr" hreflang="fr">Français</a><a class="menu-item" href="/es/privacy/" lang="es" hreflang="es">Español</a></div>
     </details>
     <details class="menu" name="topmenu">
       <summary lang="ar">مساعدة</summary>
@@ -69,7 +71,7 @@
       <li class="promise">ما يغادر هو ما عُرِض عليك، حرفاً بحرف.<span class="proof"><code>z_core/tests/wire_capture.rs</code> يسجّل الطلب بايتاً ببايت على سيرفرٍ على حاسوبك نفسِه، ويُثبت أنّ جسم الطلب هو حرفياً النصّ الذي راجعتَه، وأنّ لا قيمةً أصلية تظهر فيه ولا في ترويسة ولا في العنوان.</span></li>
       <li class="promise">لا يغادر شيء إلّا بكلمتك.<span class="proof"><code>z_core/src/payload.rs</code>، <code>z_core/tests/the_send_door_is_a_sessions_door.rs</code></span></li>
       <li class="promise">تُستعاد الإجابة على جهازك، من مخزنٍ لم يغادره قطّ.<span class="proof"><code>z_core/tests/round_trip.rs</code></span></li>
-      <li class="promise">كلّ ما يتعلّمه Z يُحفَظ في خزنةٍ مشفّرة على حاسوبك، وملفُّ الخزنة لا يسمّي أحداً.<span class="proof"><code>z_core/src/vault/crypto.rs</code> — ChaCha20-Poly1305 مع Argon2id. و<code>z_core/tests/the_vault_file_says_nothing.rs</code> يقرأ بايتات ملفِّ الخزنة نفسِه باحثاً عن اسم عميل، وعن تهجئةٍ ثانية له، وعن رقم حساب، وعن كلمة المرور: لا يجد منها شيئاً، وضابطٌ في الاختبار نفسِه يُثبت أنّ البحث يجد الخمسةَ جميعاً حين تكون مكتوبةً ظاهرةً.</span></li>
+      <li class="promise">كلّ ما يتعلّمه Z يُحفَظ في خزنةٍ مشفّرة على حاسوبك، وملفُّ الخزنة لا يسمّي أحداً.<span class="proof"><code>z_core/src/vault/crypto.rs</code> — ChaCha20-Poly1305 مع Argon2id. و<code>z_core/tests/the_vault_file_says_nothing.rs</code> يقرأ بايتات ملفِّ الخزنة نفسِه باحثاً عن اسم عميل، وعن تهجئةٍ ثانية له، وعن رقم حساب، وعن كلمة المرور: لا يجد منها شيئاً، وضابطٌ في الاختبار نفسِه يُثبت أنّ البحث يجدها جميعاً حين تكون مكتوبةً ظاهرةً.</span></li>
       <li class="promise">الملفُّ الوحيد غيرُ المشفَّر هو ملفُّ الإعدادات، وما لا يجوز أن يدخله مُختبَر.<span class="proof"><code>z_core/tests/zcfg_leak.rs</code></span></li>
       <li class="promise">تُنشأ الملفّات خاصّةً بحسابك وحدَه، والوصلةُ الرمزية في مكانها تُرفَض لا تُتبَع.<span class="proof"><code>scripts/check_storage_contracts.sh</code> يسمّي ستّة عهود ويشترط أن يُقاس كلٌّ منها على المنصّة التي تقف عليها.</span></li>
     </ul>
@@ -101,7 +103,7 @@
   <section class="card soft" aria-labelledby="h-blanks">
     <h2 id="h-blanks">فراغان نسمّيهما بدل أن نملأهما بكلام</h2>
     <ul class="promises">
-      <li class="promise"><b>نسخةٌ سويدية من هذه الصفحة.</b> الشركةُ سويدية والجهةُ الرقابية سويدية، وهذه الصفحة اليومَ بالإنجليزية والألمانية والعربية.</li>
+      <li class="promise"><b>نسخةٌ سويدية من هذه الصفحة.</b> الشركةُ سويدية والجهةُ الرقابية سويدية، وهذه الصفحة اليومَ بالإنجليزية والألمانية والعربية والفرنسية والإسبانية.</li>
       <li class="promise"><b>مدّةُ حفظٍ مقيسة للصندوق البريدي.</b> ما تكتبه إلينا يبقى حتى يُحذَف بيد. ولا رقمَ مكتوبٌ هنا لأنّ لا رقمَ قِيس — والرقمُ بلا قياسٍ خلفه هو الشيءُ الذي وُجد هذا المنتج ليرفضه.</li>
     </ul>
   </section>

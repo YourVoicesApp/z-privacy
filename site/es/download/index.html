@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="es" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Descargar Z Privacy — Z Privacy</title>
+<meta name="description" content="Z Privacy para Linux y para Windows: cada archivo con su SHA-256 impreso al lado y una línea para comprobarlo, una palabra honesta sobre la pantalla que muestra Windows ante un instalador sin firmar, y la revisión externa de lo que afirmamos.">
+<meta name="referrer" content="no-referrer">
+<link rel="icon" href="../../assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="icon" href="../../assets/favicon-16.png" sizes="16x16" type="image/png">
+<link rel="apple-touch-icon" href="../../assets/apple-touch-icon.png">
+<link rel="stylesheet" href="../../assets/fonts.css">
+<link rel="stylesheet" href="../../assets/site.css">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Z Privacy">
+<meta property="og:title" content="Descargar Z Privacy">
+<meta property="og:description" content="Z Privacy para Linux y para Windows: cada archivo con su SHA-256 impreso al lado y una línea para comprobarlo, una palabra honesta sobre la pantalla que muestra Windows ante un instalador sin firmar, y la revisión externa de lo que afirmamos.">
+<meta property="og:url" content="https://z-privacy.com/es/download/">
+<meta property="og:image" content="https://z-privacy.com/assets/logo-512.png">
+<meta property="og:image:width" content="512">
+<meta property="og:image:height" content="512">
+<meta name="twitter:card" content="summary">
+<link rel="canonical" href="https://z-privacy.com/es/download/">
+<link rel="alternate" hreflang="en" href="https://z-privacy.com/en/download/">
+<link rel="alternate" hreflang="de" href="https://z-privacy.com/de/download/">
+<link rel="alternate" hreflang="ar" href="https://z-privacy.com/ar/download/">
+<link rel="alternate" hreflang="fr" href="https://z-privacy.com/fr/download/">
+<link rel="alternate" hreflang="es" href="https://z-privacy.com/es/download/">
+</head>
+<body>
+<header class="top">
+  <a class="mark" href="/es/"><img class="z" src="../../assets/logo-512.png" width="30" height="30" alt="" aria-hidden="true"><span class="wm" lang="en" dir="ltr">Z Privacy</span></a>
+  <nav class="menus" aria-label="Idioma y ayuda">
+    <details class="menu" name="topmenu">
+      <summary lang="es">Español</summary>
+      <div class="menu-panel"><a class="menu-item" href="/en/download/" lang="en" hreflang="en">English</a><a class="menu-item" href="/de/download/" lang="de" hreflang="de">Deutsch</a><a class="menu-item" href="/ar/download/" lang="ar" dir="rtl" hreflang="ar">العربية</a><a class="menu-item" href="/fr/download/" lang="fr" hreflang="fr">Français</a><a class="menu-item on" href="/es/download/" lang="es" hreflang="es" aria-current="page">Español</a></div>
+    </details>
+    <details class="menu" name="topmenu">
+      <summary>Ayuda</summary>
+      <div class="menu-panel"><a class="menu-item" href="/es/">Z Privacy — la primera página</a><a class="menu-item" href="/es/guide/">Cómo usar Z Privacy</a><a class="menu-item" href="/es/faq/">Preguntas y respuestas</a><a class="menu-item" href="/es/download/">Descargar Z Privacy</a><a class="menu-item" href="/es/privacy/">Privacidad y protección de datos</a><a class="menu-item" href="/es/terms/">Condiciones de uso</a><a class="menu-item" href="/license/">Licencia</a><a class="menu-item" href="/third-party/">Avisos de terceros</a></div>
+    </details>
+  </nav>
+</header>
+<main>
+  <!-- **Every honest sentence of this section, by its own name** — paper 103,
+       rule 81-أ.
+
+       A page of prose cannot be read for sense by a guard, and this one makes
+       promises about somebody else's operating system. So each sentence that
+       carries a fact is marked with `data-fact="…"` on the element that says
+       it, and `scripts/check_site_claims.py` holds three things it can be sure
+       of: the three languages name the same set, the set is the one paper 103
+       asks for, and no sentence is empty. A translation that quietly drops the
+       SmartScreen paragraph is the ordinary way this page would come to lie in
+       one language only, and nobody reading the English page could tell.
+
+       The names are on the elements and not in a comment, unlike the guide's
+       key block, because here the key names **this page's own sentence** and
+       not a sentence in the application: what is checked is that the sentence
+       is really served, in every language, and a comment is not served.
+
+       The fingerprints are the other half, and they are measured rather than
+       read: the guard hashes the real file in the deploy tree and compares it
+       with what is printed here. Until the published build's own files and
+       fingerprints land, every number below is marked «(final hashes on
+       publishing day)» and the guard refuses to call this site ready. -->
+
+  <h1 class="doc-h">Descargar Z Privacy</h1>
+  <p class="hero-word">Dos versiones, cada una con su huella impresa al lado y una línea para comprobarla — y una palabra honesta sobre la pantalla que muestra Windows ante un instalador que nadie ha firmado.</p>
+
+  <section class="card" aria-labelledby="h-linux">
+    <h2 id="h-linux">Linux</h2>
+    <p class="dlt" lang="en" dir="ltr">Z Privacy V1 — Linux x86_64</p>
+    <p class="file" dir="ltr"><a href="/download/zprivacy-v1-linux-x86_64.tar.gz">zprivacy-v1-linux-x86_64.tar.gz</a></p>
+    <p class="shalab" dir="ltr">SHA-256</p>
+    <p class="sha" dir="ltr" data-of="zprivacy-v1-linux-x86_64.tar.gz">baaca7a4efa84bb9386f96f78d5620a81706c9dc4dc18dd5309309891d07432c</p>
+    <p class="shalab" dir="ltr">Build</p>
+    <p class="sha" dir="ltr" data-built-from="zprivacy-v1-linux-x86_64.tar.gz">50270fd</p>
+    <p class="note" data-fact="the-linux-bundle">Escritorio Linux x86_64 con GTK3. No se instala nada: el archivo comprimido lleva consigo lo que necesita. Descomprímalo donde quiera y ejecute <code>zprivacy</code> desde dentro de él.</p>
+    <p class="note" data-fact="verify-it-on-linux">Una línea lo comprueba. Compare lo que imprime con la huella de arriba:</p>
+    <pre dir="ltr"><code>sha256sum zprivacy-v1-linux-x86_64.tar.gz</code></pre>
+  </section>
+
+  <section class="card soft" aria-labelledby="h-windows">
+    <h2 id="h-windows">Windows</h2>
+    <p class="dlt" lang="en" dir="ltr">Z Privacy V1 — Windows x86_64</p>
+    <p class="file" dir="ltr"><a href="/download/zprivacy-v1-windows-x86_64-setup.exe">zprivacy-v1-windows-x86_64-setup.exe</a></p>
+    <p class="shalab" dir="ltr">SHA-256</p>
+    <p class="sha" dir="ltr" data-of="zprivacy-v1-windows-x86_64-setup.exe">906d9adfd299a5bc8f16fbef97b46fb80bdf80c7a9331753bb8bd94c8ff709ee</p>
+    <p class="shalab" dir="ltr">Build</p>
+    <p class="sha" dir="ltr" data-built-from="zprivacy-v1-windows-x86_64-setup.exe">50270fd</p>
+    <p class="note" data-fact="the-windows-installer">Windows 10 u 11, x86_64. Se instala solo para usted, en su propia carpeta — <code>%LOCALAPPDATA%\Programs\Z Privacy</code> — y el asistente son dos clics: Instalar y Finalizar.</p>
+    <p class="note" data-fact="verify-it-on-windows">Una línea lo comprueba, en el Símbolo del sistema o en PowerShell. Compare lo que imprime con la huella de arriba:</p>
+    <pre dir="ltr"><code>certutil -hashfile zprivacy-v1-windows-x86_64-setup.exe SHA256</code></pre>
+  </section>
+
+  <section class="card soft" aria-labelledby="h-arabic-pdf">
+    <h2 id="h-arabic-pdf">PDF en árabe, y lo que Z Privacy rechaza ahora</h2>
+    <p class="honest" data-fact="arabic-pdfs-and-the-drawing-order">Algunos PDF en árabe llevan su texto en las formas que dibujó un programa de maquetación, de modo que el orden que lee Z Privacy es el del dibujo y las palabras salen al revés. Un archivo así se rechaza ahora de forma expresa, con el motivo y una indicación hacia un archivo de Word o de texto plano: Z Privacy no protegerá un texto que ha leído al revés. Un PDF en árabe con una capa de texto sana en orden lógico no se rechaza por este motivo — en los casos probados se lee como el mismo texto en `.txt` — así que lo que se rechaza aquí no es «el árabe» ni «de derecha a izquierda»; un archivo así puede seguir rechazándose por otro motivo, como el cifrado o la falta de una capa de texto. Quedan dos límites: un archivo dibujado al revés que aun así lleva letras normales no se detecta con esto, y un PDF protegido que el propio Z Privacy escribió en árabe ya no puede traerse como documento para proteger — la puerta que solo lee un archivo así no ha cambiado.</p>
+  </section>
+
+  <section class="card soft" aria-labelledby="h-smartscreen">
+    <h2 id="h-smartscreen">Qué dirá Windows, y por qué</h2>
+    <p class="honest" data-fact="windows-will-warn-you">Nadie ha firmado este instalador. Un archivo que descarga su navegador queda marcado como procedente de internet, así que la primera vez que lo inicie, Windows muestra una página azul — «Windows protegió su PC» — en lugar del instalador. Esa página trata de la firma que falta y de nada más: dice que Windows no reconoce quién publicó el archivo, no que haya encontrado algo malo dentro de él.</p>
+    <p class="lead" data-fact="more-info-then-run-anyway">El paso son dos clics: «Más información» y luego «Ejecutar de todas formas». En el equipo donde se midió esto, el segundo botón se ofreció siempre; si alguna vez vemos que Windows lo rechaza sin más, esa frase cambiará aquí primero.</p>
+    <p class="lead" data-fact="no-administrator-is-asked">Nada pide un administrador. Z Privacy se instala solo para usted, en su propia carpeta, y ni la página azul ni el instalador piden la contraseña del equipo.</p>
+    <p class="note" data-fact="the-warning-comes-once">Aparece una sola vez. Después de «Ejecutar de todas formas», Windows quita la marca de ese archivo, así que volver a iniciar el mismo instalador no muestra nada.</p>
+    <p class="note" data-fact="untick-launch-to-start-it-yourself">La última página del instalador ofrece iniciar Z Privacy por usted, con la casilla ya marcada. Desmárquela si prefiere iniciarlo usted mismo.</p>
+    <p class="honest" data-fact="the-fingerprint-is-how-you-know">Como ninguna firma dice que el archivo es nuestro, lo dice la huella de esta página: ejecute la línea de arriba y compare las dos, carácter por carácter. Está impresa aquí, en una página servida desde z-privacy.com, y en ningún otro lugar.</p>
+    <p class="note" data-fact="the-signed-version-follows">Un instalador firmado, y con él el paquete de Microsoft Store, llegará cuando lo firme un certificado de firma de código real. No se promete ninguna fecha para ello, y nada de esta página lo espera.</p>
+  </section>
+
+  <section class="card soft" aria-labelledby="h-releases">
+    <h2 id="h-releases">Todas las versiones</h2>
+    <p class="lead" data-fact="every-release-is-listed">Esta página ofrece la versión actual. Cada versión que hemos publicado figura en la página de versiones del proyecto, con los archivos que le correspondían — así, una versión anterior, y lo que ha cambiado desde entonces, se puede seguir encontrando.</p>
+    <p class="note"><a href="https://github.com/YourVoicesApp/z-privacy/releases">Releases</a></p>
+  </section>
+
+  <section aria-labelledby="h-review">
+    <h2 id="h-review">Lo que dice sobre nuestras afirmaciones un modelo que no lo construyó</h2>
+    <p class="lead" data-fact="the-claims-review-report">Lo que este producto afirma de sí mismo se somete a un modelo que no tuvo ninguna participación en su construcción, y su informe debe estar junto al archivo que está a punto de descargar y no en un cajón. Se enlaza desde esta línea en cuanto se publique; mientras la línea no lleve ningún enlace, todavía no hay nada que leer.</p>
+  </section>
+  <p class="note" data-fact="an-ai-translation">Esta página se ha traducido del inglés con IA. ¿Un error? Escriba a <a href="mailto:zprivacy@mono-peak.com?subject=Translation%20(ES)">zprivacy@mono-peak.com</a> con el asunto «Translation (ES)».</p>
+</main>
+
+<footer>
+  <div class="foot-grid">
+    <div>
+      <h2 class="fh">Comentarios</h2>
+      <p class="mail"><a href="mailto:zprivacy@mono-peak.com" dir="ltr">zprivacy@mono-peak.com</a></p>
+      <p class="note">Comentarios solo por correo electrónico. Sin formulario, sin backend, nada se recoge en este sitio.</p>
+      <h2 class="fh">Reciba un aviso cuando salga una nueva versión</h2>
+      <p class="mail"><a href="mailto:zprivacy@mono-peak.com?subject=Updates" dir="ltr">zprivacy@mono-peak.com</a></p>
+      <p class="note">Escriba con el asunto «Updates». Solo le escribimos cuando sale una versión, y borramos su dirección cuando responda «stop». Sin formulario, sin servicio de listas y sin terceros: la dirección permanece en ese buzón y en ningún otro lugar.</p>
+    </div>
+    <div>
+      <h2 class="fh">Editor</h2>
+      <div class="legal"><div>Faruk AB</div><div>Aktiebolag (AB), Suecia</div><div>Número de registro mercantil (Org.nr) 559473-3494</div><div>Hotellgatan 3, 311 31 Falkenberg, Suecia</div></div>
+      <p class="legal-contact"><a href="/es/privacy/">Privacidad y protección de datos</a></p>
+      <p class="legal-contact"><a href="/es/terms/">Condiciones de uso</a></p>
+      <p class="legal-contact">Contacto y soporte: <a href="mailto:zprivacy@mono-peak.com" dir="ltr">zprivacy@mono-peak.com</a></p>
+    </div>
+  </div>
+  <p class="copy">© 2026 Faruk AB. Distribuido bajo la Apache License 2.0.</p>
+  <p class="colophon" lang="en">Z Privacy &#183; A mono-peak project by Faruk AB &#183; Apache-2.0</p>
+</footer>
+</body>
+</html>

@@ -8,6 +8,18 @@ cd "$(dirname "$0")/../site" || exit 2
 FAIL=0
 say() { printf '  %-6s %s\n' "$1" "$2"; }
 
+# **The site's languages, named once** — paper 121, 2 November 2026, when
+# French and Spanish made five. Every section below walked «en de ar» by hand
+# until then, and a sixth language would have been a sweep of twenty loops
+# with one of them forgotten. The Help menu's word is each language's own.
+LANGS="en de ar fr es"
+help_word() { case "$1" in en) echo Help;; de) echo Hilfe;; ar) echo مساعدة;; fr) echo Aide;; es) echo Ayuda;; esac; }
+# Every page of every language, by its folder: «homes» is the five first pages.
+in_langs() { for l in $LANGS; do printf '%s/%s ' "$l" "$1"; done; }
+others() { for l in $LANGS; do [ "$l" = en ] || printf '%s/%s ' "$l" "$1"; done; }
+HOMES=$(in_langs index.html)
+ALL_LANG_PAGES="$HOMES $(in_langs privacy/index.html) $(in_langs terms/index.html) $(in_langs guide/index.html) $(in_langs download/index.html) $(in_langs faq/index.html)"
+
 # **`--tree-only`: everything but the network.** The gates run this on every
 # measurement (G59), and a gate that goes red because the machine is offline
 # teaches nothing — it is the same lesson as a gate that reds because one of
@@ -161,7 +173,7 @@ else
   done
 fi
 
-for f in index.html en/index.html de/index.html ar/index.html license/index.html third-party/index.html; do
+for f in $HOMES license/index.html third-party/index.html; do
   [ -f "$f" ] || { say FAIL "missing $f"; FAIL=1; }
 done
 
@@ -175,12 +187,12 @@ for f in assets/favicon-32.png assets/favicon-16.png assets/apple-touch-icon.png
     FAIL=1; MISSING=1
   fi
 done
-for page in en de ar; do
+for page in $LANGS; do
   for want in 'rel="icon"' 'apple-touch-icon' 'logo-512.png'; do
     grep -q "$want" "$page/index.html" || { say FAIL "$page/index.html has no $want"; FAIL=1; MISSING=1; }
   done
 done
-[ "$MISSING" = 0 ] && say PASS "the mark is on all three pages, and its four files are here"
+[ "$MISSING" = 0 ] && say PASS "the mark is on all five first pages, and its four files are here"
 
 # ---------------------------------------------------------------- the first screen
 #
@@ -215,7 +227,7 @@ if grep -rn '<span class="z"' --include='*.html' . 2>/dev/null; then
   say FAIL "a lettered tile is still drawn instead of the owner's picture (above)"
   FAIL=1; TILED=1
 fi
-for f in index.html en/index.html de/index.html ar/index.html license/index.html third-party/index.html; do
+for f in $HOMES license/index.html third-party/index.html; do
   # **Drawn, not named.** This counted the file name until 26 October 2026,
   # when paper 118 put the same picture in an `og:image` so a pasted link
   # shows something — a reference for somebody else's preview, not a second
@@ -228,15 +240,29 @@ for f in index.html en/index.html de/index.html ar/index.html license/index.html
 done
 [ "$TILED" = 0 ] && say PASS "every page draws the picture exactly once, and no lettered tile is left"
 
-# The page a stranger actually opens first is «/» — the chooser. It is this
-# site's First Run, so the mark is large there, by the lead's weighting. «Large»
-# is a word; this is the number it was given, read off the attribute a browser
-# lays the picture out with.
-W=$(grep -o 'class="hero-mark"[^>]*width="[0-9]*"' index.html 2>/dev/null | grep -o 'width="[0-9]*"' | tr -cd '0-9')
-if [ -n "$W" ] && [ "$W" -ge 64 ]; then
-  say PASS "the first page a stranger opens carries the mark large (${W}px)"
+# **There is no first screen at «/» any more** — paper 121, the owner's ruling
+# of 2 November 2026: «نلغي الشاشة الأولى ونجعل المستخدم يدخل مباشرة». The
+# chooser was this site's First Run, and this section measured its large mark;
+# it was moved out of site/ (to packaging/retired/, not deleted) and «/» is a
+# redirect by the browser's language, written beside `_headers`. So what is
+# measured now is the other half: no page is served at «/», and the record of
+# the redirect names every language of the site and the English fallback.
+if [ -f index.html ]; then
+  say FAIL "a page is served at «/» again, and the owner's ruling retired the first screen"; FAIL=1
+elif [ ! -f _root_redirect.nginx ]; then
+  say FAIL "«/» serves nothing and no record says what the server answers there"; FAIL=1
 else
-  say FAIL "the chooser does not carry the mark large (read: '${W:-none}', wanted 64 or more)"; FAIL=1
+  RED=0
+  ALT=$(grep -oE '<zp>[a-z|]+' _root_redirect.nginx | head -1)
+  for l in $LANGS; do
+    grep -qE "[>|]$l([|]|$)" <<< "$ALT" \
+      || { say FAIL "«/» does not send a $l browser to /$l/"; FAIL=1; RED=1; }
+  done
+  grep -qE '^[[:space:]]*default[[:space:]]+en;' _root_redirect.nginx \
+    || { say FAIL "«/» has no English answer for a browser that names none of ours"; FAIL=1; RED=1; }
+  grep -qE 'return 302 /\$zprivacy_lang/;' _root_redirect.nginx \
+    || { say FAIL "«/» is not answered with a redirect to the chosen language"; FAIL=1; RED=1; }
+  [ "$RED" = 0 ] && say PASS "«/» is the server's redirect by the browser's language (${LANGS// /, }; else en), and no page"
 fi
 
 # What the first screen says, and what it does not offer.
@@ -253,8 +279,7 @@ fi
 # refused for every page but the three download pages further down this file,
 # and the link to the page is required by `check_site_claims.py`.
 SAID=0
-grep -q 'class="beta"' index.html || { say FAIL "the chooser says nothing about the state of the build"; FAIL=1; SAID=1; }
-for f in en/index.html de/index.html ar/index.html; do
+for f in $HOMES; do
   grep -q 'class="hero-idea"' "$f" || { say FAIL "$f has no idea sentence on its first screen"; FAIL=1; SAID=1; }
   grep -q 'class="hero-word"' "$f" || { say FAIL "$f does not say that nothing leaves without the reader's word"; FAIL=1; SAID=1; }
   grep -q 'class="beta"' "$f" || { say FAIL "$f says nothing about the state of the build"; FAIL=1; SAID=1; }
@@ -279,10 +304,8 @@ fi
 # in the sentence and a zero says so.
 JUMPS=0
 WALKED=0
-for f in index.html en/index.html de/index.html ar/index.html license/index.html third-party/index.html \
-         en/guide/index.html de/guide/index.html ar/guide/index.html \
-         en/faq/index.html de/faq/index.html ar/faq/index.html \
-         en/download/index.html de/download/index.html ar/download/index.html; do
+for f in $HOMES license/index.html third-party/index.html \
+         $(in_langs guide/index.html) $(in_langs faq/index.html) $(in_langs download/index.html); do
   for a in $(grep -o 'href="#[A-Za-z0-9_-]*"' "$f" 2>/dev/null | sed -E 's/href="#//; s/"//' | sort -u); do
     WALKED=$((WALKED + 1))
     grep -q "id=\"$a\"" "$f" || { say FAIL "$f jumps to #$a, and nothing on that page has that id"; FAIL=1; JUMPS=1; }
@@ -305,40 +328,31 @@ fi
 # counter guard above already refuses a script, and this one refuses a page
 # that quietly loses a menu.
 MENUS=0
-for pair in "index.html:" "en/index.html:Help" "de/index.html:Hilfe" "ar/index.html:مساعدة" \
-            "en/privacy/index.html:Help" "de/privacy/index.html:Hilfe" "ar/privacy/index.html:مساعدة" \
-            "en/terms/index.html:Help" "de/terms/index.html:Hilfe" "ar/terms/index.html:مساعدة" \
-            "en/guide/index.html:Help" "de/guide/index.html:Hilfe" "ar/guide/index.html:مساعدة" \
-            "en/download/index.html:Help" "de/download/index.html:Hilfe" "ar/download/index.html:مساعدة" \
-            "en/faq/index.html:Help" "de/faq/index.html:Hilfe" "ar/faq/index.html:مساعدة" \
-            "license/index.html:Help" "third-party/index.html:Help"
+MENU_PAIRS=""
+for f in $ALL_LANG_PAGES; do MENU_PAIRS="$MENU_PAIRS $f:$(help_word "${f%%/*}")"; done
+for pair in $MENU_PAIRS "license/index.html:Help" "third-party/index.html:Help"
 do
   f="${pair%%:*}"; help="${pair##*:}"
-  if [ -z "$help" ]; then
-    # The chooser at «/» is the language menu, so it carries none.
-    grep -q '<nav class="menus"' "$f" && { say FAIL "$f is the chooser and should carry no menu"; FAIL=1; MENUS=1; }
-    continue
-  fi
   n=$(grep -c '<details class="menu"' "$f" 2>/dev/null || true); n=${n:-0}
   [ "$n" = 2 ] || { say FAIL "$f has $n menus at the top, and there should be two"; FAIL=1; MENUS=1; }
   grep -qF "<summary>$help</summary>" "$f" || grep -qF ">$help</summary>" "$f" \
     || { say FAIL "$f does not call its second menu «$help»"; FAIL=1; MENUS=1; }
-  for name in English Deutsch العربية; do
+  for name in English Deutsch العربية Français Español; do
     grep -qF ">$name</a>" "$f" || grep -qF ">$name</summary>" "$f" \
       || { say FAIL "$f does not offer $name in its language menu"; FAIL=1; MENUS=1; }
   done
 done
 # The vocabulary moved under Help, and it moved — it was not copied. One table
 # per language, and none anywhere else.
-for f in en/index.html de/index.html ar/index.html; do
+for f in $HOMES; do
   n=$(grep -c '<div class="vocab">' "$f" 2>/dev/null || true); n=${n:-0}
   [ "$n" = 1 ] || { say FAIL "$f holds $n vocabulary tables, and there should be one"; FAIL=1; MENUS=1; }
   grep -q '<div class="menu-panel wide">' "$f" || { say FAIL "$f does not keep its vocabulary under Help"; FAIL=1; MENUS=1; }
 done
-for f in index.html en/privacy/index.html de/privacy/index.html ar/privacy/index.html en/terms/index.html de/terms/index.html ar/terms/index.html en/guide/index.html de/guide/index.html ar/guide/index.html en/download/index.html de/download/index.html ar/download/index.html en/faq/index.html de/faq/index.html ar/faq/index.html license/index.html third-party/index.html; do
+for f in $(in_langs privacy/index.html) $(in_langs terms/index.html) $(in_langs guide/index.html) $(in_langs download/index.html) $(in_langs faq/index.html) license/index.html third-party/index.html; do
   grep -q '<div class="vocab">' "$f" && { say FAIL "$f carries a second copy of the vocabulary"; FAIL=1; MENUS=1; }
 done
-[ "$MENUS" = 0 ] && say PASS "two menus on every page but the chooser, and one vocabulary, under Help"
+[ "$MENUS" = 0 ] && say PASS "two menus on every page, five languages in each, and one vocabulary, under Help"
 
 # ---------------------------------------------------------------- the privacy page
 #
@@ -348,7 +362,7 @@ done
 # name. A page that points at `z_core/tests/something_renamed.rs` is a page
 # telling a visitor to go and look at nothing.
 PRIV=0
-for f in en/privacy/index.html de/privacy/index.html ar/privacy/index.html; do
+for f in $(in_langs privacy/index.html); do
   if [ ! -f "$f" ]; then
     say FAIL "there is no $f"; FAIL=1; PRIV=1; continue
   fi
@@ -362,7 +376,7 @@ done
 # proving files. A promise dropped in translation is the oldest way for two
 # pages to disagree about one product.
 if [ "$PRIV" = 0 ]; then
-  for f in de/privacy/index.html ar/privacy/index.html; do
+  for f in $(others privacy/index.html); do
     if ! diff -q \
          <(grep -oE '<code>[A-Za-z0-9_./-]+</code>' en/privacy/index.html | sort -u) \
          <(grep -oE '<code>[A-Za-z0-9_./-]+</code>' "$f" | sort -u) >/dev/null; then
@@ -377,7 +391,7 @@ fi
 # Each language page must lead to its own privacy page, and the chooser's three
 # cards to the three language pages. A privacy page nobody can reach from the
 # site is a file in a repository, not a published policy.
-for page in en de ar; do
+for page in $LANGS; do
   grep -q "href=\"/$page/privacy/\"" "$page/index.html" \
     || { say FAIL "$page/index.html does not link its privacy page"; FAIL=1; PRIV=1; }
 done
@@ -388,12 +402,12 @@ done
 # all three pages or none.
 if [ "$PRIV" = 0 ]; then
   n_en=$(grep -c '<li class="promise">' en/privacy/index.html)
-  for f in de/privacy/index.html ar/privacy/index.html; do
+  for f in $(others privacy/index.html); do
     n=$(grep -c '<li class="promise">' "$f")
     [ "$n" = "$n_en" ] || { say FAIL "$f says $n things where the English page says $n_en"; FAIL=1; PRIV=1; }
   done
 fi
-[ "$PRIV" = 0 ] && say PASS "three privacy pages, reachable, saying the same things and naming the same files — and every file is there"
+[ "$PRIV" = 0 ] && say PASS "five privacy pages, reachable, saying the same things and naming the same files — and every file is there"
 
 # ---------------------------------------------------------------- the terms page
 #
@@ -410,7 +424,7 @@ fi
 # commit» — and a page naming a commit that was rebased away sends a reader to
 # nothing.
 TERMS=0
-for f in en/terms/index.html de/terms/index.html ar/terms/index.html; do
+for f in $(in_langs terms/index.html); do
   if [ ! -f "$f" ]; then
     say FAIL "there is no $f"; FAIL=1; TERMS=1; continue
   fi
@@ -425,7 +439,7 @@ for f in en/terms/index.html de/terms/index.html ar/terms/index.html; do
   done
 done
 if [ "$TERMS" = 0 ]; then
-  for f in de/terms/index.html ar/terms/index.html; do
+  for f in $(others terms/index.html); do
     if ! diff -q \
          <(grep -oE '<code>[A-Za-z0-9_./-]+</code>' en/terms/index.html | sort -u) \
          <(grep -oE '<code>[A-Za-z0-9_./-]+</code>' "$f" | sort -u) >/dev/null; then
@@ -436,18 +450,18 @@ if [ "$TERMS" = 0 ]; then
     fi
   done
   n_en=$(grep -c '<li class="promise">' en/terms/index.html)
-  for f in de/terms/index.html ar/terms/index.html; do
+  for f in $(others terms/index.html); do
     n=$(grep -c '<li class="promise">' "$f")
     [ "$n" = "$n_en" ] || { say FAIL "$f says $n things where the English terms page says $n_en"; FAIL=1; TERMS=1; }
   done
 fi
-for page in en de ar; do
+for page in $LANGS; do
   for f in "$page/index.html" "$page/privacy/index.html" "$page/terms/index.html"; do
     grep -q "href=\"/$page/terms/\"" "$f" \
       || { say FAIL "$f does not link the $page terms page"; FAIL=1; TERMS=1; }
   done
 done
-[ "$TERMS" = 0 ] && say PASS "three terms pages, reachable, naming one set of proofs and the commit they were written against"
+[ "$TERMS" = 0 ] && say PASS "five terms pages, reachable, naming one set of proofs and the commit they were written against"
 
 # ------------------------------------------------- being told of a new release
 #
@@ -462,15 +476,14 @@ done
 # so a `curl` of the live page cannot see the address, and a guard that fetched
 # the page would go red on a link that works.
 UPD=0
-for f in en/index.html de/index.html ar/index.html \
-         en/terms/index.html de/terms/index.html ar/terms/index.html; do
+for f in $HOMES $(in_langs terms/index.html); do
   grep -qF 'mailto:zprivacy@mono-peak.com?subject=Updates' "$f" \
     || { say FAIL "$f offers no way to be told of a new release"; FAIL=1; UPD=1; }
   grep -qF '«stop»' "$f" \
     || { say FAIL "$f does not say how to be taken off it, which is the word «stop»"; FAIL=1; UPD=1; }
 done
 # A language's two copies are one block, byte for byte, like the publisher's.
-for page in en de ar; do
+for page in $LANGS; do
   a=$(grep -oE '<p class="note">[^<]*«stop»[^<]*</p>' "$page/index.html" | head -1)
   b=$(grep -oE '<p class="note">[^<]*«stop»[^<]*</p>' "$page/terms/index.html" | head -1)
   if [ -z "$a" ] || [ "$a" != "$b" ]; then
@@ -484,7 +497,7 @@ if [ -n "$(printf '%s' "$FORMS" | tr -d '[:space:]')" ]; then
   printf '%s\n' "$FORMS" | cut -c1-120 | sed 's/^/           /'
   FAIL=1; UPD=1
 fi
-[ "$UPD" = 0 ] && say PASS "one way to be told of a release — a mailto with its subject, the same block on six pages — and no form on this site"
+[ "$UPD" = 0 ] && say PASS "one way to be told of a release — a mailto with its subject, the same block on ten pages — and no form on this site"
 
 # ------------------------------------------------- no character nobody can see
 #
@@ -519,7 +532,7 @@ LEGAL=0
 if grep -rn 'yourvoices.app@mono-peak.com' --include='*.html' . 2>/dev/null; then
   say FAIL "the platform's mailbox is still on a Z page (above)"; FAIL=1; LEGAL=1
 fi
-for f in en/index.html de/index.html ar/index.html en/privacy/index.html de/privacy/index.html ar/privacy/index.html en/terms/index.html de/terms/index.html ar/terms/index.html en/guide/index.html de/guide/index.html ar/guide/index.html en/download/index.html de/download/index.html ar/download/index.html en/faq/index.html de/faq/index.html ar/faq/index.html; do
+for f in $ALL_LANG_PAGES; do
   [ -f "$f" ] || continue
   # The country's name is translated on purpose — «Schweden» on the German page —
   # so the guarded part of the address is the street, the postcode and the city,
@@ -534,7 +547,7 @@ done
 # the block is one block wherever a language states it, and the comparison is
 # against that language's first page in every case, so a drift names the two
 # pages that disagree and not a chain.
-for page in en de ar; do
+for page in $LANGS; do
   a=$(grep -oE '<div class="legal">.*</div>' "$page/index.html" | head -1)
   if [ -z "$a" ]; then
     say FAIL "$page/index.html carries no publisher block at all"; FAIL=1; LEGAL=1; continue
@@ -614,14 +627,46 @@ fi
 # a shell script should do.
 GONE=$(grep -rniE 'zprivacy-v1-|href="[^"]*\.(tar\.gz|tgz|zip|exe|deb|rpm|AppImage|dmg|msi)"|class="sha"|class="dlt"|href="#download|sha256sum|Get-FileHash|beta\.z-privacy\.com' \
        --include='*.html' . 2>/dev/null \
-       | grep -vE '^\./(en|de|ar)/download/index\.html:' || true)
+       | grep -vE '^\./(en|de|ar|fr|es)/download/index\.html:' || true)
 if [ -n "$(printf '%s' "$GONE" | tr -d '[:space:]')" ]; then
-  say FAIL "a page that is not one of the three download pages offers something to download:"
+  say FAIL "a page that is not one of the five download pages offers something to download:"
   printf '%s\n' "$GONE" | cut -c1-120 | sed 's/^/           /'
   FAIL=1
 else
-  say PASS "no file, no fingerprint and no verify command outside the three download pages"
+  say PASS "no file, no fingerprint and no verify command outside the five download pages"
 fi
+
+# ------------------------------------------------- a translation made with AI says so
+#
+# Paper 121, the owner's ruling of 2 November 2026: the French and Spanish
+# pages were translated with AI. Privacy and terms say at their head that the
+# English is the primary text, that this is an AI translation and where to
+# write a correction; every other page says the same at its foot, once. The
+# subject is the one the mailbox is filtered by, and the pages a person wrote
+# carry no such line.
+AIT=0
+for l in fr es; do
+  subj="Translation%20($(printf '%s' "$l" | tr a-z A-Z))"
+  for f in $(for p in index.html privacy/index.html terms/index.html guide/index.html download/index.html faq/index.html; do printf '%s/%s ' "$l" "$p"; done); do
+    n=$(grep -c 'data-fact="an-ai-translation"' "$f" 2>/dev/null || true); n=${n:-0}
+    [ "$n" = 1 ] || { say FAIL "$f says $n times that it was translated with AI, and the rule is once"; FAIL=1; AIT=1; continue; }
+    NOTE_LINE=$(grep -o '<p class="note" data-fact="an-ai-translation">.*</p>' "$f" || true)
+    grep -qF "mailto:zprivacy@mono-peak.com?subject=$subj" <<< "$NOTE_LINE" \
+      || { say FAIL "$f says it was translated with AI and gives no address with the subject «${subj//%20/ }»"; FAIL=1; AIT=1; }
+  done
+  for f in "$l/privacy/index.html" "$l/terms/index.html"; do
+    # At the head: the note is the first paragraph after the page's title.
+    AT_HEAD=$(awk '/<h1/{h=1} h&&/data-fact="an-ai-translation"/{print "ok"; exit} h&&/<h2/{exit}' "$f")
+    [ "$AT_HEAD" = ok ] \
+      || { say FAIL "$f does not say at its head that the English is the primary text"; FAIL=1; AIT=1; }
+  done
+done
+for l in en de ar; do
+  if grep -lq 'data-fact="an-ai-translation"' $l/*.html $l/*/index.html 2>/dev/null; then
+    say FAIL "a $l page says it was translated with AI, and a person wrote it"; FAIL=1; AIT=1
+  fi
+done
+[ "$AIT" = 0 ] && say PASS "the French and Spanish pages say they were translated with AI — at the head of privacy and terms, at the foot of the other four — each with the address and its subject"
 
 [ "$FAIL" = 0 ] && say PASS "all pages present"
 
@@ -699,7 +744,7 @@ while IFS= read -r f; do
     # A page under a language folder is a translation of something, so it may
     # not be the one page that keeps quiet about its siblings.
     case "$rel" in
-      en/*|de/*|ar/*) h_fail "$rel is a translation and names no language version at all" ;;
+      en/*|de/*|ar/*|fr/*|es/*) h_fail "$rel is a translation and names no language version at all" ;;
     esac
     continue
   fi
@@ -711,6 +756,12 @@ while IFS= read -r f; do
   grep -qxF "$me" <<< "$theirs" \
     || h_fail "$rel lists language versions and leaves itself ($me) out of them"
   for a in $(printf '%s\n' "$mine" | awk '{print $2}' | sort -u); do
+    # **«/» is the server's answer, not a page** — paper 121: x-default names
+    # what «/» does, and «/» is the redirect by the browser's language whose
+    # record stands beside `_headers`. There is no page there to agree with.
+    if [ "$a" = "/" ] && [ ! -f index.html ] && [ -f _root_redirect.nginx ]; then
+      continue
+    fi
     tgt=".${a}index.html"
     if [ ! -f "$tgt" ]; then
       h_fail "$rel names $a as a language version of itself, and no page is there"

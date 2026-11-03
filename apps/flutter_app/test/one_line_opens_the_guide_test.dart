@@ -61,7 +61,10 @@ void main() {
     expect(theGuideAddress('sv'), 'https://z-privacy.com/en/guide/',
         reason: 'Swedish has no guide page, so the press must land on the '
             'English one and not on nothing');
-    expect(theGuideAddress('fr'), 'https://z-privacy.com/en/guide/');
+    // French has its page since paper 121; a code with none is still English.
+    expect(theGuideAddress('fr'), 'https://z-privacy.com/fr/guide/');
+    expect(theGuideAddress('es'), 'https://z-privacy.com/es/guide/');
+    expect(theGuideAddress('it'), 'https://z-privacy.com/en/guide/');
     expect(theGuideAddress(''), 'https://z-privacy.com/en/guide/');
 
     // **The closing slash**, because that is what the page calls canonical:

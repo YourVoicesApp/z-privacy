@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Comment utiliser Z Privacy — Z Privacy</title>
+<meta name="description" content="Comment on utilise Z Privacy, étape par étape : ajouter un document, les deux colonnes, protéger d’un clic, sélectionner à la main, interroger un modèle, rapporter la réponse, et le coffre — chaque commande citée d’après la liste de phrases propre à l’application.">
+<meta name="referrer" content="no-referrer">
+<link rel="icon" href="../../assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="icon" href="../../assets/favicon-16.png" sizes="16x16" type="image/png">
+<link rel="apple-touch-icon" href="../../assets/apple-touch-icon.png">
+<link rel="stylesheet" href="../../assets/fonts.css">
+<link rel="stylesheet" href="../../assets/site.css">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Z Privacy">
+<meta property="og:title" content="Comment utiliser Z Privacy">
+<meta property="og:description" content="Comment on utilise Z Privacy, étape par étape : ajouter un document, les deux colonnes, protéger d’un clic, sélectionner à la main, interroger un modèle, rapporter la réponse, et le coffre — chaque commande citée d’après la liste de phrases propre à l’application.">
+<meta property="og:url" content="https://z-privacy.com/fr/guide/">
+<meta property="og:image" content="https://z-privacy.com/assets/logo-512.png">
+<meta property="og:image:width" content="512">
+<meta property="og:image:height" content="512">
+<meta name="twitter:card" content="summary">
+<link rel="canonical" href="https://z-privacy.com/fr/guide/">
+<link rel="alternate" hreflang="en" href="https://z-privacy.com/en/guide/">
+<link rel="alternate" hreflang="de" href="https://z-privacy.com/de/guide/">
+<link rel="alternate" hreflang="ar" href="https://z-privacy.com/ar/guide/">
+<link rel="alternate" hreflang="fr" href="https://z-privacy.com/fr/guide/">
+<link rel="alternate" hreflang="es" href="https://z-privacy.com/es/guide/">
+</head>
+<body>
+<header class="top">
+  <a class="mark" href="/fr/"><img class="z" src="../../assets/logo-512.png" width="30" height="30" alt="" aria-hidden="true"><span class="wm" lang="en" dir="ltr">Z Privacy</span></a>
+  <nav class="menus" aria-label="Langue et aide">
+    <details class="menu" name="topmenu">
+      <summary lang="fr">Français</summary>
+      <div class="menu-panel"><a class="menu-item" href="/en/guide/" lang="en" hreflang="en">English</a><a class="menu-item" href="/de/guide/" lang="de" hreflang="de">Deutsch</a><a class="menu-item" href="/ar/guide/" lang="ar" dir="rtl" hreflang="ar">العربية</a><a class="menu-item on" href="/fr/guide/" lang="fr" hreflang="fr" aria-current="page">Français</a><a class="menu-item" href="/es/guide/" lang="es" hreflang="es">Español</a></div>
+    </details>
+    <details class="menu" name="topmenu">
+      <summary>Aide</summary>
+      <div class="menu-panel"><a class="menu-item" href="/fr/">Z Privacy — la première page</a><a class="menu-item" href="/fr/guide/">Comment utiliser Z Privacy</a><a class="menu-item" href="/fr/faq/">Questions et réponses</a><a class="menu-item" href="/fr/download/">Télécharger Z Privacy</a><a class="menu-item" href="/fr/privacy/">Confidentialité et protection des données</a><a class="menu-item" href="/fr/terms/">Conditions d’utilisation</a><a class="menu-item" href="/license/">Licence</a><a class="menu-item" href="/third-party/">Mentions relatives aux tiers</a></div>
+    </details>
+  </nav>
+</header>
+<main>
+  <!-- **The controls this page names, by their key in the one list** — paper
+       100 §2, and the one thing a gate can be sure of about a page of prose.
+       Every sentence this page quotes from the application is a sentence the
+       application really has, and `scripts/check_site.sh` holds that: each key
+       below must exist in `apps/flutter_app/lib/l10n/app_en.arb`, and the
+       three languages must name the same set. A page that quoted a control
+       nobody can find would be teaching a stranger about a program that does
+       not exist.
+
+       They are read from here and not from the prose on purpose: the prose is
+       translated and the key is not, so one block answers for three pages.
+
+       one-list-key: addADocumentPdfWordOrText
+       one-list-key: addADocumentOrWriteToTheAi
+       one-list-key: onlyTheProtectedVersionIsSent
+       one-list-key: originalDataStaysHere
+       one-list-key: originalLocalOnly
+       one-list-key: safeAiWillReceive
+       one-list-key: theRequestItselfNotAPreview
+       one-list-key: whatAnAiWouldReceiveStandsHere
+       one-list-key: protectedAutomaticallyNeedYourWord
+       one-list-key: protectedAs
+       one-list-key: undoProtection
+       one-list-key: nothingWasLearnedYouProtectedIt
+       one-list-key: suggestMarksAndWaits
+       one-list-key: wordsWait
+       one-list-key: pressCutsIntoProtectedTextOne
+       one-list-key: pressAValueToProtectEveryHeldLine
+       one-list-key: chooseWhoAnswersInTheMiddleFirst
+       one-list-key: askAQuestionOrPasteALetter
+       one-list-key: yourRequestValuesReplaced
+       one-list-key: copyTheChat
+       one-list-key: theChatIsOnYourClipboard
+       one-list-key: addAnAnswer
+       one-list-key: namesCameBackFrom
+       one-list-key: theFirstAnswerOpensTheChatHere
+       one-list-key: saveAsPdf
+       one-list-key: nameThisDocument
+       one-list-key: theFileNameIsNotProtected
+       one-list-key: saveAsAPlainPdf
+       one-list-key: zPdfProtectedCopy
+       one-list-key: zPdfReadBack
+       one-list-key: yourVault
+       one-list-key: yourVaultIsIn
+       one-list-key: lockNow
+       one-list-key: troubleVaultChangedElsewhere
+       one-list-key: roomLanguageAndRules
+       one-list-key: roomVaultAndSecurity
+       one-list-key: roomSessions
+       one-list-key: aListIsACsv
+  -->
+
+  <h1 class="doc-h">Comment utiliser Z Privacy</h1>
+  <p class="hero-word">Un seul écran, de l’ajout d’un document jusqu’à la conservation d’une copie protégée. Chaque commande que nomme cette page est citée d’après la liste de phrases propre à l’application ; cette page et le programme disent donc les mêmes mots.</p>
+
+  <section aria-labelledby="h-in">
+    <h2 id="h-in">Ajouter quelque chose</h2>
+    <p class="lead">Z tient en un seul écran. En haut, vous ajoutez un document — PDF, Word ou texte — ou vous écrivez directement à l’IA dans la première partie, sans aucun document. Rien ne quitte cet écran de lui-même : « Seule la version protégée est envoyée à l’IA via Z Privacy », et « Vos données originales restent sur cet appareil, sauf si vous copiez explicitement un contenu restauré ».</p>
+  </section>
+
+  <section aria-labelledby="h-columns">
+    <h2 id="h-columns">Lire les deux colonnes</h2>
+    <p class="lead" data-fact="what-the-two-columns-are">Le document figure deux fois : « Original — local uniquement » et « Protégé — ce que l’IA recevra ». La seconde est « La demande elle-même, pas un aperçu », placée à côté de l’original ligne par ligne, de sorte que vous lisez ce qui va partir avant que quoi que ce soit ne parte. Ce qu’une question ultérieure emporte <b>au-delà</b> de cette demande est dit sous <a href="#h-ask">Demander, et rapporter la réponse</a>. Le pied de page compte ce que l’analyse a trouvé : protégés automatiquement, attendent votre accord, normaux.</p>
+  </section>
+
+  <section aria-labelledby="h-press">
+    <h2 id="h-press">Protéger d’un clic</h2>
+    <p class="lead">Cliquez sur un mot de l’original et il est protégé — la colonne Protégé affiche un jeton à sa place, et la barre indique « Protégé sous … ». Cliquez sur un mot protégé et « Annuler la protection » le reprend ; rien n’a été appris de ce clic — vous l’avez protégé ici, et Annuler le reprend. Certains mots attendent votre accord au lieu d’agir seuls : « Suggérer : Z le marque et attend votre accord », et le pied de page indique combien attendent.</p>
+  </section>
+
+  <section aria-labelledby="h-hand">
+    <h2 id="h-hand">Sélectionner à la main</h2>
+    <p class="lead">Faites glisser le pointeur sur des mots pour protéger exactement ce que vous avez choisi — deux clics font un seul jeton, parce qu’une sélection exprime votre volonté. Une sélection à la main ne franchit jamais un saut de ligne, et elle ne coupe jamais un texte protégé : si elle devait le faire, rien ne change et la barre indique l’ajustement qu’elle aurait pris. Dans un tableau, cliquez sur une valeur pour protéger la même cellule dans chaque ligne retenue.</p>
+  </section>
+
+  <section aria-labelledby="h-ask">
+    <h2 id="h-ask">Demander, et rapporter la réponse</h2>
+    <p class="lead">Choisissez qui répond, dans la colonne du milieu ; écrivez votre question. Votre demande figure dans la colonne Protégé, avec ses valeurs remplacées. « Copier la discussion » met dans votre presse-papiers ce qui sortirait, protégé — la question telle qu’une IA la recevrait, et rien de plus ancien ; collez-la dans l’IA que vous utilisez, quelle qu’elle soit ; rapportez ce qu’elle a répondu avec « Ajouter une réponse » et les noms reviennent de vos sessions — chaque nom que cette conversation a porté, pas seulement ceux de ce que vous avez copié. « La première réponse ouvre la discussion ici. Chaque question suivante emporte l’échange qui la précède — pas toute la discussion, et jamais de nouveau le document. »</p>
+    <p class="honest" data-fact="what-an-in-app-chat-sends">Ce qu’envoie une conversation dans l’application, dit simplement, parce que c’est ce qui quitte cette machine : votre question est protégée, et cette question protégée est tout ce qui part. Posée à nouveau dans Z Privacy, elle part avec une seule chose en plus — l’échange qui la précède, la question précédente et sa réponse, sous la forme protégée dans laquelle elles sont parties — et jamais avec le document, qui est envoyé une seule fois, avec la question qui l’a emporté la première. Rien de plus ancien n’est envoyé, et rien de plus ancien n’est perdu : chaque tour précédent reste dans le fichier scellé de votre propre session. Ce que « Copier la discussion » met dans votre presse-papiers est cette même question protégée et rien de plus ancien, parce que la conversation que vous menez avec un modèle de votre choix garde son propre fil ; une réponse que vous rapportez à la main restaure toujours chaque nom que la conversation a jamais porté. Ce que cela vous coûte est dit ici aussi : une question de suivi parvient à un modèle qui ne voit plus le document, et aucune porte ici ne remet à qui que ce soit la conversation entière.</p>
+  </section>
+
+  <section aria-labelledby="h-pdf">
+    <h2 id="h-pdf">Garder une copie — protégée, ou relue</h2>
+    <p class="lead">« Enregistrer en PDF » demande comment nommer le document, puis écrit une copie protégée nommée d’après votre mot et celui de la session — marquée « z-pdf · copie protégée », avec une page ajoutée qui porte des informations sur le fichier et jamais une vraie valeur. Le nom est la seule chose de ce fichier qui n’est <b>pas</b> protégée, et l’application le dit là où vous le saisissez : « Le nom du fichier reste exactement tel que vous le saisissez. Il part avec le fichier ; n’y mettez donc pas de vrais noms. » En haut de l’écran, « z-pdf » ouvre un tel fichier et restaure les noms que votre coffre connaît. Cette lecture peut elle aussi être conservée — « Enregistrer en PDF ordinaire » écrit votre propre document avec ses noms remis en place : pas de page ajoutée, pas de pied de page, rien qui prétende à une protection, et les valeurs qu’il contient en clair.</p>
+  </section>
+
+  <section aria-labelledby="h-vault">
+    <h2 id="h-vault">Votre coffre</h2>
+    <p class="lead">Tout ce qui est protégé forme un bloc par valeur dans votre coffre, sur cet appareil. Le coffre s’ouvre avec votre phrase secrète et se verrouille avec « Verrouiller maintenant ».</p>
+    <p class="honest" data-fact="a-vault-write-is-not-lost-in-silence">Si une deuxième copie de Z écrit pendant qu’une première est ouverte, la prochaine écriture ici répond : « Une autre copie de Z Privacy a modifié ce coffre. Fermez cette fenêtre-là, ou verrouillez puis déverrouillez ici pour reprendre son travail. » — ainsi une écriture dans le coffre ne se perd pas en silence. Ce qui a été mesuré, c’est deux copies de Z sur un même ordinateur partageant un même coffre ; deux machines partageant un dossier sur un réseau ne l’ont pas été, pas plus que le fichier que conserve une session, qui a sa propre garde et sa propre mesure.</p>
+  </section>
+
+  <section aria-labelledby="h-rooms">
+    <h2 id="h-rooms">Les rubriques</h2>
+    <p class="lead">Les Paramètres présentent les rubriques par leur nom : Langue et règles, Coffre et sécurité, Sessions — et votre carte d’identité, où une liste est un fichier CSV avec une colonne « name » et une colonne « type ».</p>
+    <p class="note">Cette page est dans la langue de l’application, et les Paramètres de l’application portent eux-mêmes la ligne qui l’ouvre. Un seul texte, à un seul endroit : il n’en existe pas de seconde copie dans le programme qui pourrait se désaccorder de celle-ci.</p>
+  </section>
+
+
+  <!-- **The four pictures, and they are the open half of this item** — paper
+       100 §3. They are taken from the Linux debug build at the commit named
+       under the last of them, from the fixtures and never from a real
+       document, and they cannot be taken from this seat: a widget harness
+       draws with a test font in which every glyph has the same width, so a
+       picture made here would be a page of grey boxes. The owner's hand or
+       the lead's fills them.
+
+       Written as a comment rather than as four <img> tags with nothing behind
+       them, because this page goes live today (rule 83) and four broken
+       images on a published page are worse than none. Uncommenting this block
+       is the whole change when the files arrive, and the gate then holds each
+       file present.
+
+       <figure class="shot"><img src="../../assets/guide/01-the-way-in.png" width="1200" height="760"
+         alt="L’entrée en haut de l’écran unique, sans rien d’ajouté encore."></figure>
+       <figure class="shot"><img src="../../assets/guide/02-one-press.png" width="1200" height="760"
+         alt="Brief_Weber.txt en deux colonnes : un mot sur lequel on vient de cliquer dans l’Original, un jeton à sa place dans la colonne Protégé, et la barre qui indique « Protégé sous … »."></figure>
+       <figure class="shot"><img src="../../assets/guide/03-what-will-leave.png" width="1200" height="760"
+         alt="La feuille d’envoi, avec la colonne Protégé intitulée « Protégé — ce que l’IA recevra » et les deux portes de sortie en dessous."></figure>
+       <figure class="shot"><img src="../../assets/guide/04-the-z-pdf-room.png" width="1200" height="760"
+         alt="La rubrique z-pdf dans les Paramètres, avec le bouton qui relit un document protégé."><figcaption class="note">Prise depuis la version Linux au commit …, à partir du fichier de test Brief_Weber.txt et d’aucun document réel.</figcaption></figure>
+  -->
+  <p class="note"><a href="/fr/faq/">Questions et réponses</a></p>
+  <p class="note" data-fact="an-ai-translation">Cette page a été traduite de l’anglais avec l’IA. Une erreur&#160;? Écrivez à <a href="mailto:zprivacy@mono-peak.com?subject=Translation%20(FR)">zprivacy@mono-peak.com</a> avec l’objet «&#160;Translation (FR)&#160;».</p>
+</main>
+
+<footer>
+  <div class="foot-grid">
+    <div>
+      <h2 class="fh">Vos retours</h2>
+      <p class="mail"><a href="mailto:zprivacy@mono-peak.com" dir="ltr">zprivacy@mono-peak.com</a></p>
+      <p class="note">Retours par e-mail uniquement. Aucun formulaire, aucun backend, rien n’est collecté sur ce site.</p>
+      <h2 class="fh">Être prévenu lorsqu’une nouvelle version sort</h2>
+      <p class="mail"><a href="mailto:zprivacy@mono-peak.com?subject=Updates" dir="ltr">zprivacy@mono-peak.com</a></p>
+      <p class="note">Écrivez avec l’objet « Updates ». Nous ne vous répondons que lorsqu’une version est publiée, et nous supprimons votre adresse lorsque vous répondez « stop ». Aucun formulaire, aucun service de listes et aucun tiers : l’adresse reste dans cette boîte aux lettres et nulle part ailleurs.</p>
+    </div>
+    <div>
+      <h2 class="fh">Éditeur</h2>
+      <div class="legal"><div>Faruk AB</div><div>Aktiebolag (AB), Suède</div><div>Numéro d’immatriculation de la société (Org.nr) 559473-3494</div><div>Hotellgatan 3, 311 31 Falkenberg, Suède</div></div>
+      <p class="legal-contact"><a href="/fr/privacy/">Confidentialité et protection des données</a></p>
+      <p class="legal-contact"><a href="/fr/terms/">Conditions d’utilisation</a></p>
+      <p class="legal-contact">Contact et assistance : <a href="mailto:zprivacy@mono-peak.com" dir="ltr">zprivacy@mono-peak.com</a></p>
+    </div>
+  </div>
+  <p class="copy">© 2026 Faruk AB. Sous licence Apache License 2.0.</p>
+  <p class="colophon" lang="en">Z Privacy &#183; A mono-peak project by Faruk AB &#183; Apache-2.0</p>
+</footer>
+</body>
+</html>

@@ -41,8 +41,13 @@ import re
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-LANGS = ('en', 'de', 'ar')
-TAG = {'en': 'EN', 'de': 'DE', 'ar': 'AR'}
+# **French and Spanish joined on 2 November 2026** (paper 121). Their answers
+# are approved where the German and the Arabic are, in
+# `docs/faq-translation-draft.md`, marked as drafts made with AI and read by the
+# lead — the same «a sentence improved while building a page is a sentence
+# nobody approved» holds for them.
+LANGS = ('en', 'de', 'ar', 'fr', 'es')
+TAG = {'en': 'EN', 'de': 'DE', 'ar': 'AR', 'fr': 'FR', 'es': 'ES'}
 COUNT = 25
 
 
@@ -68,12 +73,16 @@ def approved():
     draft = io.open(ROOT / 'docs/faq-translation-draft.md', encoding='utf-8').read()
     # The question headings live in their own block at the foot of the draft:
     # they were the one body of text a page needed and the draft did not hold.
-    heads = {'de': {}, 'ar': {}}
+    heads = {'de': {}, 'ar': {}, 'fr': {}, 'es': {}}
     for m in re.finditer(r'^\*\*Q(\d+)\.\*\* .*?\n\n- \*\*DE\*\* — (.*?)\n'
                          r'- \*\*AR\*\* — <span[^>]*>(.*?)</span>', draft, re.S | re.M):
         heads['de'][int(m.group(1))] = m.group(2).strip()
         heads['ar'][int(m.group(1))] = m.group(3).strip()
-    for lang in ('de', 'ar'):
+    for lang in ('fr', 'es'):
+        for m in re.finditer(r'^\*\*Q(\d+)\.\*\* [^\n]*\n\n(?:- [^\n]*\n)*?- \*\*%s\*\* — ([^\n]*)\n'
+                             % TAG[lang], draft, re.M):
+            heads[lang][int(m.group(1))] = m.group(2).strip()
+    for lang in ('de', 'ar', 'fr', 'es'):
         out[lang] = {}
         for m in re.finditer(r'^## Q(\d+) · .*?\n\n.*?\*\*%s[^*]*\.?\*\*\s*'
                              r'(?:<div[^>]*>\s*)?(.*?)(?:\n\n</div>|\n\n\*\*)'
@@ -182,7 +191,7 @@ def main():
     print()
     print('%d FAQ pages checked' % len(seen))
     print('THE FAQ SAYS SOMETHING NOBODY APPROVED' if bad
-          else 'the three pages say what was approved, and their structured data '
+          else 'the five pages say what was approved, and their structured data '
                'says what they say')
     return bad
 

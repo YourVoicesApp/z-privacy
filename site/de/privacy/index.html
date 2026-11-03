@@ -24,6 +24,8 @@
 <link rel="alternate" hreflang="en" href="https://z-privacy.com/en/privacy/">
 <link rel="alternate" hreflang="de" href="https://z-privacy.com/de/privacy/">
 <link rel="alternate" hreflang="ar" href="https://z-privacy.com/ar/privacy/">
+<link rel="alternate" hreflang="fr" href="https://z-privacy.com/fr/privacy/">
+<link rel="alternate" hreflang="es" href="https://z-privacy.com/es/privacy/">
 </head>
 <body>
 <!-- The privacy page, 9 October 2026.
@@ -43,7 +45,7 @@
   <nav class="menus" aria-label="Language and help">
     <details class="menu" name="topmenu">
       <summary lang="de">Deutsch</summary>
-      <div class="menu-panel"><a class="menu-item" href="/en/privacy/" lang="en" hreflang="en">English</a><a class="menu-item on" href="/de/privacy/" lang="de" hreflang="de" aria-current="page">Deutsch</a><a class="menu-item" href="/ar/privacy/" lang="ar" dir="rtl" hreflang="ar">العربية</a></div>
+      <div class="menu-panel"><a class="menu-item" href="/en/privacy/" lang="en" hreflang="en">English</a><a class="menu-item on" href="/de/privacy/" lang="de" hreflang="de" aria-current="page">Deutsch</a><a class="menu-item" href="/ar/privacy/" lang="ar" dir="rtl" hreflang="ar">العربية</a><a class="menu-item" href="/fr/privacy/" lang="fr" hreflang="fr">Français</a><a class="menu-item" href="/es/privacy/" lang="es" hreflang="es">Español</a></div>
     </details>
     <details class="menu" name="topmenu">
       <summary>Hilfe</summary>
@@ -69,7 +71,7 @@
       <li class="promise">Was das Gerät verlässt, ist das, was Ihnen gezeigt wurde — Zeichen für Zeichen.<span class="proof"><code>z_core/tests/wire_capture.rs</code> nimmt die Anfrage auf einem Server auf Ihrem eigenen Rechner Byte für Byte auf und beweist, dass der Rumpf wörtlich der geprüfte Text ist und dass kein ursprünglicher Wert darin, in einem Header oder in der Adresse auftaucht.</span></li>
       <li class="promise">Nichts verlässt das Gerät ohne Ihr Wort.<span class="proof"><code>z_core/src/payload.rs</code>, <code>z_core/tests/the_send_door_is_a_sessions_door.rs</code></span></li>
       <li class="promise">Die Antwort wird auf Ihrem Gerät wiederhergestellt, aus einem Speicher, der es nie verlassen hat.<span class="proof"><code>z_core/tests/round_trip.rs</code></span></li>
-      <li class="promise">Alles, was Z lernt, liegt in einem verschlüsselten Tresor auf Ihrem Rechner, und die Tresordatei nennt niemanden.<span class="proof"><code>z_core/src/vault/crypto.rs</code> — ChaCha20-Poly1305 mit Argon2id. <code>z_core/tests/the_vault_file_says_nothing.rs</code> liest die Bytes der Tresordatei selbst und sucht nach dem Namen eines Klienten, einer zweiten Schreibweise davon, einer Kontonummer und dem Passwort: nichts davon ist zu finden, und eine Kontrolle im selben Test beweist, dass die Suche alle fünf findet, wenn sie offen da stehen.</span></li>
+      <li class="promise">Alles, was Z lernt, liegt in einem verschlüsselten Tresor auf Ihrem Rechner, und die Tresordatei nennt niemanden.<span class="proof"><code>z_core/src/vault/crypto.rs</code> — ChaCha20-Poly1305 mit Argon2id. <code>z_core/tests/the_vault_file_says_nothing.rs</code> liest die Bytes der Tresordatei selbst und sucht nach dem Namen eines Klienten, einer zweiten Schreibweise davon, einer Kontonummer und dem Passwort: nichts davon ist zu finden, und eine Kontrolle im selben Test beweist, dass die Suche jeden davon findet, wenn sie offen da stehen.</span></li>
       <li class="promise">Die einzige Datei, die nicht verschlüsselt ist, ist die Einstellungsdatei, und was nie in sie gelangen darf, ist getestet.<span class="proof"><code>z_core/tests/zcfg_leak.rs</code></span></li>
       <li class="promise">Die Dateien werden privat für Ihr eigenes Konto angelegt, und ein Symlink an ihrer Stelle wird abgelehnt statt verfolgt.<span class="proof"><code>scripts/check_storage_contracts.sh</code> nennt sechs Zusagen und verlangt, dass jede auf der Plattform gemessen wird, auf der Sie stehen.</span></li>
     </ul>
@@ -101,7 +103,7 @@
   <section class="card soft" aria-labelledby="h-blanks">
     <h2 id="h-blanks">Zwei Lücken, die wir benennen, statt sie mit Worten zu füllen</h2>
     <ul class="promises">
-      <li class="promise"><b>Eine schwedische Fassung dieser Seite.</b> Das Unternehmen ist schwedisch und die Behörde auch; diese Seite gibt es heute auf Englisch, Deutsch und Arabisch.</li>
+      <li class="promise"><b>Eine schwedische Fassung dieser Seite.</b> Das Unternehmen ist schwedisch und die Behörde auch; diese Seite gibt es heute auf Englisch, Deutsch, Arabisch, Französisch und Spanisch.</li>
       <li class="promise"><b>Eine gemessene Aufbewahrungsfrist für das Postfach.</b> Was Sie uns schreiben, bleibt dort, bis es von Hand gelöscht wird. Hier steht keine Zahl, weil keine gemessen wurde — und eine Zahl ohne Messung dahinter ist genau das, was dieses Produkt ablehnt.</li>
     </ul>
   </section>
