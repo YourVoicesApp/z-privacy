@@ -199,6 +199,7 @@ pub(crate) fn pack() -> LanguagePack {
         order: NameOrder::GivenThenFamily,
         names: CSV,
         provenance: "Wikidata (CC0) — given and family names of people recorded as British citizens; see z_core/assets/licenses/english_names_sources.md",
+        names_by_shape: false,
         extra: &[
             // The one shape an English letter has that no other language's
             // reader can use: a postcode written at the **end** of the

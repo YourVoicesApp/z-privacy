@@ -42,6 +42,10 @@ pub(crate) fn scan_with(
     salutations(&words, pack, &mut out);
     titled_names(&words, pack, &mut out);
     dictionary_names(&words, pack, taught, &mut out);
+    // **Names by their shape** — paper 120, and only for a pack that says so.
+    if pack.names_by_shape {
+        names_by_their_shape(&words, pack, &mut out);
+    }
     reversed_pairs(text, &words, pack, taught, &mut out);
     signatures(&words, pack, &mut out);
     roles_beside_a_name(&words, pack, taught, &mut out);
@@ -53,6 +57,17 @@ pub(crate) fn scan_with(
     // pack so the list can be counted.
     for (_, rule) in pack.extra {
         rule(&words, &mut out);
+    }
+    // **A pack with no library offers its people and protects none of them**
+    // — paper 120. Asked once, here, after every rule has spoken, because the
+    // trap this house pays for most often is a law written in one rule and not
+    // applied to the second: a title, a signature and a salutation all answer
+    // `Auto` in a pack that has a library behind them, and a French or a
+    // Spanish one does not.
+    if pack.names_by_shape {
+        for found in out.iter_mut().filter(|c| c.kind == Kind::Person) {
+            found.confidence = Confidence::Suggest;
+        }
     }
     out
 }
@@ -1128,4 +1143,91 @@ fn a_given_name_before_a_surname(
         ));
     }
     out.append(&mut found);
+}
+
+/// **Two or three capitalised words in a row, offered as a person** — paper
+/// 120, the owner's ruling of 2 November 2026: «a word that begins with a
+/// capital is put forward as a name», Suggested, so that an accepted one is
+/// kept in Z's vault.
+///
+/// Only for a pack whose `names_by_shape` is set, and that is French and
+/// Spanish: both write a person's name with a capital and write months, days
+/// and nationalities in lower case, so a capital means more there than it does
+/// in German, where every noun carries one.
+///
+/// **Never a lone capitalised word.** Every sentence begins with one; two in a
+/// row is the shape, and the pack's sentence-opening words («Le», «Lundi»,
+/// «El», «Nosotros») are no name by `name_shaped`'s own answer. A run longer
+/// than three is a heading or an institution, and is left alone. What stays in
+/// the clear around it:
+///
+/// - a line break and a page break end the run — a name is written on one
+///   line, and the signature rule reads the other shape;
+/// - a word that ends a sentence or a clause («,» «.» «;» «:» «!» «?») ends it;
+/// - a legal form («SARL», «S.L.») is a company's, never a person's;
+/// - a short word in capitals only («TVA», «NIR», «RCS») is an abbreviation;
+///   a surname written in capitals («DUPONT») is long enough to be read.
+///
+/// **Suggest, always.** There is no library behind it, so it can only ever ask.
+pub(crate) fn names_by_their_shape(words: &[Word<'_>], pack: &LanguagePack, out: &mut Vec<Candidate>) {
+    let fits = |w: &Word<'_>| {
+        let b = bare_keep_dot(w.text);
+        let n = bare(w.text);
+        let abbreviation = n.chars().count() <= 3 && !n.chars().any(char::is_lowercase);
+        !is_label(w.text)
+            && !w.text.starts_with(['(', '[', '{', '«', '"'])
+            && name_shaped(w.text, pack)
+            && !abbreviation
+            && !pack.company_forms.iter().any(|f| *f == b || *f == n)
+            && !pack.function_words.contains(&n.to_lowercase().as_str())
+    };
+    let ends_here = |w: &Word<'_>| w.text.ends_with([',', '.', ';', ':', '!', '?', ')']);
+    let mut i = 0usize;
+    while i < words.len() {
+        let Some(first) = words.get(i) else { break };
+        if !fits(first) {
+            i += 1;
+            continue;
+        }
+        // The run: on one line, stopped by the first word that is no name or
+        // that closes its clause.
+        let mut last = i;
+        while !words.get(last).is_some_and(ends_here) {
+            match words.get(last + 1) {
+                Some(next) if !next.newline_before && !next.page_break_before && fits(next) => last += 1,
+                _ => break,
+            }
+        }
+        let length = last - i + 1;
+        // A legal form right after the run makes it a company's name.
+        let a_company = words.get(last + 1).is_some_and(|next| {
+            !next.newline_before && {
+                let b = bare_keep_dot(next.text);
+                pack.company_forms.iter().any(|f| *f == b || *f == bare(next.text))
+            }
+        });
+        if (2..=3).contains(&length) && !a_company {
+            // At least one of them written as a name is written, not in
+            // capitals only — «SIRET TVA» is two labels.
+            let written = (i..=last)
+                .filter_map(|k| words.get(k))
+                .any(|w| bare(w.text).chars().skip(1).any(char::is_lowercase));
+            if let (true, Some(end_word)) = (written, words.get(last)) {
+                out.push(candidate(
+                    pack,
+                    first.start,
+                    trimmed_end(end_word),
+                    Kind::Person,
+                    Confidence::Suggest,
+                    "name-shape",
+                    format!(
+                        "capitalised words in a row, which in {} is how a person's name is written — \
+                         this build carries no {} name list, so it is offered for your word",
+                        pack.in_english, pack.in_english
+                    ),
+                ));
+            }
+        }
+        i = last + 1;
+    }
 }

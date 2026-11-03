@@ -442,10 +442,15 @@ LANGS=$FLUTTER_LIB/widgets/language_list.dart
 
 G38_OFFERED=$(grep -oE "offeredLanguages = <String>\[[^]]*\]" "$LANGS" \
               | grep -oE "'[a-z]{2}'" | tr -d "'" | tr '\n' ' ' | sed 's/ $//')
-if [ "$G38_OFFERED" = "ar de en sv" ]; then
-  pass "G38 the languages offered are the measured four: ar de en sv (every pack this build carries)"
+#   * **French and Spanish since paper 120** (2 November 2026): the core
+#     carries a pack for each, and rule 56's own Dart guard says every pack
+#     this build carries is offered. Their words are paper 121's, written at
+#     the same time; until they are, `theListIsWrittenIn` answers «no» for
+#     both and the interface stays in English.
+if [ "$G38_OFFERED" = "ar de en es fr sv" ]; then
+  pass "G38 the languages offered are the measured six: ar de en es fr sv (every pack this build carries)"
 else
-  fail "G38 the offered languages are «$G38_OFFERED» — expected «ar de en sv» (rule 56)"
+  fail "G38 the offered languages are «$G38_OFFERED» — expected «ar de en es fr sv» (rule 56)"
 fi
 
 # One list, every reader. A second literal pair is the «two copies of de, en»

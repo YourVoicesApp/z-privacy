@@ -70,6 +70,7 @@ pub(crate) fn pack() -> LanguagePack {
         order: NameOrder::GivenThenFamily,
         names: super::de_names::CSV,
         provenance: "Berlin, Bonn, Dortmund and Koeln newborn registers (CC BY 3.0 DE · CC0 · DL-DE-Zero 2.0) · Wikidata (CC0) · sigpwned/popular-names-by-country (CC0) — see z_core/assets/licenses/german_names_sources.md",
+        names_by_shape: false,
         extra: &[
             // A national plate format: «B-MW 2041» says where a car is
             // registered in Germany. Nothing about it generalises.

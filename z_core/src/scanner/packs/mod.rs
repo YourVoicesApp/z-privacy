@@ -11,6 +11,9 @@
 pub(crate) mod ar;
 pub(crate) mod de;
 pub(crate) mod en;
+pub(crate) mod es;
+pub(crate) mod fr;
+pub(crate) mod numbers;
 pub(crate) mod pack;
 pub(crate) mod people;
 pub(crate) mod sv;
@@ -37,7 +40,9 @@ pub(crate) fn installed_packs() -> Vec<pack::LanguagePack> {
     // **Arabic since paper 115**, and last in the list for no reason but the
     // order they were written: `pack_of` finds by id and nothing here is
     // ordered knowledge.
-    vec![de::pack(), sv::pack(), en::pack(), ar::pack()]
+    // **French and Spanish since paper 120**: numbers by their check, and
+    // names by their shape only — no list behind them.
+    vec![de::pack(), sv::pack(), en::pack(), ar::pack(), fr::pack(), es::pack()]
 }
 
 fn pack_of(id: &str) -> Option<pack::LanguagePack> {

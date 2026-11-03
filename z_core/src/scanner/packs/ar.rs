@@ -485,6 +485,7 @@ pub(crate) fn pack() -> LanguagePack {
         order: NameOrder::GivenThenFamily,
         names: CSV,
         provenance: "the owner's own Arabic name library — 1292 male and 1135 female given names, 2427 lines and 2414 distinct; see z_core/assets/licenses/arabic_names_sources.md",
+        names_by_shape: false,
         extra: &[
             ("names after a salutation", names_after_a_salutation),
             ("names the owner's library knows", a_name_the_library_knows),
