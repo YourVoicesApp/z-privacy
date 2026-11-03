@@ -2109,7 +2109,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get copied => 'Copiado';
 
   @override
-  String get copyProtected => 'Copiar protegido';
+  String get copyProtected => 'Copiar lo protegido';
 
   @override
   String get saving => 'Guardando…';

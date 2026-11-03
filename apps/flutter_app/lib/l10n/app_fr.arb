@@ -645,7 +645,7 @@
   "namesBelongToAnotherSession": "{count, plural, =1{Un nom de cet échange appartient à une autre session et n’a pas pu être restauré : {list}.} other{{count} noms de cet échange appartiennent à une autre session et n’ont pas pu être restaurés : {list}.}}",
   "andTheClipboardIsEmptySentence": "Rien n’a été copié — le presse-papiers est vide.",
   "nothingWasPasted": "Rien n’a été collé.",
-  "copyTheSafeTextFirst": "Copiez d’abord le texte protégé, pour que la réponse puisse être rattachée à cette charge protégée.",
+  "copyTheSafeTextFirst": "Copiez d’abord le texte protégé, pour que la réponse puisse être rattachée à ce contenu protégé.",
   "profileIsInUseAgain": "« {name} » est de nouveau utilisé.",
   "profileIsOffNamesRemain": "« {name} » est désactivé — ses noms sont toujours là.",
   "movedNamesToLanguage": "{count, plural, =1{Un nom déplacé vers {to}.} other{{count} noms déplacés vers {to}.}}",

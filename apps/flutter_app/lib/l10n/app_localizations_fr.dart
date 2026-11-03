@@ -2540,7 +2540,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get copyTheSafeTextFirst =>
-      'Copiez d’abord le texte protégé, pour que la réponse puisse être rattachée à cette charge protégée.';
+      'Copiez d’abord le texte protégé, pour que la réponse puisse être rattachée à ce contenu protégé.';
 
   @override
   String profileIsInUseAgain(String name) {

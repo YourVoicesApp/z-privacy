@@ -545,7 +545,7 @@
   "suggestionsStillOpenSend": "Todavía hay {open} sugerencias abiertas. Aparecen en el texto tal como están escritas, y no se puede enviar nada hasta que las responda. No existe «enviar de todos modos».",
   "manualAiSheetWhat": "Use un chat de IA que ya tenga. Lleve el texto de arriba — al portapapeles, o como PDF guardado en este equipo —, péguelo en el modelo que prefiera y traiga la respuesta de vuelta con «Añadir una respuesta» bajo el chat. La restauración funciona igual en ambos casos — sin cuenta, sin clave. Ninguna de las dos formas envía nada desde aquí.",
   "copied": "Copiado",
-  "copyProtected": "Copiar protegido",
+  "copyProtected": "Copiar lo protegido",
   "saving": "Guardando…",
   "saveAsPdf": "Guardar como PDF",
   "savedToWhere": "Guardado en {where}",
