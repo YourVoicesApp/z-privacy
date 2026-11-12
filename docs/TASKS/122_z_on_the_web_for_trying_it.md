@@ -117,8 +117,8 @@
 4. The lead merges both and builds `site-trial/`.
 5. The owner previews.
 
-## 6 · Open, for the owner
+## 6 · Open, and settled
 
-- **The front page.** Rule 85 makes the chat the first screen. What happens to what the front page says today (what Z is, download, guide)? The lead proposes that it stays reachable from a line at the top of the trial, unchanged.
+- ~~**The front page.**~~ **Settled by the owner, 12 Nov («نعم»):** the chat is the first screen, and what the front page says today (what Z is, download, guide) stays as it is, reached by one small line at the top of the trial.
 - **The Swedish site pages, the privacy page among them** (rule 86 (e)): a separate paper, after this one.
 - **Finnish:** a separate paper that measures name endings first.
