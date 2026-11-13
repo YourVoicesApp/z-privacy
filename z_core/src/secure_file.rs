@@ -362,6 +362,10 @@ pub(crate) fn replace_atomically(path: &Path, temp_extension: &str, bytes: &[u8]
         .map_err(|e| refused(label, format!("the complete file could not be written: {e}")))?;
     file.sync_all()
         .map_err(|e| refused(label, format!("the temporary file could not be synced: {e}")))?;
+    // The browser build (paper 122) compiles this path too, and its `File`
+    // holds nothing to close; it never gets here, since nothing opens a file
+    // there. Everywhere else this closes the file before the rename.
+    #[cfg_attr(target_arch = "wasm32", allow(clippy::drop_non_drop))]
     drop(file);
     // G15-ok: non-Unix fallback rename for ZVLT or ZCFG.
     std::fs::rename(&temp, path)

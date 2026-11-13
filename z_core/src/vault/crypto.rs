@@ -26,11 +26,14 @@
 //! without locking anyone out of an old one: the numbers used to open a vault are
 //! the numbers stored inside it.
 
+#[cfg(not(feature = "web"))]
 use argon2::{Algorithm, Argon2, Params, Version};
 use blake2::digest::consts::U32;
 use blake2::digest::Mac;
 use blake2::Blake2bMac;
+#[cfg(not(feature = "web"))]
 use chacha20poly1305::aead::{Aead, KeyInit};
+#[cfg(not(feature = "web"))]
 use chacha20poly1305::{ChaCha20Poly1305, Nonce};
 use zeroize::{Zeroize, Zeroizing};
 
@@ -306,7 +309,28 @@ fn random_array<const N: usize>() -> ApiResult<[u8; N]> {
     Ok(out)
 }
 
+/// **No sealing on the web** — paper 122 §2.2, the lead's decision 3: the
+/// trial holds no vault, so Argon2id and ChaCha20-Poly1305 are not in the web
+/// build at all. The three doors that would need them answer
+/// `NotImplemented`, and the vault stays the memory «no vault» it is when no
+/// data folder is set. The keyed BLAKE2b ladder above stays: it seals nothing.
+#[cfg(feature = "web")]
+fn derive_kek(_passphrase: &str, _params: &KdfParams) -> ApiResult<SecretKey> {
+    Err(ApiError::NotImplemented)
+}
+
+#[cfg(feature = "web")]
+fn seal(_key: &SecretKey, _plaintext: &[u8]) -> ApiResult<Vec<u8>> {
+    Err(ApiError::NotImplemented)
+}
+
+#[cfg(feature = "web")]
+fn open(_key: &SecretKey, _sealed: &[u8]) -> ApiResult<Zeroizing<Vec<u8>>> {
+    Err(ApiError::NotImplemented)
+}
+
 /// passphrase + this vault's salt and costs → the key-encryption key.
+#[cfg(not(feature = "web"))]
 fn derive_kek(passphrase: &str, params: &KdfParams) -> ApiResult<SecretKey> {
     let argon_params = Params::new(params.m_cost, params.t_cost, params.p_cost, Some(KEY_LEN)).map_err(|e| {
         ApiError::PayloadRefused {
@@ -323,6 +347,7 @@ fn derive_kek(passphrase: &str, params: &KdfParams) -> ApiResult<SecretKey> {
     Ok(key)
 }
 
+#[cfg(not(feature = "web"))]
 fn seal(key: &SecretKey, plaintext: &[u8]) -> ApiResult<Vec<u8>> {
     let cipher = ChaCha20Poly1305::new(key.as_ref().into());
     let nonce_bytes = random_array::<NONCE_LEN>()?;
@@ -335,6 +360,7 @@ fn seal(key: &SecretKey, plaintext: &[u8]) -> ApiResult<Vec<u8>> {
     Ok(out)
 }
 
+#[cfg(not(feature = "web"))]
 fn open(key: &SecretKey, sealed: &[u8]) -> ApiResult<Zeroizing<Vec<u8>>> {
     if sealed.len() <= NONCE_LEN {
         return Err(ApiError::PayloadRefused {

@@ -734,8 +734,8 @@ impl Session {
 /// Milliseconds left until `until`, and 0 the moment it is past.
 ///
 /// One function for both kinds of reveal, so there is one clock and not two.
-pub(crate) fn ms_left(until: std::time::Instant) -> u32 {
-    let now = std::time::Instant::now();
+pub(crate) fn ms_left(until: crate::clock::Instant) -> u32 {
+    let now = crate::clock::Instant::now();
     if now >= until {
         return 0;
     }
@@ -750,7 +750,7 @@ pub(crate) fn ms_left(until: std::time::Instant) -> u32 {
 /// written in `ops::hide` as if it were a design and not a gap.
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct ShownToken {
-    pub until: std::time::Instant,
+    pub until: crate::clock::Instant,
     /// The vault's lock count when this was revealed. A lock — by hand or by
     /// the clock — moves the count on, and this record is then stale. The rule
     /// is about the **moment** of a lock, not the state of being locked: a
@@ -766,7 +766,7 @@ pub(crate) struct ShownToken {
 pub(crate) struct Revealed {
     pub entity: u32,
     pub value_id: u32,
-    pub until: std::time::Instant,
+    pub until: crate::clock::Instant,
 }
 
 impl Revealed {
@@ -774,7 +774,7 @@ impl Revealed {
     /// every time rather than counted down, so a process that was suspended
     /// wakes up with the reveal already finished.
     pub(crate) fn remaining_ms(&self) -> u32 {
-        let now = std::time::Instant::now();
+        let now = crate::clock::Instant::now();
         if now >= self.until {
             return 0;
         }

@@ -19,8 +19,10 @@ unicode-normalization = "0.1"
 # The vault's crypto (task 013). Non-network, pinned, and each one justified:
 # Argon2id turns a passphrase into a key-encryption key; ChaCha20-Poly1305 seals
 # the master key and the vault body; zeroize wipes key material on drop.
-argon2 = "0.5"
-chacha20poly1305 = "0.10"
+#
+# Both are left out of the web build (paper 122 §2.2): the trial holds no
+# vault, so nothing is sealed there, and with them `getrandom` 0.2 leaves the
+# web tree. They are declared under the native target below.
 # Key derivation with domain separation (task 021): the master key derives one key
 # per purpose instead of being the single AEAD key forever. Pinned to 0.10 on
 # purpose — it is **already in the tree** under argon2, so this costs zero new
@@ -36,7 +38,9 @@ flate2 = { version = "1.1", default-features = false, features = ["rust_backend"
 # No default features: rustls with its own root store (webpki-roots), no platform
 # verifier, no gzip. TLS is not something to hand-roll, which is the whole reason
 # a dependency is accepted here at all.
-ureq = { version = "3.4.2", default-features = false, features = ["rustls"] }
+#
+# Declared under the native target below, so that the web build's tree holds
+# no client at all (paper 122, gate G1e).
 # JSON, for the request body and the provider's answer (task 020). Hand-rolling an
 # escaper and a parser for untrusted input would be a correctness burden taken on
 # for no gain: unlike the PDF reader, the alternative here costs four crates.
@@ -64,6 +68,23 @@ windows-sys = { version = "0.59", features = [
   "Win32_Storage_FileSystem",
 ] }
 
+# ---------------------------------------------------------------- native only
+# Everything the web build (paper 122) leaves out: the vault's sealing and the
+# network. A target table, not a feature: a feature cannot take a dependency
+# away, and `default` stays empty (G1d).
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+argon2 = "0.5"
+chacha20poly1305 = "0.10"
+ureq = { version = "3.4.2", default-features = false, features = ["rustls"] }
+
+# ---------------------------------------------------------------- the web
+# The browser's randomness for `getrandom` 0.3, and the page's two clocks
+# (`clock.rs`): nothing else of the browser is imported (gate G1g).
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+getrandom = { version = "0.3", features = ["wasm_js"] }
+js-sys = "0.3"
+wasm-bindgen = "0.2"
+
 [dev-dependencies]
 # The tests read the request body a provider received, to prove it is the
 # SafePayload character for character. Already in the tree; no new cost.
@@ -87,6 +108,11 @@ test_clock = []
 # `examples/what_arrives.rs` names it in `required-features`: without it the
 # instrument is not built at all, and the product has no such module.
 measuring = []
+# **The trial on the web** — paper 122 §2.2. Only for `wasm32-unknown-unknown`,
+# and only through `bridges/web`: the page's clock instead of std's, no
+# sealing, no network file. Never in `default`, and the workspace never turns
+# it on (`bridges/web` is outside it), so the native build is the one it was.
+web = []
 
 # The instrument of paper 086, and the only target in this package that asks
 # for a feature. `cargo run -p z_core --example what_arrives --features

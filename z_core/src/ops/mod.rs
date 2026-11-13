@@ -3394,7 +3394,7 @@ pub(crate) fn reveal(session: SessionId, token: String) -> ApiResult<RevealedVal
         s.revealed.insert(
             token,
             crate::session::ShownToken {
-                until: std::time::Instant::now()
+                until: crate::clock::Instant::now()
                     + std::time::Duration::from_millis(u64::from(ttl_ms)),
                 locks_at,
             },

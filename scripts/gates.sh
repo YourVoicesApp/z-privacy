@@ -85,6 +85,165 @@ else
   fail "G1d z_core's default features are not empty — the echo provider may ship"
 fi
 
+# ---------------------------------------------------------------- G1, on the web
+# **The trial in the browser has no network, and cannot be built with one** —
+# paper 122 part A. The core is built for `wasm32-unknown-unknown` with the
+# `web` feature, through `bridges/web`, which is outside the workspace so that
+# the feature never reaches the native build. Each check below is measured on
+# what the compiler built, and each has a control that must bite.
+#
+# The toolchain is 1.97.1 unless RUSTUP_TOOLCHAIN says otherwise, as in
+# `scripts/build_web_core.sh`: 1.98 ICEs on a fresh crate on this machine.
+WEB_TC="${RUSTUP_TOOLCHAIN:-1.97.1}"
+WEB_T="${CARGO_TARGET_DIR:-$PWD/target}"
+WEB_OUT="$WEB_T/web-core"
+WEB_NATIVE="$WEB_T/web-native"
+WEB_MISSING=""
+grep -qx 'wasm32-unknown-unknown' <<< "$(rustup target list --installed --toolchain "$WEB_TC" 2>/dev/null)" \
+  || WEB_MISSING="$WEB_MISSING wasm32-unknown-unknown for $WEB_TC"
+[ "$(wasm-bindgen --version 2>/dev/null | awk '{print $2}')" = "0.2.130" ] || WEB_MISSING="$WEB_MISSING wasm-bindgen 0.2.130"
+command -v node >/dev/null 2>&1 || WEB_MISSING="$WEB_MISSING node"
+command -v python3 >/dev/null 2>&1 || WEB_MISSING="$WEB_MISSING python3"
+web_cargo() { RUSTUP_TOOLCHAIN="$WEB_TC" cargo "$@"; }
+# The source files one `cargo check` of z_core compiled, read from the
+# dep-info the compiler wrote for that very artefact.
+web_sources() {
+  local d
+  d=$(web_cargo check -p z_core --lib --message-format=json "$@" 2>/dev/null | python3 -c '
+import json, sys
+for line in sys.stdin:
+    try: m = json.loads(line)
+    except ValueError: continue
+    if m.get("reason") == "compiler-artifact" and m.get("target", {}).get("name") == "z_core":
+        for f in m.get("filenames", []):
+            if f.endswith(".rmeta"):
+                print(f[: -len(".rmeta")].replace("/libz_core-", "/z_core-") + ".d")
+') || return 1
+  [ -f "$d" ] || return 1
+  # Written relative to the workspace or absolute, depending on who asked.
+  tr ' ' '\n' < "$d" | sed -e 's/:$//' -e "s|^$PWD/||" | grep -E '^z_core/src/.*\.rs$' | sort -u
+}
+
+# **One clock** (the lead's decision 2): on wasm32 the standard library's
+# clock panics, so every reader of time asks `z_core/src/clock.rs`. A second
+# reader would build, and trap on the page at its first call. The control is
+# the same search over that file, where both must be found.
+G1G_CLOCK_RE='std::time::(Instant|SystemTime)|\bSystemTime::|UNIX_EPOCH'
+G1G_CLOCK=$(grep -RnE "$G1G_CLOCK_RE" --include='*.rs' z_core/src | grep -v '^z_core/src/clock\.rs:' \
+            | grep -vE '^[^:]+:[0-9]+: *//' || true)
+if [ -n "$G1G_CLOCK" ]; then
+  fail "G1g time is read outside z_core/src/clock.rs — on the web that call traps:"; printf '        %s\n' "$G1G_CLOCK"
+elif [ "$(grep -cE "$G1G_CLOCK_RE" z_core/src/clock.rs)" -ge 2 ]; then
+  pass "G1g time is read in one file, z_core/src/clock.rs (and the search finds it there)"
+else
+  fail "G1g the search for a clock finds nothing even in z_core/src/clock.rs, so it proves nothing"
+fi
+
+if [ -n "$WEB_MISSING" ]; then
+  for g in "G1c the web build compiles no file that names $CLIENT" "G1e the web build's tree holds no network crate" \
+           "G1f a wasm32 build without the web feature is refused" "G1g the browser module imports only what is on its list" \
+           "G1h the web and the native core answer the same"; do
+    skip "$g" "missing:$WEB_MISSING"
+  done
+else
+  # G1f: the two wrong builds are refused by name, and the right one builds.
+  G1F_NO_WEB=$(web_cargo check -p z_core --lib --target wasm32-unknown-unknown 2>&1)
+  if [ $? -ne 0 ] && grep -q 'z_core on wasm32 needs the `web` feature' <<< "$G1F_NO_WEB"; then
+    pass "G1f z_core for wasm32 without \`web\` is refused by name — the network file cannot be built for the browser"
+  else
+    fail "G1f z_core for wasm32 without \`web\` was not refused by its own compile_error"
+  fi
+  G1F_NATIVE_WEB=$(web_cargo check -p z_core --lib --features web 2>&1)
+  if [ $? -ne 0 ] && grep -q 'the `web` feature is for wasm32-unknown-unknown only' <<< "$G1F_NATIVE_WEB"; then
+    pass "G1f z_core with \`web\` on a native target is refused by name"
+  else
+    fail "G1f z_core with \`web\` on a native target was not refused by its own compile_error"
+  fi
+  # The control: the same check, with the feature, compiles. So the refusal
+  # above is the feature's, not a broken toolchain's.
+  G1C_WEB=$(web_sources --features web --target wasm32-unknown-unknown)
+  if [ -n "$G1C_WEB" ]; then
+    pass "G1f   the control: the same check with \`web\` compiles ($(printf '%s\n' "$G1C_WEB" | grep -c .) files of z_core)"
+  else
+    fail "G1f   the control: z_core with \`web\` does not compile for wasm32, so the refusals above prove nothing"
+  fi
+
+  # G1c, on the web: what the compiler read for the browser names no client,
+  # and the network file is not among it. The control reads the native build
+  # the same way, and must find both.
+  g1c_names() { printf '%s\n' "$1" | while IFS= read -r f; do [ -n "$f" ] && grep -lE "\b$CLIENT::" "$f"; done; }
+  G1C_WEB_NAMES=$(g1c_names "$G1C_WEB")
+  if [ -n "$G1C_WEB" ] && [ -z "$G1C_WEB_NAMES" ] && ! grep -qx "z_core/src/$NET_DIR/http.rs" <<< "$G1C_WEB"; then
+    pass "G1c the web build compiles $(printf '%s\n' "$G1C_WEB" | grep -c .) files and none names $CLIENT; $NET_DIR/http.rs is not among them"
+  else
+    fail "G1c the web build compiles a file that names $CLIENT, or the network file:"; printf '        %s\n' $G1C_WEB_NAMES
+  fi
+  G1C_NATIVE=$(web_sources)
+  G1C_NATIVE_NAMES=$(g1c_names "$G1C_NATIVE")
+  if grep -qx "z_core/src/$NET_DIR/http.rs" <<< "$G1C_NATIVE" && [ -n "$G1C_NATIVE_NAMES" ]; then
+    pass "G1c   the control: the native build's own list holds $NET_DIR/http.rs and $(printf '%s\n' "$G1C_NATIVE_NAMES" | grep -c .) file(s) naming $CLIENT"
+  else
+    fail "G1c   the control: the native build's list does not show the network file, so the web reading cannot see one"
+  fi
+
+  # G1e: the web tree holds no network crate and no vault crypto. The control
+  # is the same tree for this machine, where the client must be found.
+  G1E_BAD='^(ureq|ureq-proto|rustls|rustls-pki-types|rustls-webpki|webpki-roots|ring|http|hyper|reqwest|argon2|chacha20poly1305) v'
+  G1E_WEB=$(cd bridges/web && web_cargo tree --locked --offline --target wasm32-unknown-unknown -e normal --prefix none 2>&1)
+  G1E_WEB_RC=$?
+  G1E_WEB_HITS=$(printf '%s\n' "$G1E_WEB" | grep -E "$G1E_BAD" | sort -u)
+  G1E_WEB_GR=$(printf '%s\n' "$G1E_WEB" | grep -E '^getrandom v0\.2' | sort -u)
+  if [ $G1E_WEB_RC -eq 0 ] && grep -q '^z_core v' <<< "$G1E_WEB" && [ -z "$G1E_WEB_HITS" ] && [ -z "$G1E_WEB_GR" ]; then
+    pass "G1e the web build's tree holds $(printf '%s\n' "$G1E_WEB" | grep -E ' v[0-9]' | sort -u | grep -c .) crates: no client, no TLS, no vault crypto, no getrandom 0.2"
+  else
+    fail "G1e the web build's tree holds a network or vault crate (or could not be read):"; printf '        %s\n' $G1E_WEB_HITS $G1E_WEB_GR
+  fi
+  G1E_HOST=$(rustc --version --verbose 2>/dev/null | awk '/^host:/ {print $2}')
+  G1E_NATIVE=$(cd bridges/web && web_cargo tree --locked --offline --target "$G1E_HOST" -e normal --prefix none 2>&1)
+  if grep -qE "^$CLIENT v" <<< "$G1E_NATIVE"; then
+    pass "G1e   the control: the same reading for $G1E_HOST finds $CLIENT"
+  else
+    fail "G1e   the control: the same reading for $G1E_HOST does not find $CLIENT, so the web reading proves nothing"
+  fi
+
+  # G1g: build the module the page loads, and read what it asks of the page.
+  G1G_BUILT=0
+  if G1G_BUILD=$(RUSTUP_TOOLCHAIN="$WEB_TC" scripts/build_web_core.sh "$WEB_OUT" 2>&1); then
+    if G1G_OUT=$(node bridges/web/tests/imports.mjs "$WEB_OUT" 2>&1); then
+      pass "G1g $G1G_OUT"
+    else
+      fail "G1g the browser module asks the page for something not on its list:"; printf '%s\n' "$G1G_OUT" | sed 's/^/        /'
+    fi
+    G1G_BUILT=1
+    G1G_SIZE=$(printf '%s\n' "$G1G_BUILD" | tail -1 | sed 's/^build_web_core: //')
+    pass "G1g   the module is built: $G1G_SIZE"
+  else
+    fail "G1g the browser module does not build (scripts/build_web_core.sh):"; printf '%s\n' "$G1G_BUILD" | tail -15 | sed 's/^/        /'
+  fi
+
+  # G1h: the doors' own tests, then the parity of §2.4 across six languages.
+  if G1H_T=$(cd bridges/web && CARGO_TARGET_DIR="$WEB_NATIVE" web_cargo test --locked --quiet 2>&1); then
+    G1H_N=$(printf '%s\n' "$G1H_T" | awk '/^test result: ok\./ {s += $4} END {print s + 0}')
+    pass "G1h the doors' own tests: $G1H_N passed"
+  else
+    fail "G1h the doors' own tests:"; printf '%s\n' "$G1H_T" | tail -20 | sed 's/^/        /'
+  fi
+  if (cd bridges/web && CARGO_TARGET_DIR="$WEB_NATIVE" web_cargo build --locked --quiet --example parity_replay) >/tmp/g1h.$$ 2>&1 \
+     && [ "$G1G_BUILT" = 1 ]; then
+    G1H_WORK=$(mktemp -d)
+    if G1H_OUT=$(node bridges/web/tests/parity.mjs "$WEB_OUT" "$WEB_NATIVE/debug/examples/parity_replay" "$G1H_WORK" 2>&1); then
+      pass "G1h $(printf '%s\n' "$G1H_OUT" | tail -1); the control (two tokens trading places) bit"
+    else
+      fail "G1h the web and the native core disagree:"; printf '%s\n' "$G1H_OUT" | tail -20 | sed 's/^/        /'
+    fi
+    rm -f "$G1H_WORK/transcript.jsonl"
+    rmdir "$G1H_WORK" 2>/dev/null || true
+  else
+    fail "G1h the parity replay does not build, or there is no browser module:"; tail -15 /tmp/g1h.$$ | sed 's/^/        /'
+  fi
+  rm -f /tmp/g1h.$$
+fi
+
 # ---------------------------------------------------------------- G27
 # **One rule decides which language reads a text** — 080.
 #

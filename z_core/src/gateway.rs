@@ -109,7 +109,7 @@ pub(crate) fn send(request: Request) -> ApiResult<Answer> {
         .model_id
         .filter(|m| !m.trim().is_empty())
         .unwrap_or_else(|| login.model.clone());
-    let started = std::time::Instant::now();
+    let started = crate::clock::Instant::now();
 
     // The provider is handed the handle's text and this function never sees
     // it: `providers::ask` is the only reader there is. There is no second arm

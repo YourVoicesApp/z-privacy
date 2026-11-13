@@ -15,8 +15,21 @@
 //! promise.
 
 #![cfg_attr(test, allow(clippy::unwrap_used, clippy::expect_used, clippy::panic, clippy::indexing_slicing))]
+// On the web the native-only paths (sealing, providers) are compiled as
+// refusals and never called: what they leave unused is expected there.
+#![cfg_attr(feature = "web", allow(dead_code))]
+
+// **The web build is a wasm build, and a wasm build is the web build** —
+// paper 122, gate G1f. On `wasm32` without `web`, the network file and the
+// vault's sealing would be reachable; on a native target with `web`, the clock
+// would ask a browser that is not there. Both are refused here, by name.
+#[cfg(all(target_arch = "wasm32", not(feature = "web")))]
+compile_error!("z_core on wasm32 needs the `web` feature: without it the network (ureq) and the vault's sealing are reachable");
+#[cfg(all(feature = "web", not(target_arch = "wasm32")))]
+compile_error!("the `web` feature is for wasm32-unknown-unknown only");
 
 pub mod api;
+mod clock;
 mod documents;
 mod ops;
 mod config;
