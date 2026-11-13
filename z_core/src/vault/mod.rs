@@ -12,7 +12,8 @@ pub(crate) mod format;
 pub(crate) mod model;
 
 use std::path::PathBuf;
-use std::time::{Duration, Instant};
+use crate::clock::Instant;
+use std::time::Duration;
 
 use crate::api::{ApiError, ApiResult, Kind, VaultState};
 use crate::vault::crypto::{SealedVault, SecretKey};

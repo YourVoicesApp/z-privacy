@@ -21,7 +21,8 @@ pub(crate) mod zip;
 
 use std::cell::{Cell, RefCell};
 use std::collections::BTreeSet;
-use std::time::{Duration, Instant};
+use crate::clock::Instant;
+use std::time::Duration;
 
 #[cfg(test)]
 use crate::api::Place;

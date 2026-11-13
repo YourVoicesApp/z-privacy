@@ -338,7 +338,7 @@ pub(crate) fn reveal_value(entity: u32, value_id: u32) -> ApiResult<RevealedValu
             *revealed = Some(crate::session::Revealed {
                 entity,
                 value_id,
-                until: std::time::Instant::now() + std::time::Duration::from_millis(u64::from(ttl_ms)),
+                until: crate::clock::Instant::now() + std::time::Duration::from_millis(u64::from(ttl_ms)),
             });
             Ok(RevealedValue {
                 // Named by its identity, not by a token: this is the vault, not a

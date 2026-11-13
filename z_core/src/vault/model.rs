@@ -18,10 +18,7 @@ use crate::text::nfc;
 /// Seconds since 1970, for «added on». The clock is not a secret and not a
 /// document: reading it breaks no invariant.
 pub(crate) fn now_seconds() -> u64 {
-    std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map(|d| d.as_secs())
-        .unwrap_or(0)
+    crate::clock::unix_seconds()
 }
 
 /// One spelling-aware value.

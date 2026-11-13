@@ -40,10 +40,7 @@ fn os_hex4() -> String {
     match getrandom::fill(&mut bytes) {
         Ok(()) => {}
         Err(_) => {
-            let nanos = std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .map(|d| d.subsec_nanos())
-                .unwrap_or(0);
+            let nanos = crate::clock::subsec_nanos();
             bytes = [(nanos >> 8) as u8, nanos as u8];
         }
     }

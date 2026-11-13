@@ -1,0 +1,60 @@
+# **The browser's door** — paper 122 part A, the lead's decision 1.
+#
+# Ten functions over the same core the app uses, each taking one JSON string
+# and answering one JSON string. Synchronous, no threads, no eval: the page
+# loads `z_web.js` + `z_web_bg.wasm` (wasm-bindgen `--target web`) and calls
+# them in order. `scripts/build_web_core.sh` builds it.
+#
+# **Its own workspace, with its own lock**, and outside the root one: it turns
+# on z_core's `web` feature, and a feature turned on inside a workspace is
+# turned on for every member that shares the crate. Kept here, it cannot
+# change one line of what the native build compiles.
+#
+# On a native target the same doors build against the native core (no `web`
+# feature, no wasm-bindgen): that is how the parity test of §2.4 replays the
+# browser's calls through the app's own core and compares the answers.
+[package]
+name = "z_web"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.89"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+serde_json = "1"
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+z_core = { path = "../../z_core", features = ["web"] }
+# Pinned to the CLI that writes `z_web.js`: the two must be the same version,
+# or the glue and the module disagree about their own imports.
+wasm-bindgen = "=0.2.130"
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+z_core = { path = "../../z_core" }
+
+[[example]]
+name = "parity_replay"
+
+[workspace]
+
+[profile.release]
+# Not "symbols": that also drops the `target_features` section wasm-bindgen
+# reads. The names are removed by wasm-bindgen instead (build_web_core.sh).
+strip = "debuginfo"
+opt-level = "s"
+lto = true
+codegen-units = 1
+panic = "abort"
+
+[lints.rust]
+unsafe_code = "deny"
+missing_debug_implementations = "warn"
+
+[lints.clippy]
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"
+indexing_slicing = "warn"

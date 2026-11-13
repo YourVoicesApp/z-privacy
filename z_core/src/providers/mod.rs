@@ -18,6 +18,15 @@ pub(crate) mod fake;
 mod anthropic;
 mod deepseek;
 mod google;
+#[cfg(not(feature = "web"))]
+mod http;
+/// **The web build has no network** — paper 122 §2.2: `http.rs`, the one file
+/// that names the HTTP client (G1c), is not compiled there, and `ureq` is not
+/// in the web build's tree at all (G1e). What stands in its place does no I/O
+/// of any kind: every call is refused by name before anything could leave,
+/// and the doors that reach it are not on the web bridge (`bridges/web`).
+#[cfg(feature = "web")]
+#[path = "no_network.rs"]
 mod http;
 mod moonshot;
 mod openai;
@@ -276,7 +285,7 @@ fn check_size(bytes: usize, provider: &dyn Provider) -> ApiResult<()> {
 /// The connection test. Sends the word `ping` — none of the user's words.
 pub(crate) fn ping(id: &str, credential: &str, base: &str, model: &str) -> ApiResult<u32> {
     let provider = find(id)?;
-    let started = std::time::Instant::now();
+    let started = crate::clock::Instant::now();
     provider.ask(credential, base, model, "ping", "").result?;
     Ok(started.elapsed().as_millis().min(u128::from(u32::MAX)) as u32)
 }

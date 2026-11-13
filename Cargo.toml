@@ -5,7 +5,11 @@ members = ["z_core", "bridges/native/z_bridge"]
 # out of the workspace so an ordinary `cargo build` never compiles the
 # attacker, and so its pinned `Cargo.lock` is never rewritten by our builds —
 # which is exactly how its hashes stay verifiable (gate G21).
-exclude = ["redteam"]
+# `bridges/web` (paper 122) is the browser's door. It turns on z_core's `web`
+# feature, and a feature turned on inside the workspace is turned on for every
+# member that shares the crate: kept outside, with its own lock, it can never
+# change what the native build compiles.
+exclude = ["redteam", "bridges/web"]
 
 [workspace.package]
 version = "0.1.0"
