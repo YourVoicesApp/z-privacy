@@ -5344,6 +5344,43 @@ fi
 # the owner's golden documents, clippy and flutter each turn a measurement into
 # a skip with the tree untouched. Every precondition below is its own assertion
 # with its own reason, so a red here can only mean the one thing it says.
+# ---------------------------------------------------------------- G74
+# **The web trial in a real browser** — paper 122 part B, rule 85 (c).
+#
+# `scripts/check_the_trial_in_a_browser.sh` runs `test/web_browser/` in Chrome
+# (its own temporary profile; nothing of the person's browser): a full flow,
+# then the browser's own storage — localStorage, sessionStorage, cookies,
+# IndexedDB, Cache Storage, service workers — which must be empty. With the
+# module G1g builds (`target/web-core/`), the same flow runs against the
+# **real** core, and the PDF «Save to my device» offers is read back with
+# `pdftotext`: every protected value back in it, no token of ours. A tree
+# with no module says so as a skip, never as a pass.
+G74_MODULE="${CARGO_TARGET_DIR:-$PWD/target}/web-core"
+if ! command -v google-chrome >/dev/null 2>&1 && ! command -v chromium >/dev/null 2>&1; then
+  skip "G74 the web trial in a browser" "no Chrome on this machine"
+elif ! command -v pdftotext >/dev/null 2>&1; then
+  skip "G74 the web trial in a browser" "no pdftotext on this machine"
+else
+  G74_ARG=""
+  [ -f "$G74_MODULE/z_web.js" ] && [ -f "$G74_MODULE/z_web_bg.wasm" ] && G74_ARG="$G74_MODULE"
+  if G74_OUT=$(scripts/check_the_trial_in_a_browser.sh $G74_ARG 2>&1); then
+    G74_RAN=$(printf '%s\n' "$G74_OUT" | grep -oE '\+[0-9]+' | tail -1 | tr -d '+')
+    G74_SKIPPED=$(printf '%s\n' "$G74_OUT" | grep -oE '~[0-9]+' | tail -1 | tr -d '~')
+    pass "G74 the web trial in Chrome keeps nothing after a full flow ($G74_RAN passed, ${G74_SKIPPED:-0} skipped)"
+    if [ -n "$G74_ARG" ]; then
+      if [ "${G74_SKIPPED:-0}" = "0" ]; then
+        pass "G74   and against the real module ($G74_MODULE): the protected values never leave, and the PDF reads them back"
+      else
+        fail "G74   the module is at $G74_MODULE and the real-core test was still skipped"
+      fi
+    else
+      skip "G74   the same flow against the real module" "no z_web.js at $G74_MODULE (scripts/build_web_core.sh, G1g)"
+    fi
+  else
+    fail "G74 the web trial in a browser:"; printf '%s\n' "$G74_OUT" | grep -E '\[E\]|Expected|Actual|Error|error' | head -20 | sed 's/^/        /'
+  fi
+fi
+
 NUMBERS=docs/MEASURED_ON_LINUX.txt
 if [ ! -f "$NUMBERS" ]; then
   fail "the numbers Windows is compared against: $NUMBERS is missing"

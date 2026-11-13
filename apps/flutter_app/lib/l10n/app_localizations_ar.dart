@@ -2817,4 +2817,31 @@ class AppLocalizationsAr extends AppLocalizations {
   String theCorrectionSubject(String code) {
     return 'Translation ($code)';
   }
+
+  @override
+  String get trialNotice =>
+      'هذه تجربة لـ Z على الويب. يُرجى عدم كتابة معلومات مهمة هنا. للاستعمال الحقيقي، يلزم تثبيت التطبيق.';
+
+  @override
+  String get trialKeysNeedTheApp =>
+      'الاتصال المباشر بالنموذج يحتاج إلى التطبيق. يلزم تثبيته أولاً.';
+
+  @override
+  String get trialYourCopyIsYours =>
+      'هذه النسخة صارت ملكك، والموقع لا يستطيع مسحها.';
+
+  @override
+  String get trialYourText => 'النص كما كُتب';
+
+  @override
+  String get trialTheAnswerWithRealNames => 'الجواب بالأسماء الحقيقية';
+
+  @override
+  String get trialCopy => 'نسخ';
+
+  @override
+  String get trialSaveToMyDevice => 'حفظ على جهازي';
+
+  @override
+  String get trialAboutZ => 'ما هو Z، والتنزيل، وطريقة الاستخدام';
 }

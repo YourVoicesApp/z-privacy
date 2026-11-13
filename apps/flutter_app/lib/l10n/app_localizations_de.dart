@@ -2811,4 +2811,31 @@ class AppLocalizationsDe extends AppLocalizations {
   String theCorrectionSubject(String code) {
     return 'Translation ($code)';
   }
+
+  @override
+  String get trialNotice =>
+      'Dies ist eine Testversion von Z im Web. Bitte schreiben Sie hier keine wichtigen Informationen. Für die echte Nutzung installieren Sie die App.';
+
+  @override
+  String get trialKeysNeedTheApp =>
+      'Eine direkte Verbindung zu einem Modell braucht die App. Installieren Sie sie zuerst.';
+
+  @override
+  String get trialYourCopyIsYours =>
+      'Diese Kopie gehört jetzt Ihnen. Die Website kann sie nicht löschen.';
+
+  @override
+  String get trialYourText => 'Ihr Text';
+
+  @override
+  String get trialTheAnswerWithRealNames => 'Die Antwort, mit den echten Namen';
+
+  @override
+  String get trialCopy => 'Kopieren';
+
+  @override
+  String get trialSaveToMyDevice => 'Auf meinem Gerät speichern';
+
+  @override
+  String get trialAboutZ => 'Über Z, Download und Anleitung';
 }

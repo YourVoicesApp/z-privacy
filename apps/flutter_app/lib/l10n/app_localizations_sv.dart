@@ -2807,4 +2807,31 @@ class AppLocalizationsSv extends AppLocalizations {
   String theCorrectionSubject(String code) {
     return 'Translation ($code)';
   }
+
+  @override
+  String get trialNotice =>
+      'Det här är en provversion av Z på webben. Skriv inte viktig information här. Installera appen för riktig användning.';
+
+  @override
+  String get trialKeysNeedTheApp =>
+      'En direkt anslutning till en modell kräver appen. Installera den först.';
+
+  @override
+  String get trialYourCopyIsYours =>
+      'Den här kopian är nu din. Webbplatsen kan inte radera den.';
+
+  @override
+  String get trialYourText => 'Din text';
+
+  @override
+  String get trialTheAnswerWithRealNames => 'Svaret, med de riktiga namnen';
+
+  @override
+  String get trialCopy => 'Kopiera';
+
+  @override
+  String get trialSaveToMyDevice => 'Spara på min enhet';
+
+  @override
+  String get trialAboutZ => 'Om Z, nedladdning och guide';
 }

@@ -2815,4 +2815,31 @@ class AppLocalizationsFr extends AppLocalizations {
   String theCorrectionSubject(String code) {
     return 'Translation ($code)';
   }
+
+  @override
+  String get trialNotice =>
+      'Ceci est un essai de Z sur le web. Merci de ne pas écrire d’informations importantes ici. Pour un usage réel, installez l’application.';
+
+  @override
+  String get trialKeysNeedTheApp =>
+      'Se connecter directement à un modèle nécessite l’application. Installez-la d’abord.';
+
+  @override
+  String get trialYourCopyIsYours =>
+      'Cette copie est désormais la vôtre. Le site ne peut pas l’effacer.';
+
+  @override
+  String get trialYourText => 'Votre texte';
+
+  @override
+  String get trialTheAnswerWithRealNames => 'La réponse, avec les vrais noms';
+
+  @override
+  String get trialCopy => 'Copier';
+
+  @override
+  String get trialSaveToMyDevice => 'Enregistrer sur mon appareil';
+
+  @override
+  String get trialAboutZ => 'À propos de Z, téléchargement et guide';
 }

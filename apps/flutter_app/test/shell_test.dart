@@ -1114,7 +1114,9 @@ void main() {
     await tester.tap(find.byKey(TheChat.showTheText(0)));
     await settle(tester);
     expect(inPanel(find.text(sentences.copyRestored)), findsOneWidget);
-    expect(find.text('Copy'), findsNothing);
+    // No bare «Copy» stands in the chat — read from the list since paper 122,
+    // whose web trial gave that word its own key.
+    expect(find.text(sentences.trialCopy), findsNothing);
     expect(restored, contains('Thomas Müller'));
 
     // **Brought into view before it is pressed.** The press lives in the

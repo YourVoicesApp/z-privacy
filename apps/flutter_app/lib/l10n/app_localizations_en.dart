@@ -2797,4 +2797,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String theCorrectionSubject(String code) {
     return 'Translation ($code)';
   }
+
+  @override
+  String get trialNotice =>
+      'This is a trial of Z on the web. Please do not write important information here. For real use, install the app.';
+
+  @override
+  String get trialKeysNeedTheApp =>
+      'Connecting to a model directly needs the app. Install it first.';
+
+  @override
+  String get trialYourCopyIsYours =>
+      'This copy is yours now. The site cannot erase it.';
+
+  @override
+  String get trialYourText => 'Your text';
+
+  @override
+  String get trialTheAnswerWithRealNames => 'The answer, with the real names';
+
+  @override
+  String get trialCopy => 'Copy';
+
+  @override
+  String get trialSaveToMyDevice => 'Save to my device';
+
+  @override
+  String get trialAboutZ => 'About Z, download and guide';
 }

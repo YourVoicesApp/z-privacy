@@ -67,6 +67,14 @@ flutter:
     # packaging/linux/third-party/dejavu-LICENSE.txt and it is named in
     # NOTICES.txt beside the others.
     - assets/fonts/
+  # **The web trial's one font** (paper 122): the same DejaVu Sans, declared as
+  # a family so the browser draws Latin, Arabic and Swedish from our own origin
+  # and never asks a font CDN for a fallback (`connect-src 'self'`). The
+  # desktop's theme names no family and is not changed by this.
+  fonts:
+    - family: dejavu_sans
+      fonts:
+        - asset: assets/fonts/DejaVuSans.ttf
 
 # **What the MSIX says about itself** — 093 item 3, and every line of it is a
 # placeholder until the Store names the product.

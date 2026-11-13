@@ -703,5 +703,13 @@
   "theGuideOpensInYourBrowser": "La página se abre en su navegador, en el idioma de esta interfaz. Nada de su documento ni de su bóveda acompaña la pulsación: su navegador pide una página al sitio, como en cualquier otra visita.",
   "couldNotOpenYourBrowser": "Z Privacy no pudo abrir su navegador. La dirección del botón se abre a mano en cualquier navegador.",
   "thisTranslationWasMadeWithAi": "Esta traducción se ha hecho con IA. Para señalar un error, escriba a zprivacy@mono-peak.com con el asunto «{subject}».",
-  "theCorrectionSubject": "Translation ({code})"
+  "theCorrectionSubject": "Translation ({code})",
+  "trialNotice": "Esta es una prueba de Z en la web. Por favor, no escriba aquí información importante. Para un uso real, instale la aplicación.",
+  "trialKeysNeedTheApp": "Conectarse directamente a un modelo requiere la aplicación. Instálela primero.",
+  "trialYourCopyIsYours": "Esta copia ahora es suya. El sitio no puede borrarla.",
+  "trialYourText": "Su texto",
+  "trialTheAnswerWithRealNames": "La respuesta, con los nombres reales",
+  "trialCopy": "Copiar",
+  "trialSaveToMyDevice": "Guardar en mi dispositivo",
+  "trialAboutZ": "Acerca de Z, descarga y guía"
 }
