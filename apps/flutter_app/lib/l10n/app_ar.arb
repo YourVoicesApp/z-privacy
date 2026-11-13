@@ -703,5 +703,13 @@
   "theGuideOpensInYourBrowser": "تُفتح الصفحةُ في متصفّحك، باللغة التي عليها هذه الواجهة. ولا يذهب شيءٌ من وثيقتك أو خزنتك مع الضغطة: متصفّحك يطلب من الموقع صفحةً، كأيّ زيارةٍ أخرى.",
   "couldNotOpenYourBrowser": "لم يستطع Z Privacy فتحَ متصفّحك. والعنوانُ على الضغطة يُفتح في أيّ متصفّحٍ باليد.",
   "thisTranslationWasMadeWithAi": "صُنعت هذه الترجمة بالذكاء الاصطناعي. للإبلاغ عن خطأ، اكتب إلى zprivacy@mono-peak.com بالموضوع «{subject}».",
-  "theCorrectionSubject": "Translation ({code})"
+  "theCorrectionSubject": "Translation ({code})",
+  "trialNotice": "هذه تجربة لـ Z على الويب. يُرجى عدم كتابة معلومات مهمة هنا. للاستعمال الحقيقي، يلزم تثبيت التطبيق.",
+  "trialKeysNeedTheApp": "الاتصال المباشر بالنموذج يحتاج إلى التطبيق. يلزم تثبيته أولاً.",
+  "trialYourCopyIsYours": "هذه النسخة صارت ملكك، والموقع لا يستطيع مسحها.",
+  "trialYourText": "النص كما كُتب",
+  "trialTheAnswerWithRealNames": "الجواب بالأسماء الحقيقية",
+  "trialCopy": "نسخ",
+  "trialSaveToMyDevice": "حفظ على جهازي",
+  "trialAboutZ": "ما هو Z، والتنزيل، وطريقة الاستخدام"
 }

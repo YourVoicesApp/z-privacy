@@ -107,6 +107,22 @@ MIGRATED = {
     'widgets/tokens.dart',
     'widgets/vault_forms.dart',
     'widgets/why_sheet.dart',
+    # **The web trial, paper 122** — written into the list from its first
+    # line, so zero is its law from the day it was written. Its sentences are
+    # the list's (`trial…` and the app's own keys); what is left in these
+    # files is names the machine reads, the core's own labels, and keys.
+    'main_web.dart',
+    'core/theme.dart',
+    'core/the_way_text_reads.dart',
+    'web/the_page.dart',
+    'web/the_page_js.dart',
+    'web/the_page_none.dart',
+    'web/the_trial.dart',
+    'web/the_trial_pdf.dart',
+    'web/the_web_core.dart',
+    'web/the_web_doors.dart',
+    'web/the_web_doors_js.dart',
+    'web/the_web_doors_none.dart',
 }
 
 # **The debt is empty, and it was emptied by a word rather than by work** —
@@ -419,6 +435,21 @@ A_FILES_OWN_WORDS = (
 # and a pattern wide enough to hold it would hold a sentence too.
 A_COMMAND_THE_MACHINE_READS = {'url.dll,FileProtocolHandler'}
 
+# **A name the browser reads is not a sentence** — paper 122. The web trial's
+# `the_page_js.dart` asks the browser for its own objects by name, through
+# `dart:js_interop_unsafe`: `URL`, `Blob` and three methods. They are read by
+# the browser and never by a person, and a translated one would be a property
+# that does not exist. Named one by one, for the reason the command above is.
+A_NAME_THE_BROWSER_READS = {'URL', 'Blob', 'createObjectURL', 'createElement', 'revokeObjectURL'}
+
+# **The core's own labels for its providers** — paper 122, rule 85 (g). The
+# app draws them as the core hands them (`Provider::label`), the same in
+# every language; the web trial has no core to ask for the list, so it holds
+# the same six words, and `the_trial_test.dart` reads them back out of
+# `z_core/src/providers/*.rs` in `known()`'s order, so the two cannot drift.
+THE_CORES_PROVIDER_LABELS = {'OpenAI-compatible', 'Anthropic', 'xAI (Grok)', 'DeepSeek',
+                             'Moonshot (Kimi)', 'Google (Gemini)'}
+
 # An `intl` date pattern: only pattern letters, spaces and date punctuation.
 DATE_PATTERN = re.compile(r'[yMdEHhmsaz., /:-]+')
 
@@ -501,6 +532,10 @@ def sentences_in(path: pathlib.Path) -> list[str]:
             if v in A_NAME_BOTH_HALVES_SPELL:         # one name, two halves
                 continue
             if v in A_COMMAND_THE_MACHINE_READS:      # an argument, not a word
+                continue
+            if v in A_NAME_THE_BROWSER_READS:         # a browser object's name
+                continue
+            if v in THE_CORES_PROVIDER_LABELS:        # the core's own label
                 continue            # **A date pattern is not a sentence.** `'d MMM y'` is what `intl`
             # is asked for, and the words it puts in it come from the locale's
             # own table — so the pattern is the shape and the sentence is

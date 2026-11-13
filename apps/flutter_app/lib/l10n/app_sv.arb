@@ -703,5 +703,13 @@
   "theGuideOpensInYourBrowser": "Sidan öppnas i din webbläsare, på det språk det här gränssnittet är på. Med trycket går ingenting från ditt dokument och ingenting från ditt valv med: din webbläsare ber webbplatsen om en sida, som vid vilket annat besök som helst.",
   "couldNotOpenYourBrowser": "Z Privacy kunde inte öppna din webbläsare. Adressen på knappen går att öppna i vilken webbläsare som helst för hand.",
   "thisTranslationWasMadeWithAi": "Den här översättningen gjordes med AI. Rapportera ett fel till zprivacy@mono-peak.com med ämnet «{subject}».",
-  "theCorrectionSubject": "Translation ({code})"
+  "theCorrectionSubject": "Translation ({code})",
+  "trialNotice": "Det här är en provversion av Z på webben. Skriv inte viktig information här. Installera appen för riktig användning.",
+  "trialKeysNeedTheApp": "En direkt anslutning till en modell kräver appen. Installera den först.",
+  "trialYourCopyIsYours": "Den här kopian är nu din. Webbplatsen kan inte radera den.",
+  "trialYourText": "Din text",
+  "trialTheAnswerWithRealNames": "Svaret, med de riktiga namnen",
+  "trialCopy": "Kopiera",
+  "trialSaveToMyDevice": "Spara på min enhet",
+  "trialAboutZ": "Om Z, nedladdning och guide"
 }

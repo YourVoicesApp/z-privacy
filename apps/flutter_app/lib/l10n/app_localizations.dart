@@ -4346,6 +4346,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Translation ({code})'**
   String theCorrectionSubject(String code);
+
+  /// Paper 122, rule 85 (d): the band at the top of the web trial, always visible, linking to the download page. Written with AI in German, French and Spanish (paper 122); Arabic and Swedish are the lead's.
+  ///
+  /// In en, this message translates to:
+  /// **'This is a trial of Z on the web. Please do not write important information here. For real use, install the app.'**
+  String get trialNotice;
+
+  /// Paper 122, rule 85 (g): shown at once when a provider or key field is pressed in the web trial; no field takes a key. Written with AI in German, French and Spanish (paper 122); Arabic and Swedish are the lead's.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting to a model directly needs the app. Install it first.'**
+  String get trialKeysNeedTheApp;
+
+  /// Paper 122, rule 85 (c): under «Save to my device» in the web trial's document. Written with AI in German, French and Spanish (paper 122); Arabic and Swedish are the lead's.
+  ///
+  /// In en, this message translates to:
+  /// **'This copy is yours now. The site cannot erase it.'**
+  String get trialYourCopyIsYours;
+
+  /// Paper 122, rule 85 (b): the first heading of the web trial's document, over the visitor's text as written. Written with AI in German, French and Spanish (paper 122); Arabic and Swedish are the lead's.
+  ///
+  /// In en, this message translates to:
+  /// **'Your text'**
+  String get trialYourText;
+
+  /// Paper 122, rule 85 (b): the second heading of the web trial's document, over the answer with the real names put back. Written with AI in German, French and Spanish (paper 122); Arabic and Swedish are the lead's.
+  ///
+  /// In en, this message translates to:
+  /// **'The answer, with the real names'**
+  String get trialTheAnswerWithRealNames;
+
+  /// Paper 122: the button that copies the web trial's document. No key with these words existed in any list. Written with AI in German, French and Spanish (paper 122); Arabic and Swedish are the lead's.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy'**
+  String get trialCopy;
+
+  /// Paper 122, rule 85 (c): the button that saves the web trial's PDF to the visitor's device. Written with AI in German, French and Spanish (paper 122); Arabic and Swedish are the lead's.
+  ///
+  /// In en, this message translates to:
+  /// **'Save to my device'**
+  String get trialSaveToMyDevice;
+
+  /// Paper 122 §6, the owner's ruling of 12 Nov: the one small line at the top of the trial, to today's front page. Written with AI in German, French and Spanish (paper 122); Arabic and Swedish are the lead's.
+  ///
+  /// In en, this message translates to:
+  /// **'About Z, download and guide'**
+  String get trialAboutZ;
 }
 
 class _AppLocalizationsDelegate

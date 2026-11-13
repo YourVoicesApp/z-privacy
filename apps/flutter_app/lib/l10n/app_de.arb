@@ -703,5 +703,13 @@
   "theGuideOpensInYourBrowser": "Die Seite öffnet sich in Ihrem Browser, in der Sprache dieser Oberfläche. Mit dem Druck geht nichts aus Ihrem Dokument und nichts aus Ihrem Tresor mit: Ihr Browser fragt die Website nach einer Seite, wie bei jedem anderen Besuch.",
   "couldNotOpenYourBrowser": "Z Privacy konnte Ihren Browser nicht öffnen. Die Adresse auf der Schaltfläche lässt sich in jedem Browser von Hand öffnen.",
   "thisTranslationWasMadeWithAi": "Diese Übersetzung wurde mit KI erstellt. Einen Fehler melden Sie an zprivacy@mono-peak.com mit dem Betreff «{subject}».",
-  "theCorrectionSubject": "Translation ({code})"
+  "theCorrectionSubject": "Translation ({code})",
+  "trialNotice": "Dies ist eine Testversion von Z im Web. Bitte schreiben Sie hier keine wichtigen Informationen. Für die echte Nutzung installieren Sie die App.",
+  "trialKeysNeedTheApp": "Eine direkte Verbindung zu einem Modell braucht die App. Installieren Sie sie zuerst.",
+  "trialYourCopyIsYours": "Diese Kopie gehört jetzt Ihnen. Die Website kann sie nicht löschen.",
+  "trialYourText": "Ihr Text",
+  "trialTheAnswerWithRealNames": "Die Antwort, mit den echten Namen",
+  "trialCopy": "Kopieren",
+  "trialSaveToMyDevice": "Auf meinem Gerät speichern",
+  "trialAboutZ": "Über Z, Download und Anleitung"
 }

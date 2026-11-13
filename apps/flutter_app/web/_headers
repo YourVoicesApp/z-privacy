@@ -1,0 +1,33 @@
+# The web trial's headers — paper 122, rules 85 and 86.
+#
+# **This file is a record, like `site/_headers`**: the server sends the
+# headers, and this is what they should be for the trial's pages, kept beside
+# the page so the intent is reviewed with it. `flutter build web` copies it into
+# the build, so it stands in `site-trial/` too.
+#
+# What differs from the site's own policy, and why:
+#
+# * `script-src 'self' 'wasm-unsafe-eval'` — the page's scripts and the two
+#   WebAssembly modules (Flutter's CanvasKit and Z's core, `z_web_bg.wasm`)
+#   come from our own origin. `'wasm-unsafe-eval'` compiles WebAssembly and
+#   nothing else: no `'unsafe-eval'`, no `'unsafe-inline'` for scripts.
+# * `connect-src 'self'` — the page can reach no host but ours, so the
+#   visitor's text cannot leave the browser even by a fault of ours.
+# * `style-src 'self' 'unsafe-inline'` — **the trial only, the lead's ruling of
+#   13 November 2026.** Flutter's engine injects two `<style>` elements with
+#   its text-editing rules (they hide the hidden input's own caret, selection
+#   and placeholder). Inline style cannot reach the network while
+#   `connect-src`, `img-src` and `font-src` are `'self'`, and per-browser
+#   hashes of those two elements would break on the next Flutter or browser
+#   update. Measured in headless Chrome: with this policy the page reports no
+#   violation at all.
+# * No `<base>`, no manifest, no service worker: `base-uri 'none'` and
+#   `default-src 'none'` stay as the site has them, and leaving the page keeps
+#   nothing (rule 85 (c)).
+# * No COOP/COEP: the core and the renderer need no shared memory.
+/*
+  Content-Security-Policy: default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; connect-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self'; form-action 'none'; frame-ancestors 'none'; base-uri 'none'
+  Referrer-Policy: no-referrer
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Permissions-Policy: geolocation=(), camera=(), microphone=(), interest-cohort=()

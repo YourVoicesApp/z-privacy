@@ -93,6 +93,16 @@ ICO = "apps/flutter_app/windows/runner/resources/app_icon.ico"
 ICO_SIZES = (256, 48, 32, 16)
 SITE = "site/assets"
 SITE_FILES = (("favicon-32.png", 32), ("favicon-16.png", 16), ("apple-touch-icon.png", 180), ("logo-512.png", 512))
+# The web trial's own (paper 122): `flutter create --platforms=web` writes
+# Flutter's logo into these, and a page of Z's must not wear another mark.
+WEB = "apps/flutter_app/web"
+WEB_FILES = (
+    ("favicon.png", 32),
+    ("icons/Icon-192.png", 192),
+    ("icons/Icon-512.png", 512),
+    ("icons/Icon-maskable-192.png", 192),
+    ("icons/Icon-maskable-512.png", 512),
+)
 
 
 def square() -> Image.Image:
@@ -131,6 +141,8 @@ def write(root: pathlib.Path) -> list[pathlib.Path]:
         png(root / APP / f"zprivacy-{size}.png", size)
     for name, size in SITE_FILES:
         png(root / SITE / name, size)
+    for name, size in WEB_FILES:
+        png(root / WEB / name, size)
 
     # One `.ico` holding four sizes, as Windows reads them.
     ico = root / ICO
