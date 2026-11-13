@@ -5344,6 +5344,25 @@ fi
 # the owner's golden documents, clippy and flutter each turn a measurement into
 # a skip with the tree untouched. Every precondition below is its own assertion
 # with its own reason, so a red here can only mean the one thing it says.
+# ---------------------------------------------------------------- G75
+# **The preview keeps its two promises** — paper 122 §4, rule 86.
+#
+# `scripts/check_the_preview.sh`: `scripts/build_site_trial.sh` refuses an OUT
+# that is `site/` or inside it — by `..`, by a symbolic link, the repository
+# itself, a folder it did not make — before anything is built, and a fresh
+# folder passes the same check (the control); and `scripts/preview_trial.sh`
+# listens on 127.0.0.1 and nowhere else, read from the socket table, sends
+# `_headers` exactly as written, serves `.wasm` as `application/wasm` and stops
+# on SIGINT — with a server on 0.0.0.0 as the control the reading must flag.
+# It builds nothing: G74 runs the trial itself.
+if ! command -v ss >/dev/null 2>&1 || ! command -v curl >/dev/null 2>&1; then
+  skip "G75 the preview's two promises" "no ss or no curl on this machine"
+elif G75_OUT=$(scripts/check_the_preview.sh 2>&1); then
+  pass "G75 the trial's build never writes site/ ($(grep -c '^ok    refused' <<< "$G75_OUT") refusals, the control passes), and its preview serves 127.0.0.1 only with _headers as written"
+else
+  fail "G75 the preview's two promises:"; grep -E '^FAIL' <<< "$G75_OUT" | sed 's/^/        /'
+fi
+
 # ---------------------------------------------------------------- G74
 # **The web trial in a real browser** — paper 122 part B, rule 85 (c).
 #

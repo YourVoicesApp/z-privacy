@@ -51,3 +51,8 @@ z_core/assets/de_names_v2_tier3.csv
 # writes them, the path is in its own first lines, and whoever wants a look
 # runs it.
 apps/flutter_app/test/screens_in_arabic/
+
+# The web trial's folder (paper 122 §4): a build product of
+# scripts/build_site_trial.sh, served by scripts/preview_trial.sh. Never
+# committed; the owner publishes it after his preview.
+/site-trial/
