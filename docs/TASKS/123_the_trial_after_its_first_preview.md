@@ -139,6 +139,7 @@ This part is for rule 88 only. It is a report, not a build, and the report comes
 1. Do `native/text_engine` (cosmic-text), `native/writing` and the parts of `native/writing_ffi` that the editor and the writing report need build for `wasm32-unknown-unknown`?
    - Name each crate or feature that does not build, and why.
    - The PDF (`krilla`) and the AI crate are not needed: name what leaves with them.
+   - **Rule 88 (و): there is no save and no print,** so no PDF and no `.peak` in the web build.
 2. **Fonts:** which faces does the editor need for Arabic and Latin, at the least? What size are they, and how does cosmic-text take them with no system font database?
 3. **Size:** what is the editor's `.wasm` size, and the size with its fonts, compressed and not?
 4. **The writing report:** which call gives the counts by source (keyboard, paste, Z)? Can an insert be marked with the AI's source from outside (for rule 88 (د)), and through which door?
