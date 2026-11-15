@@ -711,5 +711,12 @@
   "trialTheAnswerWithRealNames": "La réponse, avec les vrais noms",
   "trialCopy": "Copier",
   "trialSaveToMyDevice": "Enregistrer sur mon appareil",
-  "trialAboutZ": "À propos de Z, téléchargement et guide"
+  "trialAboutZ": "À propos de Z, téléchargement et guide",
+  "trialKeepTheCodes": "Rendez chaque code qui commence par __Z_ exactement tel qu’il est écrit, avec tous ses tirets bas et sans aucune modification.",
+  "trialStartOver": "Recommencer",
+  "trialStartOverQuestion": "Tout ce qui se trouve sur cette page sera effacé. Une copie que vous avez enregistrée sur votre appareil reste la vôtre.",
+  "trialErase": "Effacer",
+  "trialQuestionNumber": "{n}e question",
+  "theChatYou": "vous",
+  "theChatCoded": "codé"
 }

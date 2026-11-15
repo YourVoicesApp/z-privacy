@@ -4394,6 +4394,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'About Z, download and guide'**
   String get trialAboutZ;
+
+  /// Paper 123, rule 87 (c): the first line of every «Copy protected» in the web trial, in the page's language. It holds no value and no token; it is never shown on the protected side as the visitor's own text. German, French and Spanish written with AI (paper 123); Arabic and Swedish are the lead's.
+  ///
+  /// In en, this message translates to:
+  /// **'Give back every code that starts with __Z_ exactly as written, with all its underscores and no changes.'**
+  String get trialKeepTheCodes;
+
+  /// Paper 123, rule 87 (d): the button at the top of the web trial that erases the page and the core's session. German, French and Spanish written with AI (paper 123); Arabic and Swedish are the lead's.
+  ///
+  /// In en, this message translates to:
+  /// **'Start over'**
+  String get trialStartOver;
+
+  /// Paper 123, rule 87 (d): asked once by «Start over» when a document is on the page. German, French and Spanish written with AI (paper 123); Arabic and Swedish are the lead's.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything on this page will be erased. A copy you saved on your device stays yours.'**
+  String get trialStartOverQuestion;
+
+  /// Paper 123, rule 87 (d): the button that erases, beside «Cancel» (the existing key `cancel`). German, French and Spanish written with AI (paper 123); Arabic and Swedish are the lead's.
+  ///
+  /// In en, this message translates to:
+  /// **'Erase'**
+  String get trialErase;
+
+  /// Paper 123 §3.4: the heading of each later question in the web trial's document (2, 3, …). The Arabic and Swedish here are e2's, waiting for the lead's own words. German, French and Spanish written with AI (paper 123); Arabic and Swedish are the lead's.
+  ///
+  /// In en, this message translates to:
+  /// **'Question {n}'**
+  String trialQuestionNumber(int n);
+
+  /// Paper 123: the small label over the question in each turn of the chat (the app's and the web trial's), who asked. It was a literal English word until now. German, French and Spanish written with AI (paper 123); Arabic and Swedish are the lead's.
+  ///
+  /// In en, this message translates to:
+  /// **'you'**
+  String get theChatYou;
+
+  /// Paper 123: the small label beside «you» and the answerer in each turn of the chat — the side shown is what travelled, coded (rule 66). It was a literal English word until now. German, French and Spanish written with AI (paper 123); Arabic and Swedish are the lead's.
+  ///
+  /// In en, this message translates to:
+  /// **'coded'**
+  String get theChatCoded;
 }
 
 class _AppLocalizationsDelegate

@@ -711,5 +711,12 @@
   "trialTheAnswerWithRealNames": "الجواب بالأسماء الحقيقية",
   "trialCopy": "نسخ",
   "trialSaveToMyDevice": "حفظ على جهازي",
-  "trialAboutZ": "ما هو Z، والتنزيل، وطريقة الاستخدام"
+  "trialAboutZ": "ما هو Z، والتنزيل، وطريقة الاستخدام",
+  "trialKeepTheCodes": "أعِد كل رمز يبدأ بـ __Z_ كما كُتب تماماً، بشرطاته كلها ودون أي تغيير.",
+  "trialStartOver": "ابدأ من جديد",
+  "trialStartOverQuestion": "سيُمسح كل ما في هذه الصفحة. النسخة التي حفظتها على جهازك تبقى لك.",
+  "trialErase": "امسح",
+  "trialQuestionNumber": "السؤال {n}",
+  "theChatYou": "أنت",
+  "theChatCoded": "مرمّز"
 }

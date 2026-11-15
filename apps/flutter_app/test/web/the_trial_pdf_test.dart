@@ -45,7 +45,7 @@ void main() {
     const answer = 'Thank you, Anna Lindqvist. Björn will hear from us.';
     final pdf = await buildTheTrialPdf(
       yourText: asked,
-      answer: answer,
+      exchanges: [(null, answer)],
       t: t,
       pageIsRightToLeft: false,
       font: await fixtureFont(),
@@ -83,7 +83,7 @@ void main() {
     final t = lookupAppLocalizations(const Locale('en'));
     final pdf = await buildTheTrialPdf(
       yourText: 'Dear Anna Lindqvist,',
-      answer: 'Thank you, __Z_PERSON_99__.',
+      exchanges: [(null, 'Thank you, __Z_PERSON_99__.')],
       t: t,
       pageIsRightToLeft: false,
       font: await fixtureFont(),
@@ -103,7 +103,7 @@ void main() {
       const asked = 'كتبت آمنة الحسيني رسالة إلى المدرسة.';
       final pdf = await buildTheTrialPdf(
         yourText: asked,
-        answer: 'شكراً آمنة الحسيني.',
+        exchanges: [(null, 'شكراً آمنة الحسيني.')],
         t: t,
         pageIsRightToLeft: true,
         font: await fixtureFont(),

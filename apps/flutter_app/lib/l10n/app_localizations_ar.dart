@@ -2844,4 +2844,29 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get trialAboutZ => 'ما هو Z، والتنزيل، وطريقة الاستخدام';
+
+  @override
+  String get trialKeepTheCodes =>
+      'أعِد كل رمز يبدأ بـ __Z_ كما كُتب تماماً، بشرطاته كلها ودون أي تغيير.';
+
+  @override
+  String get trialStartOver => 'ابدأ من جديد';
+
+  @override
+  String get trialStartOverQuestion =>
+      'سيُمسح كل ما في هذه الصفحة. النسخة التي حفظتها على جهازك تبقى لك.';
+
+  @override
+  String get trialErase => 'امسح';
+
+  @override
+  String trialQuestionNumber(int n) {
+    return 'السؤال $n';
+  }
+
+  @override
+  String get theChatYou => 'أنت';
+
+  @override
+  String get theChatCoded => 'مرمّز';
 }

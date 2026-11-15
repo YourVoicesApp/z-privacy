@@ -164,6 +164,52 @@ class Restored {
   const Restored(this.text, this.pieces);
   final String text;
   final List<RestoredPiece> pieces;
+
+  static Restored read(Map<String, Object?> v) {
+    final segments = v['segments'];
+    return Restored(v['text'] as String? ?? '', [
+      if (segments is List)
+        for (final s in segments)
+          if (s is Map)
+            RestoredPiece(
+              s['text'] as String? ?? '',
+              s['piece'] as String? ?? 'words',
+            ),
+    ]);
+  }
+}
+
+/// One turn of the open chat, as `z_turns` lists it: the question as it
+/// left, the answer as it arrived, and the answer restored — the core's own
+/// segments. The thread and the document are drawn from this, and the page
+/// keeps no copy of a turn of its own.
+class WebTurn {
+  const WebTurn({
+    required this.questionAsItLeft,
+    required this.answerAsWritten,
+    required this.question,
+    required this.answer,
+    this.unresolved = const [],
+  });
+
+  /// The coded forms the thread draws (rule 66).
+  final String questionAsItLeft;
+  final String answerAsWritten;
+
+  /// The restored forms, for «Show the text», the page's document and the
+  /// PDF. The first turn's question is the whole text as it left, so its
+  /// restored form is the visitor's text as written.
+  final Restored question;
+  final Restored answer;
+  final List<String> unresolved;
+}
+
+/// The question as the visitor typed it, with the core's marks over it, and
+/// what of it would leave — `z_set_question`.
+class WebQuestion {
+  const WebQuestion(this.view, this.leaves);
+  final WebView view;
+  final String leaves;
 }
 
 /// How far a protection reaches: this place, or every place of the value in
@@ -313,17 +359,73 @@ class TheWebCore {
                 })['answer']!
                 as num)
             .toInt();
-    final v = _okMap('z_restored_view', {'session': session, 'answer': answer});
-    final segments = v['segments'];
-    return Restored(v['text'] as String? ?? '', [
-      if (segments is List)
-        for (final s in segments)
-          if (s is Map)
-            RestoredPiece(
-              s['text'] as String? ?? '',
-              s['piece'] as String? ?? 'words',
+    return restoredAnswer(answer);
+  }
+
+  // ------------------------------------------------ the chat (paper 123)
+
+  /// **The next question of the chat** — `z_set_question` `{"session","text"}`
+  /// → `{"text","marks"}`: the core scans and protects it as it scans the
+  /// original, so a name already protected is the same token here. `text` is
+  /// the question as it would leave; the marks stand over what was typed.
+  WebQuestion setQuestion(String text) {
+    _payload = null;
+    final v = _okMap('z_set_question', {'session': session, 'text': text});
+    return WebQuestion(
+      WebView.read({'text': text, 'marks': v['marks']}),
+      v['text'] as String? ?? '',
+    );
+  }
+
+  /// **What «Copy protected» copies for a follow-up** — `z_question_to_take_out`
+  /// `{"session"}` → `{"text","payload"}`: the same history the app's
+  /// `ask_model` sends, then the protected question. The next answer pasted is
+  /// restored against this payload.
+  TakeOut questionToTakeOut() {
+    final v = _okMap('z_question_to_take_out', {'session': session});
+    _payload = (v['payload']! as Map).cast<String, Object?>();
+    return TakeOut(v['text'] as String? ?? '', 0, 0);
+  }
+
+  /// The turns of the open chat, in order — `z_turns` `{"session"}` →
+  /// `{"chat":n,"turns":[…]}`: only the turns whose `chat` is the open one.
+  List<WebTurn> turns() {
+    final v = _okMap('z_turns', {'session': session});
+    final open = v['chat'];
+    final turns = v['turns'];
+    Restored restoredOf(Object? m) =>
+        m is Map<String, Object?> ? Restored.read(m) : const Restored('', []);
+    return [
+      if (turns is List)
+        for (final t in turns)
+          if (t is Map<String, Object?> && t['chat'] == open)
+            WebTurn(
+              questionAsItLeft: t['question_as_it_left'] as String? ?? '',
+              answerAsWritten: t['answer_as_written'] as String? ?? '',
+              question: restoredOf(t['question']),
+              answer: restoredOf(t['answer']),
+              unresolved: [
+                if (t['unresolved'] is List)
+                  for (final u in t['unresolved'] as List) '$u',
+              ],
             ),
-    ]);
+    ];
+  }
+
+  /// One answer of the chat, with the names put back.
+  Restored restoredAnswer(int answer) => Restored.read(
+    _okMap('z_restored_view', {'session': session, 'answer': answer}),
+  );
+
+  /// **«Start over»** — `z_close` drops the session and everything it holds
+  /// from memory; a later call with its id is refused by name. Then a new
+  /// session with the same pack: the next text gets new tokens.
+  void startOver(String pack) {
+    final s = _session;
+    _session = null;
+    _payload = null;
+    if (s != null) _ok('z_close', {'session': s});
+    open(pack);
   }
 
   static String _outcomeName(Object? outcome) =>

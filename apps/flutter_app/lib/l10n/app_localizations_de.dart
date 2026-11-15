@@ -2838,4 +2838,29 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get trialAboutZ => 'Über Z, Download und Anleitung';
+
+  @override
+  String get trialKeepTheCodes =>
+      'Geben Sie jeden Code, der mit __Z_ beginnt, genau so zurück, wie er geschrieben ist, mit allen Unterstrichen und ohne Änderungen.';
+
+  @override
+  String get trialStartOver => 'Neu beginnen';
+
+  @override
+  String get trialStartOverQuestion =>
+      'Alles auf dieser Seite wird gelöscht. Eine Kopie, die Sie auf Ihrem Gerät gespeichert haben, bleibt Ihre.';
+
+  @override
+  String get trialErase => 'Löschen';
+
+  @override
+  String trialQuestionNumber(int n) {
+    return 'Frage $n';
+  }
+
+  @override
+  String get theChatYou => 'Sie';
+
+  @override
+  String get theChatCoded => 'codiert';
 }

@@ -2708,26 +2708,42 @@ fi
 # it is the bubble's state. `.answerAsWritten` is the coded one and is
 # deliberately not matched — the pattern ends at a non-letter, so the two
 # cannot be confused.
+# **Since paper 123 the turn is drawn in its own file**, `the_chat_turn.dart`,
+# so the web trial draws its chat with the same widget and there is no second
+# chat. The law is read where the drawing now is: in the turn's file the
+# restored side (`.answer`) is read only by the bubble's state — a field's
+# own declaration (`this.answer`) is not a read — and in `the_chat.dart` only
+# by `shownAs`, which hands the core's turn to that widget and draws nothing.
 CHAT_DART=$FLUTTER_LIB/widgets/the_chat.dart
-if [ -f "$CHAT_DART" ]; then
+TURN_DART=$FLUTTER_LIB/widgets/the_chat_turn.dart
+if [ -f "$CHAT_DART" ] && [ -f "$TURN_DART" ]; then
   G47_RESTORED=$(awk '
     /^class [_A-Za-z]+/ { cls = $2 }
+    /\.answer[^A-Za-z]/ && !/this\.answer[^A-Za-z]/ { if (cls != "") print cls }
+  ' "$TURN_DART" | sort -u | tr '\n' ' ' | sed 's/ $//')
+  G47_MAPPED=$(awk '
+    /^class [_A-Za-z]+/ { cls = $2 }
+    /^ChatTurnShown shownAs\(/ { cls = "shownAs" }
     /\.answer[^A-Za-z]/ { if (cls != "") print cls }
   ' "$CHAT_DART" | sort -u | tr '\n' ' ' | sed 's/ $//')
-  if [ "$G47_RESTORED" = "_BubbleState" ]; then
-    pass "G47 the restored answer is drawn in one class, and it is the bubble a press opens"
+  if [ "$G47_RESTORED" = "_BubbleState" ] && [ "$G47_MAPPED" = "shownAs" ]; then
+    pass "G47 the restored answer is drawn in one class, and it is the bubble a press opens (the_chat.dart only maps it, in shownAs)"
   else
-    fail "G47 the restored side of a turn is read in «$G47_RESTORED» — expected «_BubbleState» only (rule 66)"
+    fail "G47 the restored side of a turn is read in «$G47_RESTORED» (turn) and «$G47_MAPPED» (chat) — expected «_BubbleState» and «shownAs» only (rule 66)"
   fi
   # And the coded sides go through the painter the Safe column uses, so a token
-  # is drawn the same way wherever a person meets it — never as bare text.
-  if grep -q 'child: SafeText(text: text, chips: false)' "$CHAT_DART"; then
+  # is drawn the same way wherever a person meets it — never as bare text. The
+  # turn paints a coded side only through the painter it is handed, and the
+  # app's chat hands it the Safe column's own.
+  if grep -q 'coded: (text) => SafeText(text: text, chips: false)' "$CHAT_DART" \
+     && grep -q 'child: coded(text)' "$TURN_DART" \
+     && ! grep -q 'SafeText\|Text(text' "$TURN_DART"; then
     pass "G47 the thread draws what travelled with the Safe column's own painter"
   else
     fail "G47 the chat draws the coded sides itself — a token must look the same wherever it stands"
   fi
 else
-  fail "G47 widgets/the_chat.dart is missing — the third part of the one screen is not built (rule 65)"
+  fail "G47 widgets/the_chat.dart or widgets/the_chat_turn.dart is missing — the third part of the one screen is not built (rule 65)"
 fi
 
 # ---------------------------------------------------------------- G42

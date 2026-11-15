@@ -3784,5 +3784,38 @@
   "trialAboutZ": "About Z, download and guide",
   "@trialAboutZ": {
     "description": "Paper 122 §6, the owner's ruling of 12 Nov: the one small line at the top of the trial, to today's front page. Written with AI in German, French and Spanish (paper 122); Arabic and Swedish are the lead's."
+  },
+  "trialKeepTheCodes": "Give back every code that starts with __Z_ exactly as written, with all its underscores and no changes.",
+  "@trialKeepTheCodes": {
+    "description": "Paper 123, rule 87 (c): the first line of every «Copy protected» in the web trial, in the page's language. It holds no value and no token; it is never shown on the protected side as the visitor's own text. German, French and Spanish written with AI (paper 123); Arabic and Swedish are the lead's."
+  },
+  "trialStartOver": "Start over",
+  "@trialStartOver": {
+    "description": "Paper 123, rule 87 (d): the button at the top of the web trial that erases the page and the core's session. German, French and Spanish written with AI (paper 123); Arabic and Swedish are the lead's."
+  },
+  "trialStartOverQuestion": "Everything on this page will be erased. A copy you saved on your device stays yours.",
+  "@trialStartOverQuestion": {
+    "description": "Paper 123, rule 87 (d): asked once by «Start over» when a document is on the page. German, French and Spanish written with AI (paper 123); Arabic and Swedish are the lead's."
+  },
+  "trialErase": "Erase",
+  "@trialErase": {
+    "description": "Paper 123, rule 87 (d): the button that erases, beside «Cancel» (the existing key `cancel`). German, French and Spanish written with AI (paper 123); Arabic and Swedish are the lead's."
+  },
+  "trialQuestionNumber": "Question {n}",
+  "@trialQuestionNumber": {
+    "description": "Paper 123 §3.4: the heading of each later question in the web trial's document (2, 3, …). The Arabic and Swedish here are e2's, waiting for the lead's own words. German, French and Spanish written with AI (paper 123); Arabic and Swedish are the lead's.",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "theChatYou": "you",
+  "@theChatYou": {
+    "description": "Paper 123: the small label over the question in each turn of the chat (the app's and the web trial's), who asked. It was a literal English word until now. German, French and Spanish written with AI (paper 123); Arabic and Swedish are the lead's."
+  },
+  "theChatCoded": "coded",
+  "@theChatCoded": {
+    "description": "Paper 123: the small label beside «you» and the answerer in each turn of the chat — the side shown is what travelled, coded (rule 66). It was a literal English word until now. German, French and Spanish written with AI (paper 123); Arabic and Swedish are the lead's."
   }
 }

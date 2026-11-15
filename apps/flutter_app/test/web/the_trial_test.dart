@@ -109,10 +109,9 @@ void main() {
     expect(safe, isNot(contains('anna@example.org')));
     expect(safe, contains('__Z_PERSON_'));
     await press(tester, TheTrial.copyProtected);
-    expect(clipboard, [
-      '',
-      safe,
-    ], reason: 'emptied first (081), then only the protected text');
+    // Emptied first (081), then the keep-the-codes line (87 (ج)) and only the
+    // protected text.
+    expect(clipboard, ['', '${en.trialKeepTheCodes}\n\n$safe']);
     expect(find.text(en.theChatIsOnYourClipboard), findsOneWidget);
 
     // The model's answer, pasted back with the tokens it was given.

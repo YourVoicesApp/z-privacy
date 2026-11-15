@@ -31,6 +31,10 @@ class FakeWebDoors implements WebDoors {
 
   int _sessions = 0;
   int _findings = 0;
+
+  /// Tokens minted over the fake's life: a closed session's numbers are never
+  /// handed out again, so its tokens restore nothing in the next one.
+  int _minted = 0;
   int? _session;
   String _pack = 'en';
   String _text = '';
@@ -38,6 +42,17 @@ class FakeWebDoors implements WebDoors {
   final List<Map<String, Object?>> _marks = [];
   final Map<String, String> _tokens = {}; // token → value
   final Map<int, String> _answers = {};
+
+  // The chat (paper 123): the next question and its marks, what each payload
+  // carried out, and the turns.
+  String _qText = '';
+  final List<Map<String, Object?>> _qMarks = [];
+  final Map<int, String> _carried = {};
+  final List<Map<String, Object?>> _turns = [];
+  bool _closed = false;
+
+  /// Every session `z_close` let go of.
+  final List<int> closed = [];
   Map<String, Object?>? _payload;
 
   String get pack => _pack;
@@ -66,6 +81,11 @@ class FakeWebDoors implements WebDoors {
       'z_payload_to_take_out' => _takeOut(r),
       'z_ingest_answer' => _ingest(r),
       'z_restored_view' => _restored(r),
+      'z_set_question' => _setQuestion(r),
+      'z_question_to_take_out' => _questionToTakeOut(r),
+      'z_end_the_chat' => _endTheChat(r),
+      'z_turns' => _turnsOf(r),
+      'z_close' => _close(r),
       _ => _err('no_such_door'),
     };
   }
@@ -108,7 +128,7 @@ class FakeWebDoors implements WebDoors {
       if (e.value == value) return e.key;
     }
     final t =
-        '__Z_${kind.toUpperCase()}_${(_tokens.length + 1).toString().padLeft(2, '0')}__';
+        '__Z_${kind.toUpperCase()}_${(++_minted).toString().padLeft(2, '0')}__';
     _tokens[t] = value;
     return t;
   }
@@ -326,6 +346,160 @@ class FakeWebDoors implements WebDoors {
     });
   }
 
+  /// The app's question scan (046/N), as ed's core runs it: every value it
+  /// finds is protected at once — a question never holds a suggestion — and a
+  /// value already protected in the document comes back as the same token,
+  /// with source `vault` («already protected in this document»).
+  void _scanTheQuestion() {
+    _qMarks.clear();
+    final protectedInTheDocument = {
+      for (final m in _marks)
+        if (m['state'] == 'protected')
+          _text.substring(m['start']! as int, m['end']! as int),
+    };
+    for (final e in {...automatic, ...suggested}.entries) {
+      var at = _qText.indexOf(e.key);
+      while (at >= 0) {
+        final end = at + e.key.length;
+        if (!_qMarks.any(
+          (m) => (m['start']! as int) < end && at < (m['end']! as int),
+        )) {
+          _qMarks.add({
+            'start': at,
+            'end': end,
+            'state': 'protected',
+            'token': _tokenFor(e.key, e.value),
+            'kind': e.value,
+            'source': protectedInTheDocument.contains(e.key)
+                ? 'vault'
+                : 'language_pack',
+            'decided': false,
+            'finding': null,
+          });
+        }
+        at = _qText.indexOf(e.key, end);
+      }
+    }
+  }
+
+  String get _questionLeaves {
+    final marks = _qMarks.where((m) => m['state'] == 'protected').toList()
+      ..sort((a, b) => (b['start']! as int).compareTo(a['start']! as int));
+    var out = _qText;
+    for (final m in marks) {
+      out = out.replaceRange(
+        m['start']! as int,
+        m['end']! as int,
+        m['token']! as String,
+      );
+    }
+    return out;
+  }
+
+  // `{"session","text"}` → `{"text","marks"}`: what would leave, and the
+  // marks over what was typed.
+  String _setQuestion(Map<String, Object?> r) {
+    if (!_fields(r, {'session', 'text'})) return _err('bad_request');
+    final bad = _checkSession(r);
+    if (bad != null) return bad;
+    _qText = r['text']! as String;
+    _scanTheQuestion();
+    _revision++;
+    _payload = null;
+    return _ok({'text': _questionLeaves, 'marks': _qMarks});
+  }
+
+  /// What `ask_model` hands its model: the one exchange before, protected,
+  /// then the question alone.
+  String get _theChat {
+    final out = StringBuffer();
+    if (_turns.isNotEmpty) {
+      final t = _turns.last;
+      out.write('${t['question']}\n\n${t['answer']}\n\n');
+    }
+    out.write(_questionLeaves);
+    return out.toString();
+  }
+
+  String _questionToTakeOut(Map<String, Object?> r) {
+    if (!_fields(r, {'session'})) return _err('bad_request');
+    final bad = _checkSession(r);
+    if (bad != null) return bad;
+    if (_qText.trim().isEmpty) return _err('nothing_to_send');
+    // An open suggestion can only be the document's (a question holds none).
+    if (_open_ > 0) return _err('open_suggestions', {'count': _open_});
+    final id = _revision * 10 + 2;
+    _payload = {'id': id, 'session': _session, 'revision': _revision};
+    _carried[id] = _questionLeaves;
+    return _ok({'text': _theChat, 'payload': _payload});
+  }
+
+  int _chats = 1;
+  String _endTheChat(Map<String, Object?> r) {
+    if (!_fields(r, {'session'})) return _err('bad_request');
+    final bad = _checkSession(r);
+    if (bad != null) return bad;
+    return _ok({'chat': ++_chats});
+  }
+
+  // ed's shape: `{"chat":n,"turns":[{chat, question_as_it_left,
+  // answer_as_written, question:{text,segments}, answer:{text,segments},
+  // unresolved}]}` — the coded forms and the restored ones.
+  String _turnsOf(Map<String, Object?> r) {
+    if (!_fields(r, {'session'})) return _err('bad_request');
+    final bad = _checkSession(r);
+    if (bad != null) return bad;
+    Map<String, Object?> restored(String raw) {
+      final segments = _segmentsOf(raw);
+      return {
+        'text': segments.map((x) => x['text']).join(),
+        'segments': segments,
+      };
+    }
+
+    return _ok({
+      'chat': _chats,
+      'turns': [
+        for (final t in _turns)
+          {
+            'chat': t['chat'],
+            'question_as_it_left': t['question'],
+            'answer_as_written': t['answer'],
+            'question': restored(t['question']! as String),
+            'answer': restored(t['answer']! as String),
+            'unresolved': [
+              for (final m in RegExp(
+                r'__Z_[A-Z0-9_]+__',
+              ).allMatches(t['answer']! as String))
+                if (!_tokens.containsKey(m.group(0))) m.group(0),
+            ],
+          },
+      ],
+    });
+  }
+
+  /// `z_close`: the session and everything it holds go from memory; a later
+  /// call with its id is refused by name, and its tokens restore nothing.
+  String _close(Map<String, Object?> r) {
+    if (!_fields(r, {'session'})) return _err('bad_request');
+    final bad = _checkSession(r);
+    if (bad != null) return bad;
+    closed.add(_session!);
+    _session = null;
+    _closed = true;
+    _tokens.clear();
+    _answers.clear();
+    _turns.clear();
+    _carried.clear();
+    _marks.clear();
+    _qMarks.clear();
+    _text = '';
+    _qText = '';
+    return _ok(<String, Object?>{});
+  }
+
+  bool get wasClosed => _closed;
+
   int get _open_ => _marks.where((m) => m['state'] == 'suggested').length;
 
   String? _cannotLeave() {
@@ -357,6 +531,7 @@ class FakeWebDoors implements WebDoors {
       'session': _session,
       'revision': _revision,
     };
+    _carried[_revision * 10 + 1] = _protectedText;
     return _ok({'payload': _payload});
   }
 
@@ -383,15 +558,15 @@ class FakeWebDoors implements WebDoors {
     }
     final id = _answers.length + 1;
     _answers[id] = r['text']! as String;
+    _turns.add({
+      'chat': _chats,
+      'question': _carried[p['id']] ?? '',
+      'answer': r['text'],
+    });
     return _ok({'answer': id});
   }
 
-  String _restored(Map<String, Object?> r) {
-    if (!_fields(r, {'session', 'answer'})) return _err('bad_request');
-    final bad = _checkSession(r);
-    if (bad != null) return bad;
-    final raw = _answers[r['answer']];
-    if (raw == null) return _err('invalid_handle');
+  List<Map<String, Object?>> _segmentsOf(String raw) {
     final segments = <Map<String, Object?>>[];
     var at = 0;
     for (final m in RegExp(r'__Z_[A-Z0-9_]+__').allMatches(raw)) {
@@ -409,6 +584,16 @@ class FakeWebDoors implements WebDoors {
     if (at < raw.length) {
       segments.add({'text': raw.substring(at), 'piece': 'words'});
     }
+    return segments;
+  }
+
+  String _restored(Map<String, Object?> r) {
+    if (!_fields(r, {'session', 'answer'})) return _err('bad_request');
+    final bad = _checkSession(r);
+    if (bad != null) return bad;
+    final raw = _answers[r['answer']];
+    if (raw == null) return _err('invalid_handle');
+    final segments = _segmentsOf(raw);
     return _ok({
       'text': segments.map((s) => s['text']).join(),
       'segments': segments,

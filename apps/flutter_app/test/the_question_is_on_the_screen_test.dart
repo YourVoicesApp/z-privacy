@@ -381,7 +381,7 @@ void main() {
     // **Both sides are coded**, and the thread says so of each: «you · coded»
     // above, the answerer and «coded» below.
     expect(inChat('you'), findsWidgets, reason: 'the question’s side is not named');
-    expect(find.descendant(of: find.byType(TheChat), matching: find.text('coded')),
+    expect(find.descendant(of: find.byType(TheChat), matching: find.text(sentences.theChatCoded)),
         findsWidgets, reason: 'the thread does not say that what it draws is coded');
 
     // **The question as it left**: the token, never the name. A thread that
@@ -398,7 +398,7 @@ void main() {
     expect(sides, isNotEmpty);
     final you = tester.getRect(find.descendant(
       of: find.byType(TheChat),
-      matching: find.text('you'),
+      matching: find.text(sentences.theChatYou),
     ).first);
     final answered = tester.getRect(find.descendant(
       of: find.byType(TheChat),

@@ -32,6 +32,8 @@ import 'package:zprivacy/l10n/app_localizations.dart';
 import 'package:zprivacy/web/the_page.dart' as page;
 import 'package:zprivacy/web/the_trial_pdf.dart';
 import 'package:zprivacy/web/the_web_core.dart';
+import 'package:zprivacy/widgets/plain_bits.dart';
+import 'package:zprivacy/widgets/the_chat_turn.dart';
 
 /// The interface languages of the trial: the app's six (`language_list.dart`).
 const trialLanguages = ['en', 'ar', 'de', 'fr', 'es', 'sv'];
@@ -162,6 +164,16 @@ class TheTrial extends StatefulWidget {
   static const save = ValueKey<String>('trial-document-save');
   static const yours = ValueKey<String>('trial-document-yours');
 
+  // Paper 123: the chat, and «Start over».
+  static const chat = ValueKey<String>('trial-chat');
+  static const compose = ValueKey<String>('trial-compose');
+  static const startOver = ValueKey<String>('trial-start-over');
+  static const startOverQuestion = ValueKey<String>(
+    'trial-start-over-question',
+  );
+  static const erase = ValueKey<String>('trial-erase');
+  static const cancelStartOver = ValueKey<String>('trial-start-over-cancel');
+
   @override
   State<TheTrial> createState() => _TheTrialState();
 }
@@ -182,10 +194,27 @@ class _TheTrialState extends State<TheTrial> {
   String? _safe;
   String? _safeWhyNot;
 
-  /// The question as it left, the answer brought back, and their document.
-  String? _asked;
-  Restored? _restored;
+  /// The exchanges of the open chat, from the core's `z_turns`, and their
+  /// document (paper 123: the chat, rules 65–68 and 87 (أ)). The page keeps no
+  /// copy of a turn of its own: the document's words are the core's restored
+  /// forms — the first turn's question is the visitor's text as written.
+  final List<_Exchange> _done = [];
+
   Uint8List? _pdf;
+
+  /// The chat is open once the first answer is in: the original is then read
+  /// only, and the next question is written in the compose box.
+  bool get _chatOpen => _done.isNotEmpty;
+
+  /// The next question, with the core's marks over it, and its text as typed
+  /// when it left — for the document, which holds the visitor's own words.
+  final _MarkedController _question = _MarkedController();
+  Timer? _asking;
+
+  /// Whether the clipboard's last text is Z's own copy, so «Start over» empties
+  /// it (87 (د)). The page never reads the clipboard to find out: a browser
+  /// would ask the visitor's permission for that.
+  bool _ourCopyIsOnTheClipboard = false;
 
   String? _note;
   bool _noteIsTheApp = false;
@@ -196,6 +225,7 @@ class _TheTrialState extends State<TheTrial> {
     super.initState();
     // The acts under the original follow the caret and the selection.
     _text.addListener(_moved);
+    _question.addListener(_moved);
     unawaited(_start());
   }
 
@@ -220,8 +250,11 @@ class _TheTrialState extends State<TheTrial> {
   @override
   void dispose() {
     _reading?.cancel();
+    _asking?.cancel();
     _text.removeListener(_moved);
+    _question.removeListener(_moved);
     _text.dispose();
+    _question.dispose();
     _answer.dispose();
     super.dispose();
   }
@@ -280,6 +313,7 @@ class _TheTrialState extends State<TheTrial> {
   void _readTheSafeSide() {
     final core = _core;
     if (core == null) return;
+    if (_chatOpen) return _readTheQuestionToTakeOut(core);
     if (_view.text.trim().isEmpty) {
       _safe = null;
       _safeWhyNot = sentences.thereIsNothingToSendYet;
@@ -300,6 +334,46 @@ class _TheTrialState extends State<TheTrial> {
       _safe = null;
       _safeWhyNot = _refusal(r);
     }
+  }
+
+  /// With the chat open, the protected side is the chat as it would leave:
+  /// every earlier turn, protected, and the new question (rule 65).
+  void _readTheQuestionToTakeOut(TheWebCore core) {
+    if (_question.text.trim().isEmpty) {
+      _safe = null;
+      _safeWhyNot = sentences.thereIsNothingToSendYet;
+      return;
+    }
+    // A question never holds a suggestion: the core's question scan (046/N)
+    // protects every value it finds at once. An open suggestion can only be
+    // the document's, and the core's refusal says so by name below.
+    try {
+      _safe = core.questionToTakeOut().text;
+      _safeWhyNot = null;
+    } on WebRefusal catch (r) {
+      _safe = null;
+      _safeWhyNot = _refusal(r);
+    }
+  }
+
+  /// The next question, scanned and protected by the core as the original is
+  /// (`z_set_question`): a name already protected is the same token here.
+  void _askedSomethingElse(String _) {
+    _asking?.cancel();
+    _asking = Timer(const Duration(milliseconds: 250), () {
+      if (!mounted) return;
+      _act(
+        (core) => setState(() {
+          _note = null;
+          _showTheQuestion(core.setQuestion(_question.text).view);
+        }),
+      );
+    });
+  }
+
+  void _showTheQuestion(WebView view) {
+    _question.view = view;
+    _readTheSafeSide();
   }
 
   void _written(String _) {
@@ -371,28 +445,40 @@ class _TheTrialState extends State<TheTrial> {
 
   /// «Copy Protected»: the clipboard emptied first (081), then only the text
   /// the core says may leave.
+  ///
+  /// **The first line asks the model to keep the codes** (87 (ج)): the same
+  /// line on every turn, in the page's language, holding no value and no
+  /// token. It is put on the clipboard only — never shown on the protected
+  /// side as the visitor's own text.
   Future<void> _copyProtected() async {
+    final t = AppLocalizations.of(context);
     await emptyTheClipboardFirst();
+    _ourCopyIsOnTheClipboard = false;
     final core = _core;
     if (core == null) return;
     try {
-      final out = core.takeOut();
-      await Clipboard.setData(ClipboardData(text: out.text));
-      _asked = _view.text;
+      final out = _chatOpen ? core.questionToTakeOut() : core.takeOut();
+      await Clipboard.setData(
+        ClipboardData(text: '${t.trialKeepTheCodes}\n\n${out.text}'),
+      );
+      _ourCopyIsOnTheClipboard = true;
       _said(sentences.theChatIsOnYourClipboard);
     } on WebRefusal catch (r) {
       _said(andTheClipboardIsEmpty(_refusal(r)));
     }
   }
 
+  /// The answer pasted into the one answer box, whatever turn it belongs to:
+  /// restored against what was copied last, and the chat grows by one turn.
   Future<void> _restore() async {
     final pasted = _answer.text;
     if (pasted.trim().isEmpty) return _said(sentences.nothingWasPasted);
     final core = _core;
     if (core == null) return;
-    final Restored restored;
+    final List<WebTurn> turns;
     try {
-      restored = core.restore(pasted);
+      core.restore(pasted);
+      turns = core.turns();
     } on WebRefusal catch (r) {
       return _said(_refusal(r));
     }
@@ -401,20 +487,37 @@ class _TheTrialState extends State<TheTrial> {
     // what the visitor reads.
     setState(() {
       _note = null;
-      _restored = restored;
+      _done
+        ..clear()
+        ..addAll([for (final turn in turns) _Exchange(turn)]);
       _pdf = null;
+      _answer.clear();
+      _question.clear();
+      _question.view = WebView.empty;
+      _readTheSafeSide();
     });
+    await _buildThePdf();
+  }
+
+  Future<void> _buildThePdf() async {
     final t = lookupAppLocalizations(Locale(widget.language));
+    final count = _done.length;
     try {
       final pdf = await buildTheTrialPdf(
-        yourText: _asked ?? _view.text,
-        answer: restored.text,
+        yourText: _done.first.turn.question.text,
+        exchanges: [
+          for (var i = 0; i < _done.length; i++)
+            (
+              i == 0 ? null : _done[i].turn.question.text,
+              _done[i].turn.answer.text,
+            ),
+        ],
         t: t,
         pageIsRightToLeft:
             theWayALanguageIsRead(widget.language) == TextDirection.rtl,
         font: await widget.font(),
       );
-      if (mounted && identical(_restored, restored)) {
+      if (mounted && _done.length == count) {
         setState(() => _pdf = pdf);
         widget.onThePdf?.call(pdf);
       }
@@ -423,17 +526,94 @@ class _TheTrialState extends State<TheTrial> {
     }
   }
 
+  /// The document as text: the same parts, in the same order, as its PDF.
+  String _theDocumentAsText(AppLocalizations t) {
+    final out = StringBuffer(
+      '${t.trialYourText}\n\n${_done.first.turn.question.text}',
+    );
+    for (var i = 0; i < _done.length; i++) {
+      final turn = _done[i].turn;
+      if (i > 0) {
+        out.write(
+          '\n\n${t.trialQuestionNumber(i + 1)}\n\n${turn.question.text}',
+        );
+      }
+      out.write('\n\n${t.trialTheAnswerWithRealNames}\n\n${turn.answer.text}');
+    }
+    return out.toString();
+  }
+
   Future<void> _copyTheDocument() async {
     final t = AppLocalizations.of(context);
     await emptyTheClipboardFirst();
-    final restored = _restored;
-    if (restored == null) return;
-    await Clipboard.setData(
-      ClipboardData(
-        text:
-            '${t.trialYourText}\n\n${_asked ?? _view.text}\n\n${t.trialTheAnswerWithRealNames}\n\n${restored.text}',
-      ),
-    );
+    _ourCopyIsOnTheClipboard = false;
+    if (_done.isEmpty) return;
+    await Clipboard.setData(ClipboardData(text: _theDocumentAsText(t)));
+    _ourCopyIsOnTheClipboard = true;
+  }
+
+  /// **«Start over»** (87 (د)). With a document on the page it asks once;
+  /// with none it erases at once.
+  Future<void> _startOver() async {
+    if (_done.isNotEmpty) {
+      final t = AppLocalizations.of(context);
+      final erase = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          key: TheTrial.startOverQuestion,
+          backgroundColor: Zc.paper,
+          content: Text(t.trialStartOverQuestion, style: Zc.body),
+          actions: [
+            TextButton(
+              key: TheTrial.cancelStartOver,
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: Text(sentences.cancel),
+            ),
+            FilledButton(
+              key: TheTrial.erase,
+              onPressed: () => Navigator.of(ctx).pop(true),
+              style: FilledButton.styleFrom(backgroundColor: Zc.clay),
+              child: Text(t.trialErase),
+            ),
+          ],
+        ),
+      );
+      if (erase != true || !mounted) return;
+    }
+    await _erase();
+  }
+
+  /// Everything on the page goes, and the core's session with it: the
+  /// clipboard first, when Z's own copy is the last thing on it; then
+  /// `z_close` and a new session with the same pack. The page's language and
+  /// the pack stay; the next text gets new tokens.
+  Future<void> _erase() async {
+    if (_ourCopyIsOnTheClipboard) {
+      await emptyTheClipboardFirst();
+      _ourCopyIsOnTheClipboard = false;
+    }
+    _reading?.cancel();
+    _asking?.cancel();
+    final core = _core;
+    if (core == null || !mounted) return;
+    try {
+      core.startOver(_pack);
+    } on WebRefusal catch (r) {
+      return _said(_refusal(r));
+    }
+    setState(() {
+      _done.clear();
+      _pdf = null;
+      _note = null;
+      _providersOpen = false;
+      _view = WebView.empty;
+      _text.view = WebView.empty;
+      _text.clear();
+      _question.view = WebView.empty;
+      _question.clear();
+      _answer.clear();
+      _readTheSafeSide();
+    });
   }
 
   void _save() {
@@ -556,7 +736,8 @@ class _TheTrialState extends State<TheTrial> {
         ],
         const SizedBox(height: 16),
         _answerSide(t),
-        if (_restored != null) ...[const SizedBox(height: 18), _document(t)],
+        if (_chatOpen) ...[const SizedBox(height: 16), _theChat(t)],
+        if (_chatOpen) ...[const SizedBox(height: 18), _document(t)],
         const SizedBox(height: 24),
       ],
     );
@@ -602,6 +783,13 @@ class _TheTrialState extends State<TheTrial> {
             onChanged: _choosePack,
           ),
         ],
+      ),
+      // **«Start over»** at the top of the trial (87 (د)).
+      OutlinedButton.icon(
+        key: TheTrial.startOver,
+        onPressed: _core == null ? null : () => unawaited(_startOver()),
+        icon: const Icon(Icons.restart_alt, size: 18),
+        label: Text(t.trialStartOver),
       ),
       TextButton.icon(
         key: TheTrial.ai,
@@ -712,6 +900,10 @@ class _TheTrialState extends State<TheTrial> {
           TextField(
             key: TheTrial.original,
             controller: _text,
+            // Once the chat is open the original is what the chat is about;
+            // the next words go into the compose box, and «Start over» begins
+            // a new text.
+            readOnly: _chatOpen,
             minLines: 8,
             maxLines: null,
             keyboardType: TextInputType.multiline,
@@ -725,41 +917,44 @@ class _TheTrialState extends State<TheTrial> {
             onChanged: _written,
             onTap: () => setState(() {}),
           ),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              FilledButton(
-                key: TheTrial.protect,
-                onPressed: selected && here == null
-                    ? _protectTheSelection
-                    : null,
-                style: FilledButton.styleFrom(backgroundColor: Zc.clay),
-                child: Text(t.protectAct),
-              ),
-              if (here != null && here.protected)
-                OutlinedButton.icon(
-                  key: TheTrial.unprotect,
-                  onPressed: () => _unprotect(here),
-                  icon: const Icon(Icons.undo, size: 16),
-                  label: Text(t.undoProtection),
+          // The original's acts stand until the chat opens: from then on it
+          // is the text the chat is about, and it does not change under it.
+          if (!_chatOpen) const SizedBox(height: 10),
+          if (!_chatOpen)
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                FilledButton(
+                  key: TheTrial.protect,
+                  onPressed: selected && here == null
+                      ? _protectTheSelection
+                      : null,
+                  style: FilledButton.styleFrom(backgroundColor: Zc.clay),
+                  child: Text(t.protectAct),
                 ),
-              if (here != null && here.suggested) ...[
-                OutlinedButton.icon(
-                  key: TheTrial.protectIt,
-                  onPressed: () => _answerTheSuggestion(here, protect: true),
-                  icon: const Icon(Icons.shield_outlined, size: 16),
-                  label: Text(t.protectIt),
-                ),
-                OutlinedButton(
-                  key: TheTrial.leaveIt,
-                  onPressed: () => _answerTheSuggestion(here, protect: false),
-                  child: Text(t.leaveItInTheClear),
-                ),
+                if (here != null && here.protected)
+                  OutlinedButton.icon(
+                    key: TheTrial.unprotect,
+                    onPressed: () => _unprotect(here),
+                    icon: const Icon(Icons.undo, size: 16),
+                    label: Text(t.undoProtection),
+                  ),
+                if (here != null && here.suggested) ...[
+                  OutlinedButton.icon(
+                    key: TheTrial.protectIt,
+                    onPressed: () => _answerTheSuggestion(here, protect: true),
+                    icon: const Icon(Icons.shield_outlined, size: 16),
+                    label: Text(t.protectIt),
+                  ),
+                  OutlinedButton(
+                    key: TheTrial.leaveIt,
+                    onPressed: () => _answerTheSuggestion(here, protect: false),
+                    child: Text(t.leaveItInTheClear),
+                  ),
+                ],
               ],
-            ],
-          ),
+            ),
         ],
       ),
     );
@@ -830,11 +1025,100 @@ class _TheTrialState extends State<TheTrial> {
     ),
   );
 
-  /// **The document, inside the page** (rule 85 (b)): the same two parts the
-  /// PDF holds, drawn as a page, with the PDF behind «Save to my device».
+  /// **The chat** (rule 87 (أ), rules 65–68), under the answer box: the
+  /// thread, each answer coded with one «Show the text», drawn by the app's
+  /// own turn widget (`the_chat_turn.dart`) — and the box for the next
+  /// question. «Copy Protected» above then copies the chat with its history,
+  /// and the next answer goes into the same answer box.
+  Widget _theChat(AppLocalizations t) {
+    return Container(
+      key: TheTrial.chat,
+      decoration: Zc.panel(),
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Eyebrow(sentences.theChatTitle),
+          const SizedBox(height: 12),
+          for (var i = 0; i < _done.length; i++) ...[
+            ChatTurnView(
+              turn: _done[i].shown,
+              at: i,
+              open: _openTurn == i,
+              onShow: () =>
+                  setState(() => _openTurn = _openTurn == i ? null : i),
+              onSaid: (line) => _said(line),
+              coded: _coded,
+            ),
+            const SizedBox(height: 14),
+          ],
+          Container(
+            decoration: Zc.panel(fill: Zc.warmCard, radius: 9),
+            padding: const EdgeInsets.fromLTRB(12, 2, 12, 2),
+            child: TextField(
+              key: TheTrial.compose,
+              controller: _question,
+              minLines: 1,
+              maxLines: 6,
+              keyboardType: TextInputType.multiline,
+              textDirection: theWayTheTextReads(_question.text),
+              style: Zc.document.copyWith(
+                fontFamily: trialFont,
+                fontSize: 13.5,
+              ),
+              decoration: InputDecoration(
+                border: InputBorder.none,
+                hintText: sentences.askSomethingElseAboutThis,
+                hintStyle: Zc.body.copyWith(color: Zc.ink4),
+              ),
+              onChanged: _askedSomethingElse,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Which answer's restored text is open — rule 66: coded unless asked.
+  int? _openTurn;
+
+  /// A coded side, tokens drawn as tokens. The app's Safe-column painter reads
+  /// the core's page edges through its bridge, which the web has none of; this
+  /// draws the same characters with the token style, in the trial's font.
+  static Widget _coded(String text) => Text.rich(
+    TextSpan(
+      children: [
+        for (final (piece, isToken) in _tokensIn(text))
+          TextSpan(
+            text: piece,
+            style: isToken
+                ? const TextStyle(color: Zc.clayDeep, fontSize: 13)
+                : null,
+          ),
+      ],
+    ),
+    textDirection: theWayTheTextReads(text),
+    style: Zc.document.copyWith(fontSize: 13.5),
+  );
+
+  static List<(String, bool)> _tokensIn(String text) {
+    final out = <(String, bool)>[];
+    var at = 0;
+    for (final m in RegExp(r'__Z_[A-Z0-9_]+__').allMatches(text)) {
+      if (m.start > at) out.add((text.substring(at, m.start), false));
+      out.add((m.group(0)!, true));
+      at = m.end;
+    }
+    if (at < text.length) out.add((text.substring(at), false));
+    return out;
+  }
+
+  /// **The document, inside the page** (rule 85 (b), paper 123 §3.4): the
+  /// visitor's text as written, then each answer restored — and before every
+  /// answer after the first, its question as the visitor wrote it — the same
+  /// parts, in the same order, as the PDF behind «Save to my device».
   Widget _document(AppLocalizations t) {
-    final restored = _restored!;
-    final asked = _asked ?? _view.text;
+    final asked = _done.first.turn.question.text;
     return Container(
       key: TheTrial.document,
       decoration: BoxDecoration(
@@ -859,32 +1143,44 @@ class _TheTrialState extends State<TheTrial> {
             textDirection: theWayTheTextReads(asked),
             style: Zc.document,
           ),
-          const SizedBox(height: 18),
-          Text(t.trialTheAnswerWithRealNames, style: Zc.h2),
-          const SizedBox(height: 8),
-          Text.rich(
-            TextSpan(
-              children: [
-                for (final p in restored.pieces)
-                  TextSpan(
-                    text: p.text,
-                    style: switch (p.piece) {
-                      'restored' => const TextStyle(
-                        color: Zc.river,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      'unresolved' => const TextStyle(
-                        color: Zc.amber,
-                        backgroundColor: Zc.amberWash,
-                      ),
-                      _ => null,
-                    },
-                  ),
-              ],
+          for (var i = 0; i < _done.length; i++) ...[
+            if (i > 0) ...[
+              const SizedBox(height: 18),
+              Text(t.trialQuestionNumber(i + 1), style: Zc.h2),
+              const SizedBox(height: 8),
+              Text(
+                _done[i].turn.question.text,
+                textDirection: theWayTheTextReads(_done[i].turn.question.text),
+                style: Zc.document,
+              ),
+            ],
+            const SizedBox(height: 18),
+            Text(t.trialTheAnswerWithRealNames, style: Zc.h2),
+            const SizedBox(height: 8),
+            Text.rich(
+              TextSpan(
+                children: [
+                  for (final p in _done[i].turn.answer.pieces)
+                    TextSpan(
+                      text: p.text,
+                      style: switch (p.piece) {
+                        'restored' => const TextStyle(
+                          color: Zc.river,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        'unresolved' => const TextStyle(
+                          color: Zc.amber,
+                          backgroundColor: Zc.amberWash,
+                        ),
+                        _ => null,
+                      },
+                    ),
+                ],
+              ),
+              textDirection: theWayTheTextReads(_done[i].turn.answer.text),
+              style: Zc.document,
             ),
-            textDirection: theWayTheTextReads(restored.text),
-            style: Zc.document,
-          ),
+          ],
           const SizedBox(height: 20),
           Wrap(
             spacing: 10,
@@ -974,4 +1270,30 @@ class _MarkedController extends TextEditingController {
     if (at < text.length) spans.add(TextSpan(text: text.substring(at)));
     return TextSpan(style: style, children: spans);
   }
+}
+
+/// One exchange of the trial's chat: the core's turn — the question as it
+/// left and the answer as it arrived, and both restored.
+class _Exchange {
+  _Exchange(this.turn);
+
+  final WebTurn turn;
+
+  ChatTurnShown get shown => ChatTurnShown(
+    questionAsItLeft: turn.questionAsItLeft,
+    who: sentences.answeredByHand,
+    answerAsWritten: turn.answerAsWritten,
+    unresolved: turn.unresolved,
+    answer: [
+      for (final p in turn.answer.pieces)
+        (
+          p.text,
+          switch (p.piece) {
+            'restored' => ChatPiece.restored,
+            'unresolved' => ChatPiece.unresolved,
+            _ => ChatPiece.words,
+          },
+        ),
+    ],
+  );
 }

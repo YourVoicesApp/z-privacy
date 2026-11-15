@@ -16,7 +16,6 @@
 @TestOn('browser')
 library;
 
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -55,8 +54,10 @@ Future<void> realTime(WidgetTester tester, bool Function() done) async {
 
 void main() {
   testWidgets('write, leave one suggestion and protect the other, copy, paste '
-      'the answer, read the real values in the document and its PDF — against '
-      'the real module', (tester) async {
+      'the answer, read the real values in the document and its PDF; a second '
+      'turn through the chat; start over — against the real module', (
+    tester,
+  ) async {
     final copied = <String>[];
     tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
       SystemChannels.platform,
@@ -167,10 +168,71 @@ void main() {
     }
     expect(read, isNot(contains('__Z_')));
 
+    // **Paper 123: a second turn through the real chat doors.** The question
+    // names Ilse Carrow again; the core gives her the same tokens, and the
+    // copy carries the exchange before, protected, behind the line.
+    pdf = null;
+    await tester.ensureVisible(find.byKey(TheTrial.compose));
+    await tester.enterText(
+      find.byKey(TheTrial.compose),
+      'Will Ilse Carrow confirm by Friday?',
+    );
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump();
+    await press(tester, TheTrial.copyProtected);
+    final second = copied.last;
+    expect(
+      second.split('\n').first,
+      'Give back every code that starts with __Z_ exactly as written, with all its underscores and no changes.',
+    );
+    for (final v in protectedValues) {
+      expect(
+        second,
+        isNot(contains(v)),
+        reason: '«$v» may not leave in the second turn either',
+      );
+    }
+    final secondTokens = RegExp(
+      r'__Z_[A-Z0-9_]+__',
+    ).allMatches(second.split('\n').last).map((m) => m.group(0)!).toList();
+    expect(secondTokens, hasLength(2), reason: 'Ilse and Carrow, as tokens');
+    expect(
+      tokens,
+      containsAll(secondTokens),
+      reason: 'the same name is the same token',
+    );
+    await tester.enterText(
+      find.byKey(TheTrial.answer),
+      'Yes, ${secondTokens.join(' ')} will confirm.',
+    );
+    await tester.pump();
+    await press(tester, TheTrial.restore);
+    await realTime(tester, () => pdf != null);
+    expect(pdf, isNotNull, reason: 'the PDF of both turns was built');
+    final both = (await tester.runAsync(
+      () => theTextOfThePdf(pdf!),
+    ))!.replaceAll(RegExp(r'\s+'), ' ');
+    expect(both, contains('Question 2 Will Ilse Carrow confirm by Friday?'));
+    expect(both, contains('Yes, Ilse Carrow will confirm.'));
+    expect(both, isNot(contains('__Z_')));
+
+    // **«Start over»**: asked, erased, the session closed.
+    await tester.drag(
+      find.byType(SingleChildScrollView),
+      const Offset(0, 6000),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(TheTrial.startOver));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(TheTrial.erase));
+    await tester.pumpAndSettle();
+    expect(find.byKey(TheTrial.document), findsNothing);
+    expect(copied.last, '', reason: 'Z\'s copy emptied from the clipboard');
+
     expect(
       await tester.runAsync(whatTheBrowserKeeps),
       nothing,
-      reason: 'nothing kept after the real flow',
+      reason: 'nothing kept after two real turns and a start over',
     );
     // Skipped with no Z_WEB_MODULE or no server: run
     // scripts/check_the_trial_in_a_browser.sh with the module's folder.

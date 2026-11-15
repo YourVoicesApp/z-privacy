@@ -171,4 +171,128 @@ void main() {
       });
     }
   }
+
+  // Paper 123: a two-turn chat, and the «Start over» question.
+  const questions = {
+    'en': 'Can Anna Lindqvist sign the contract on Friday?',
+    'ar': 'هل تستطيع آمنة الحسيني توقيع العقد يوم الجمعة؟',
+    'sv': 'Kan Anna Lindqvist skriva under avtalet på fredag?',
+  };
+  const secondAnswers = {
+    'en': 'Yes. {person} can sign on Friday at the harbour office.',
+    'ar': 'نعم. تستطيع {person} التوقيع يوم الجمعة في مكتب الميناء.',
+    'sv': 'Ja. {person} kan skriva under på fredag på hamnkontoret.',
+  };
+  for (final lang in const ['en', 'ar', 'sv']) {
+    for (final width in const [390, 1440]) {
+      testWidgets(
+        'the chat in $lang at $width px, and the start-over question',
+        (tester) async {
+          final size = Size(width.toDouble(), width == 390 ? 844 : 900);
+          await tester.binding.setSurfaceSize(size);
+          addTearDown(() => tester.binding.setSurfaceSize(null));
+          final copied = <String>[];
+          tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+            SystemChannels.platform,
+            (call) async {
+              if (call.method == 'Clipboard.setData') {
+                copied.add((call.arguments as Map)['text'] as String);
+              }
+              return null;
+            },
+          );
+          addTearDown(
+            () => tester.binding.defaultBinaryMessenger
+                .setMockMethodCallHandler(SystemChannels.platform, null),
+          );
+          final doors = FakeWebDoors();
+          await tester.pumpWidget(
+            RepaintBoundary(
+              key: _whole,
+              child: TrialApp(
+                language: lang,
+                doors: () async => doors,
+                font: fixtureFont,
+              ),
+            ),
+          );
+          await tester.pump();
+          await tester.pump();
+          final letter = _letters[lang]!;
+          await write(tester, letter);
+          await caretAt(tester, letter.indexOf('Björn') + 1);
+          await press(tester, TheTrial.protectIt);
+          await press(tester, TheTrial.copyProtected);
+          final first = copied.last;
+          final persons = RegExp(
+            r'__Z_PERSON_[0-9]+__',
+          ).allMatches(first).map((m) => m.group(0)!).toList();
+          final email = RegExp(
+            r'__Z_EMAIL_[0-9]+__',
+          ).firstMatch(first)!.group(0)!;
+          await tester.enterText(
+            find.byKey(TheTrial.answer),
+            _answers[lang]!
+                .replaceAll('{person}', persons.first)
+                .replaceAll('{other}', persons.last)
+                .replaceAll('{email}', email),
+          );
+          await tester.pump();
+          await press(tester, TheTrial.restore);
+          for (var i = 0; i < 6; i++) {
+            await tester.runAsync(
+              () => Future<void>.delayed(const Duration(milliseconds: 60)),
+            );
+            await tester.pump();
+          }
+          await tester.ensureVisible(find.byKey(TheTrial.compose));
+          await tester.enterText(
+            find.byKey(TheTrial.compose),
+            questions[lang]!,
+          );
+          await tester.pump(const Duration(milliseconds: 300));
+          await tester.pump();
+          await press(tester, TheTrial.copyProtected);
+          final token = RegExp(
+            r'__Z_PERSON_[0-9]+__',
+          ).firstMatch(copied.last.split('\n\n').last)!.group(0)!;
+          await tester.enterText(
+            find.byKey(TheTrial.answer),
+            secondAnswers[lang]!.replaceAll('{person}', token),
+          );
+          await tester.pump();
+          await press(tester, TheTrial.restore);
+          for (var i = 0; i < 6; i++) {
+            await tester.runAsync(
+              () => Future<void>.delayed(const Duration(milliseconds: 60)),
+            );
+            await tester.pump();
+          }
+          // The second answer's restored text open, as a visitor would read it.
+          await tester.ensureVisible(find.byKey(const Key('the-chat-show-1')));
+          await tester.pump();
+          await tester.tap(find.byKey(const Key('the-chat-show-1')));
+          await tester.pumpAndSettle();
+          await tester.ensureVisible(find.byKey(TheTrial.chat));
+          await tester.pumpAndSettle();
+          await _picture(tester, '$lang-the-chat-$width');
+          await tester.drag(
+            find.byType(SingleChildScrollView),
+            const Offset(0, -6000),
+          );
+          await tester.pumpAndSettle();
+          await _picture(tester, '$lang-the-chat-$width-the-document');
+          await tester.drag(
+            find.byType(SingleChildScrollView),
+            const Offset(0, 6000),
+          );
+          await tester.pumpAndSettle();
+          await tester.tap(find.byKey(TheTrial.startOver));
+          await tester.pumpAndSettle();
+          expect(find.byKey(TheTrial.startOverQuestion), findsOneWidget);
+          await _picture(tester, '$lang-start-over-$width');
+        },
+      );
+    }
+  }
 }

@@ -2834,4 +2834,29 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get trialAboutZ => 'Om Z, nedladdning och guide';
+
+  @override
+  String get trialKeepTheCodes =>
+      'Återge varje kod som börjar med __Z_ exakt som den är skriven, med alla understreck och utan ändringar.';
+
+  @override
+  String get trialStartOver => 'Börja om';
+
+  @override
+  String get trialStartOverQuestion =>
+      'Allt på den här sidan raderas. En kopia som du har sparat på din enhet är fortfarande din.';
+
+  @override
+  String get trialErase => 'Radera';
+
+  @override
+  String trialQuestionNumber(int n) {
+    return 'Fråga $n';
+  }
+
+  @override
+  String get theChatYou => 'Du';
+
+  @override
+  String get theChatCoded => 'Kodat';
 }

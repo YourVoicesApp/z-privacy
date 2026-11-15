@@ -711,5 +711,12 @@
   "trialTheAnswerWithRealNames": "Svaret, med de riktiga namnen",
   "trialCopy": "Kopiera",
   "trialSaveToMyDevice": "Spara på min enhet",
-  "trialAboutZ": "Om Z, nedladdning och guide"
+  "trialAboutZ": "Om Z, nedladdning och guide",
+  "trialKeepTheCodes": "Återge varje kod som börjar med __Z_ exakt som den är skriven, med alla understreck och utan ändringar.",
+  "trialStartOver": "Börja om",
+  "trialStartOverQuestion": "Allt på den här sidan raderas. En kopia som du har sparat på din enhet är fortfarande din.",
+  "trialErase": "Radera",
+  "trialQuestionNumber": "Fråga {n}",
+  "theChatYou": "Du",
+  "theChatCoded": "Kodat"
 }

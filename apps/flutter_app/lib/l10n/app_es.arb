@@ -711,5 +711,12 @@
   "trialTheAnswerWithRealNames": "La respuesta, con los nombres reales",
   "trialCopy": "Copiar",
   "trialSaveToMyDevice": "Guardar en mi dispositivo",
-  "trialAboutZ": "Acerca de Z, descarga y guía"
+  "trialAboutZ": "Acerca de Z, descarga y guía",
+  "trialKeepTheCodes": "Devuelva cada código que empiece por __Z_ exactamente como está escrito, con todos sus guiones bajos y sin cambios.",
+  "trialStartOver": "Empezar de nuevo",
+  "trialStartOverQuestion": "Todo lo que hay en esta página se borrará. Una copia que haya guardado en su dispositivo sigue siendo suya.",
+  "trialErase": "Borrar",
+  "trialQuestionNumber": "Pregunta {n}",
+  "theChatYou": "usted",
+  "theChatCoded": "codificado"
 }

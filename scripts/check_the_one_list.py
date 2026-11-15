@@ -123,6 +123,10 @@ MIGRATED = {
     'web/the_web_doors.dart',
     'web/the_web_doors_js.dart',
     'web/the_web_doors_none.dart',
+    # Paper 123: the chat's pieces the web trial draws with, moved out of
+    # `bits.dart` and `the_chat.dart` unchanged, at zero from the day they moved.
+    'widgets/plain_bits.dart',
+    'widgets/the_chat_turn.dart',
 }
 
 # **The debt is empty, and it was emptied by a word rather than by work** —

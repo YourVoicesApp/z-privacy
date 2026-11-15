@@ -1,12 +1,13 @@
 // **The visitor's document** — paper 122 §3.2, rule 85 (b).
 //
 // Built in memory with the `pdf` package, and **not a z-pdf**: rule 80 does
-// not govern it. It holds two things, under two headings in the page's
-// language:
+// not govern it. It holds, under headings in the page's language:
 //
 //   1. the visitor's text **exactly as written**, unprotected;
 //   2. the model's answer with the real names put back (the core's
-//      `restored_view` text, as it gave it).
+//      `restored_view` text, as it gave it);
+//   3. since paper 123, every later turn of the chat: «Question n» with the
+//      question as the visitor wrote it, then its answer restored.
 //
 // It carries no token of ours that was placed, no token map, no session
 // number, no footer, no stamp and no /Info (no title, author, producer or
@@ -31,7 +32,7 @@ Future<ByteData> theTrialFont() =>
 
 Future<Uint8List> buildTheTrialPdf({
   required String yourText,
-  required String answer,
+  required List<(String? question, String answer)> exchanges,
   required AppLocalizations t,
   required bool pageIsRightToLeft,
   required ByteData font,
@@ -89,9 +90,18 @@ Future<Uint8List> buildTheTrialPdf({
       build: (_) => [
         title(t.trialYourText),
         ...paragraphs(yourText),
-        pw.SizedBox(height: 18),
-        title(t.trialTheAnswerWithRealNames),
-        ...paragraphs(answer),
+        // Paper 123 §3.4: every turn — before each answer after the first,
+        // its question as the visitor wrote it.
+        for (var i = 0; i < exchanges.length; i++) ...[
+          if (exchanges[i].$1 case final String question) ...[
+            pw.SizedBox(height: 18),
+            title(t.trialQuestionNumber(i + 1)),
+            ...paragraphs(question),
+          ],
+          pw.SizedBox(height: 18),
+          title(t.trialTheAnswerWithRealNames),
+          ...paragraphs(exchanges[i].$2),
+        ],
       ],
     ),
   );

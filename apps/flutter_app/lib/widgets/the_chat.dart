@@ -37,10 +37,10 @@ import 'package:zprivacy/core/messages.dart';
 import 'package:zprivacy/core/palette.dart';
 import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/session_state.dart';
-import 'package:zprivacy/core/the_clipboard.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/widgets/bits.dart';
 import 'package:zprivacy/widgets/document_text.dart';
+import 'package:zprivacy/widgets/the_chat_turn.dart';
 
 class TheChat extends StatefulWidget {
   const TheChat({
@@ -99,14 +99,11 @@ class TheChat extends StatefulWidget {
   /// it again, this one spends what is in it.
   static const addIt = ValueKey<String>('the-chat-add-it');
 
-  /// The strip that says an answer carries tokens this session cannot place —
-  /// 046/U, kept from the answer panel because the law is the same law.
-  static const unresolved = ValueKey<String>('the-chat-unresolved');
-
-  /// One key per turn, so a press lands on the answer it was drawn under
-  /// rather than on whichever bubble happens to be first.
-  static Key showTheText(int at) => Key('the-chat-show-$at');
-  static Key bubble(int at) => Key('the-chat-bubble-$at');
+  /// The strip, and the per-turn keys, are the turn's own since paper 123
+  /// (`the_chat_turn.dart`); named here too, for every guard that reaches them.
+  static const unresolved = ChatTurnView.unresolved;
+  static Key showTheText(int at) => ChatTurnView.showTheText(at);
+  static Key bubble(int at) => ChatTurnView.bubble(at);
 
   @override
   State<TheChat> createState() => _TheChatState();
@@ -240,12 +237,13 @@ class _TheChatState extends State<TheChat> {
                     style: Zc.small.copyWith(color: Zc.ink4),
                   ),
                 for (var at = 0; at < turns.length; at++) ...[
-                  _Turn(
-                    turn: turns[at],
+                  ChatTurnView(
+                    turn: shownAs(turns[at]),
                     at: at,
                     open: _open == at,
                     onShow: () => setState(() => _open = _open == at ? null : at),
                     onSaid: (line) => setState(() => _said = line),
+                    coded: (text) => SafeText(text: text, chips: false),
                   ),
                   const SizedBox(height: 14),
                 ],
@@ -531,253 +529,6 @@ class _TheChatState extends State<TheChat> {
   }
 }
 
-/// One exchange: what went, what came back, and the one press that puts the
-/// names back.
-class _Turn extends StatelessWidget {
-  const _Turn({
-    required this.turn,
-    required this.at,
-    required this.open,
-    required this.onShow,
-    required this.onSaid,
-  });
-
-  final TurnRow turn;
-  final int at;
-  final bool open;
-  final VoidCallback onShow;
-  final void Function(String?) onSaid;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // **A turn without a question is a real turn** — and the only one
-        // there is: an answer brought back on a copy of the whole chat. Its
-        // payload *is* the chat, so storing that as the question would put the
-        // conversation inside itself and send every word of it twice as
-        // history. The core writes no question for it, and this draws no «you»
-        // line — an empty box above an answer would be the app claiming the
-        // person asked nothing when they asked everything.
-        if (turn.questionAsItLeft.isNotEmpty) ...[
-          _Side(who: 'you', text: turn.questionAsItLeft, tint: Zc.ink3),
-          const SizedBox(height: 8),
-        ],
-        _Side(who: whoAnswered(turn.via), text: turn.answerAsWritten, tint: Zc.river),
-        const SizedBox(height: 6),
-        // **One button per answer, and the default is coded** — rule 66.
-        Align(
-          alignment: AlignmentDirectional.centerStart,
-          child: ZButton(
-            key: TheChat.showTheText(at),
-            label: open ? sentences.hideTheText : sentences.showTheText,
-            icon: open ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-            onPressed: onShow,
-          ),
-        ),
-        if (open) ...[
-          const SizedBox(height: 8),
-          _Bubble(turn: turn, at: at, onSaid: onSaid),
-        ],
-      ],
-    );
-  }
-}
-
-/// One side of one exchange, coded. The painter is the Safe column's own, so a
-/// token is drawn the same way wherever a person meets it.
-class _Side extends StatelessWidget {
-  const _Side({required this.who, required this.text, required this.tint});
-
-  final String who;
-  final String text;
-  final Color tint;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Text(
-              who,
-              style: Zc.tiny.copyWith(color: tint, fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(width: 6),
-            Text('coded', style: Zc.tiny.copyWith(color: Zc.ink4)),
-          ],
-        ),
-        const SizedBox(height: 4),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.fromLTRB(11, 9, 11, 9),
-          decoration: Zc.panel(fill: Zc.paper, radius: 9),
-          // Characters, not chips: this is what the model read, and a chip per
-          // token would put `U+FFFC` where a word should be.
-          child: SafeText(text: text, chips: false),
-        ),
-      ],
-    );
-  }
-}
-
-/// **The restored answer, in a bubble** — rule 66.
-///
-/// The segments are the core's, the fourth mark is the one the answer panel
-/// drew, the «unresolved» strip is 046/U's, and «Copy Restored» keeps 081's
-/// order: the clipboard is emptied before the question is asked, so a person
-/// who cancels is left with an empty clipboard rather than with whatever they
-/// had copied before.
-class _Bubble extends StatefulWidget {
-  const _Bubble({required this.turn, required this.at, required this.onSaid});
-
-  final TurnRow turn;
-  final int at;
-  final void Function(String?) onSaid;
-
-  @override
-  State<_Bubble> createState() => _BubbleState();
-}
-
-class _BubbleState extends State<_Bubble> {
-  @override
-  Widget build(BuildContext context) {
-    final turn = widget.turn;
-    final unknown = turn.unresolved;
-    return Container(
-      key: TheChat.bubble(widget.at),
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(12, 11, 12, 11),
-      decoration: Zc.panel(fill: Zc.clayWash, edge: Zc.clayEdge, radius: 11),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            sentences.theTextWithYourNamesBack,
-            style: Zc.tiny.copyWith(color: Zc.clayDeep, fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 8),
-          if (unknown.isNotEmpty) ...[
-            Container(
-              key: TheChat.unresolved,
-              padding: const EdgeInsets.fromLTRB(11, 9, 11, 9),
-              decoration: Zc.panel(fill: Zc.amberWash, edge: Zc.amberEdge, radius: 9),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    unknown.length == 1
-                        ? sentences.thisAnswerCarriesOneUnknownToken
-                        : sentences.thisAnswerCarriesUnknownTokens(unknown.length),
-                    style: Zc.small.copyWith(color: Zc.amber, fontWeight: FontWeight.w600),
-                  ),
-                  const SizedBox(height: 5),
-                  Text(
-                    unknown.join('\n'),
-                    style: Zc.tiny.copyWith(letterSpacing: 0, fontFamily: Zc.mono),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 10),
-          ],
-          SelectableText.rich(
-            TextSpan(
-              children: [
-                for (final seg in turn.answer)
-                  TextSpan(
-                    text: seg.text,
-                    style: switch (seg.piece) {
-                      // The fourth mark: dotted for a value that was put back
-                      // here, locally — the only place a word can carry it,
-                      // because it is the only place a value comes back.
-                      Piece.restored => const TextStyle(
-                        backgroundColor: Zc.clayWash,
-                        color: Zc.clayDeep,
-                        fontWeight: FontWeight.w600,
-                        decoration: TextDecoration.underline,
-                        decorationStyle: TextDecorationStyle.dotted,
-                        decorationColor: Zc.clayDeep,
-                        decorationThickness: 1.5,
-                      ),
-                      // A token nothing could place is not drawn as the
-                      // answer: amber, struck through, because it is the one
-                      // thing in the text that is not what the sentence
-                      // appears to say.
-                      Piece.unresolved => const TextStyle(
-                        backgroundColor: Zc.amberWash,
-                        color: Zc.amber,
-                        fontFamily: Zc.mono,
-                        fontSize: 13,
-                        decoration: TextDecoration.lineThrough,
-                        decorationColor: Zc.amberEdge,
-                        decorationThickness: 1.5,
-                      ),
-                      Piece.words => null,
-                    },
-                  ),
-              ],
-            ),
-            style: Zc.document,
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              ZButton(
-                label: sentences.copyRestored,
-                icon: Icons.copy_outlined,
-                onPressed: () => unawaited(_copyRestored(
-                  turn.answer.map((s) => s.text).join(),
-                )),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(
-            unknown.isEmpty
-                ? sentences.theMarkedWordsWerePutBackHere
-                : sentences.theDottedWordsWerePutBackHere,
-            style: Zc.tiny.copyWith(letterSpacing: 0),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// 081, and the order is the answer panel's own: the clipboard is emptied
-  /// **before** the question, so a cancel leaves it empty rather than leaving
-  /// whatever was on it before.
-  Future<void> _copyRestored(String text) async {
-    await emptyTheClipboardFirst();
-    if (!mounted) return;
-    final sure = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Zc.paper,
-        title: Text(sentences.copyRestoredTextQuestion, style: Zc.h2),
-        content: Text(
-          sentences.thisWillPlaceTheRealValues,
-          style: Zc.body,
-        ),
-        actions: [
-          ZButton(label: sentences.cancel, onPressed: () => Navigator.of(ctx).pop(false)),
-          ZButton(
-            label: sentences.copyRestored,
-            filled: true,
-            onPressed: () => Navigator.of(ctx).pop(true),
-          ),
-        ],
-      ),
-    );
-    if (sure != true || !mounted) return;
-    await Clipboard.setData(ClipboardData(text: text));
-    if (!mounted) return;
-    widget.onSaid(sentences.restoredTextCopied);
-  }
-}
-
 /// The send arrow, with the name of who answers on it.
 class _Arrow extends StatelessWidget {
   const _Arrow({
@@ -814,3 +565,22 @@ class _Arrow extends StatelessWidget {
     );
   }
 }
+
+/// A turn of the core, as the shared turn widget draws it.
+ChatTurnShown shownAs(TurnRow turn) => ChatTurnShown(
+      questionAsItLeft: turn.questionAsItLeft,
+      who: whoAnswered(turn.via),
+      answerAsWritten: turn.answerAsWritten,
+      answer: [
+        for (final seg in turn.answer)
+          (
+            seg.text,
+            switch (seg.piece) {
+              Piece.words => ChatPiece.words,
+              Piece.restored => ChatPiece.restored,
+              Piece.unresolved => ChatPiece.unresolved,
+            },
+          ),
+      ],
+      unresolved: turn.unresolved,
+    );

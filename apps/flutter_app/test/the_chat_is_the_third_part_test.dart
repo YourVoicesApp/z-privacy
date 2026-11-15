@@ -178,8 +178,8 @@ void main() {
     expect(inChat(find.textContaining('Thomas Müller')), findsNothing,
         reason: 'the thread draws a name the model never saw — rule 66');
     // And the two sides are named, with the door that answered.
-    expect(inChat(find.text('you')), findsOneWidget);
-    expect(inChat(find.textContaining('coded')), findsWidgets);
+    expect(inChat(find.text(sentences.theChatYou)), findsOneWidget);
+    expect(inChat(find.textContaining(sentences.theChatCoded)), findsWidgets);
 
     // **One press, and the names are back — in the bubble.**
     expect(find.byKey(TheChat.bubble(0)), findsNothing,
@@ -312,7 +312,7 @@ void main() {
         reason: 'the core stored the chat as the question of its own answer');
     // One «you» line on the glass, for the turn that had a question.
     expect(
-      find.descendant(of: find.byType(TheChat), matching: find.text('you')),
+      find.descendant(of: find.byType(TheChat), matching: find.text(sentences.theChatYou)),
       findsOneWidget,
       reason: 'the thread drew a question nobody asked',
     );
