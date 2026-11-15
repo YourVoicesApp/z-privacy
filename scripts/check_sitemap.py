@@ -36,6 +36,19 @@ import xml.etree.ElementTree as ET
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SITE = os.path.join(ROOT, 'site')
 HOST = 'https://z-privacy.com'
+
+# **The web trial** (paper 125): one page, `apps/flutter_app/web/index.html`,
+# built into site-trial/ and served at /<lang>/try/ for six languages. It is not
+# in site/, so the tree walk cannot see it; it names no canonical address,
+# because one file serves six addresses and the language is read from the
+# address itself. So its six entries are checked here by what they must be:
+# the page exists, and each entry names exactly the six /try/ addresses and
+# «/» as x-default.
+TRIAL_PAGE = os.path.join(ROOT, 'apps', 'flutter_app', 'web', 'index.html')
+TRIAL_LANGS = ('en', 'ar', 'de', 'fr', 'es', 'sv')
+TRIAL = {'%s/%s/try/' % (HOST, lang) for lang in TRIAL_LANGS}
+TRIAL_ALTERNATES = dict({lang: '%s/%s/try/' % (HOST, lang) for lang in TRIAL_LANGS},
+                        **{'x-default': HOST + '/'})
 SM = '{http://www.sitemaps.org/schemas/sitemap/0.9}'
 XH = '{http://www.w3.org/1999/xhtml}'
 
@@ -105,9 +118,30 @@ def main():
     listed = []
     today = datetime.date.today()
 
+    trial_listed = set()
     for url in root.findall(SM + 'url'):
         loc = url.findtext(SM + 'loc', default='').strip()
         listed.append(loc)
+        if loc in TRIAL:
+            trial_listed.add(loc)
+            if not os.path.exists(TRIAL_PAGE):
+                say('FAIL', 'the list offers %s, and the trial has no page (%s)' % (loc, TRIAL_PAGE))
+                bad = 1
+            inline = {link.get('hreflang'): link.get('href') for link in url.findall(XH + 'link')
+                      if link.get('rel') == 'alternate' and link.get('hreflang')}
+            if inline != TRIAL_ALTERNATES:
+                say('FAIL', '%s: the trial\'s six addresses and «/» are its language versions, and the list says %s'
+                    % (loc, sorted(inline.items())))
+                bad = 1
+            mod = url.findtext(SM + 'lastmod', default='').strip()
+            try:
+                if datetime.date(*[int(x) for x in mod.split('-')]) > today:
+                    say('FAIL', '%s says it was last changed on %s, which has not happened yet' % (loc, mod))
+                    bad = 1
+            except (TypeError, ValueError):
+                say('FAIL', '%s carries «%s» where a date belongs' % (loc, mod))
+                bad = 1
+            continue
         if loc not in tree:
             say('FAIL', 'the list offers %s, and no page in the tree has that address' % (loc or '<empty loc>'))
             bad = 1
@@ -153,6 +187,11 @@ def main():
         say('FAIL', 'the list offers the same address more than once: %s' % ', '.join(twice))
         bad = 1
 
+    if os.path.exists(TRIAL_PAGE) and trial_listed != TRIAL:
+        say('FAIL', 'the trial is served at six addresses, and the list leaves out: %s'
+            % ', '.join(sorted(TRIAL - trial_listed)))
+        bad = 1
+
     missing = sorted(set(tree) - set(listed))
     if missing:
         say('FAIL', 'a page will be uploaded that the list never mentions, so nobody will find it:')
@@ -163,6 +202,7 @@ def main():
     if not bad:
         say('PASS', 'the list offers all %d pages of the tree and nothing else, each at the address it claims for itself'
             % len(tree))
+        say('PASS', 'and the web trial at its %d addresses, each naming the other five and «/»' % len(TRIAL))
     return verdict(bad, len(tree))
 
 

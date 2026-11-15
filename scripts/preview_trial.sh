@@ -93,7 +93,8 @@ class Preview(http.server.BaseHTTPRequestHandler):
 
     def _send_file(self, root, inner, rules):
         inner = posixpath.normpath(urllib.parse.unquote(inner)).lstrip('/')
-        if inner.startswith('..') or inner == '_headers' or inner.endswith('/_headers'):
+        # The two records beside the page are not pages: never served.
+        if inner.startswith('..') or os.path.basename(inner) in ('_headers', '_trial.nginx'):
             return self.send_error(404)
         full = os.path.join(root, inner)
         if os.path.isdir(full):

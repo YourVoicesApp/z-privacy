@@ -14,7 +14,8 @@
 #       --csp                    no code generated at run time
 #       --no-wasm-dry-run        the JavaScript build only, said out loud
 #
-# and assembles OUT from them: the Flutter build (with `web/_headers`, the
+# and assembles OUT from them, with `_trial.nginx` — the server's record
+# (paper 125), written from `_headers` beside it: the Flutter build (with `web/_headers`, the
 # trial's CSP, which Flutter copies in; the fonts it bundles under
 # `assets/fonts/` and `assets/assets/fonts/` — DejaVu Sans and the icon font),
 # `z_web.js` and `z_web_bg.wasm` beside `index.html`, and a marker file
@@ -91,8 +92,14 @@ find "$ASSEMBLED" -name '*.symbols' -type f -delete
 cp -- "$WORK/core/z_web.js" "$WORK/core/z_web_bg.wasm" "$ASSEMBLED/"
 : > "$ASSEMBLED/.site-trial"
 
+# **The server's record** (paper 125 §2.2): `_trial.nginx`, beside `_headers`,
+# written from it and read back against it — the owner's nginx lines for the
+# trial. A record, not a page: the upload leaves it and `_headers` out.
+python3 -I "$ROOT/scripts/write_trial_nginx.py" "$ASSEMBLED" >/dev/null || die "the server record could not be written"
+python3 -I "$ROOT/scripts/write_trial_nginx.py" --check "$ASSEMBLED" >/dev/null || die "the server record's headers are not _headers's"
+
 # What a page needs, checked before the folder is put in place.
-for f in index.html flutter_bootstrap.js flutter.js main.dart.js _headers z_web.js z_web_bg.wasm \
+for f in index.html flutter_bootstrap.js flutter.js main.dart.js _headers _trial.nginx z_web.js z_web_bg.wasm \
          canvaskit/canvaskit.js canvaskit/canvaskit.wasm canvaskit/chromium/canvaskit.wasm \
          assets/FontManifest.json assets/assets/fonts/DejaVuSans.ttf; do
   [ -f "$ASSEMBLED/$f" ] || die "the assembled folder has no $f"

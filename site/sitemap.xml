@@ -302,4 +302,76 @@
     <xhtml:link rel="alternate" hreflang="fr" href="https://z-privacy.com/fr/faq/"/>
     <xhtml:link rel="alternate" hreflang="es" href="https://z-privacy.com/es/faq/"/>
   </url>
+  <!--
+    The web trial, paper 125: one page for six languages, served from the
+    trial's own build (site-trial/, not site/) at /<lang>/try/ — «/» sends a
+    visitor there. Each address reads its language from itself, so the six
+    name each other; x-default is «/», which chooses among them.
+  -->
+  <url>
+    <loc>https://z-privacy.com/en/try/</loc>
+    <lastmod>2026-11-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://z-privacy.com/en/try/"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://z-privacy.com/ar/try/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://z-privacy.com/de/try/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://z-privacy.com/fr/try/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://z-privacy.com/es/try/"/>
+    <xhtml:link rel="alternate" hreflang="sv" href="https://z-privacy.com/sv/try/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://z-privacy.com/"/>
+  </url>
+  <url>
+    <loc>https://z-privacy.com/ar/try/</loc>
+    <lastmod>2026-11-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://z-privacy.com/en/try/"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://z-privacy.com/ar/try/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://z-privacy.com/de/try/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://z-privacy.com/fr/try/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://z-privacy.com/es/try/"/>
+    <xhtml:link rel="alternate" hreflang="sv" href="https://z-privacy.com/sv/try/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://z-privacy.com/"/>
+  </url>
+  <url>
+    <loc>https://z-privacy.com/de/try/</loc>
+    <lastmod>2026-11-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://z-privacy.com/en/try/"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://z-privacy.com/ar/try/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://z-privacy.com/de/try/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://z-privacy.com/fr/try/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://z-privacy.com/es/try/"/>
+    <xhtml:link rel="alternate" hreflang="sv" href="https://z-privacy.com/sv/try/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://z-privacy.com/"/>
+  </url>
+  <url>
+    <loc>https://z-privacy.com/fr/try/</loc>
+    <lastmod>2026-11-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://z-privacy.com/en/try/"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://z-privacy.com/ar/try/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://z-privacy.com/de/try/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://z-privacy.com/fr/try/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://z-privacy.com/es/try/"/>
+    <xhtml:link rel="alternate" hreflang="sv" href="https://z-privacy.com/sv/try/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://z-privacy.com/"/>
+  </url>
+  <url>
+    <loc>https://z-privacy.com/es/try/</loc>
+    <lastmod>2026-11-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://z-privacy.com/en/try/"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://z-privacy.com/ar/try/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://z-privacy.com/de/try/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://z-privacy.com/fr/try/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://z-privacy.com/es/try/"/>
+    <xhtml:link rel="alternate" hreflang="sv" href="https://z-privacy.com/sv/try/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://z-privacy.com/"/>
+  </url>
+  <url>
+    <loc>https://z-privacy.com/sv/try/</loc>
+    <lastmod>2026-11-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://z-privacy.com/en/try/"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://z-privacy.com/ar/try/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://z-privacy.com/de/try/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://z-privacy.com/fr/try/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://z-privacy.com/es/try/"/>
+    <xhtml:link rel="alternate" hreflang="sv" href="https://z-privacy.com/sv/try/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://z-privacy.com/"/>
+  </url>
 </urlset>

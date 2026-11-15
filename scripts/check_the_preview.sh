@@ -33,6 +33,8 @@ cleanup() { for p in "${PIDS[@]}"; do kill -TERM "$p" 2>/dev/null; done; rm -rf 
 trap cleanup EXIT
 
 # ---- 1 · the refusal
+site_print() { find site -type f -print0 | sort -z | xargs -0 sha1sum | sha1sum; }
+SITE_BEFORE="$(site_print)"
 ln -s "$ROOT/site" "$WORK/a-link-to-site"
 mkdir "$WORK/someone-elses" && : > "$WORK/someone-elses/a-file"
 for out in site site/ site/en "$ROOT/site/new" ./site/../site/x "$WORK/a-link-to-site" \
@@ -46,7 +48,7 @@ for out in "$WORK/a-new-folder" "$WORK/nested/new"; do
   rc=$?
   if [ "$rc" = 0 ]; then ok "the control passes: $out"; else bad "the control was refused (exit $rc): $out"; fi
 done
-[ -z "$(git status --porcelain -- site)" ] && ok "site/ is as committed" || bad "site/ changed"
+[ "$(site_print)" = "$SITE_BEFORE" ] && ok "site/ is byte for byte what it was before the refusals ran" || bad "site/ changed while the refusals ran"
 
 # ---- 2 · 127.0.0.1 only, the headers as written
 listeners() { ss -Hltn "sport = :$1" 2>/dev/null | awk '{print $4}'; }
@@ -86,9 +88,27 @@ else
   grep -qi '^Content-Type: application/wasm' <<< "$WASM" && ok ".wasm is application/wasm" || bad ".wasm has another type"
   [ "$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$PORT/en/try/_headers")" = 404 ] \
     && ok "_headers itself is not served" || bad "_headers is served as a file"
+  printf 'record\n' > "$FIX/_trial.nginx"
+  [ "$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$PORT/en/try/_trial.nginx")" = 404 ] \
+    && ok "_trial.nginx is not served" || bad "_trial.nginx is served as a file"
   kill -INT "$PREVIEW_PID"
   for _ in $(seq 1 30); do kill -0 "$PREVIEW_PID" 2>/dev/null || break; sleep 0.1; done
   if kill -0 "$PREVIEW_PID" 2>/dev/null; then bad "SIGINT did not stop the preview"; else ok "SIGINT stops it"; fi
+fi
+
+# ---- 3 · the server's record (paper 125): its headers are _headers's
+REC="$WORK/record"
+mkdir -p "$REC" && cp apps/flutter_app/web/_headers "$REC/"
+if python3 -I scripts/write_trial_nginx.py "$REC" >/dev/null && python3 -I scripts/write_trial_nginx.py --check "$REC" >/dev/null; then
+  ok "the server record is written from _headers and sends exactly its headers"
+else
+  bad "the server record does not hold _headers's headers"
+fi
+sed -i "s/connect-src 'self';/connect-src *;/" "$REC/_trial.nginx"
+if python3 -I scripts/write_trial_nginx.py --check "$REC" >/dev/null 2>&1; then
+  bad "the control: a record whose CSP differs from _headers passed the check"
+else
+  ok "the control: a record whose CSP differs from _headers is refused"
 fi
 
 # The control: a server on every address must be flagged by the same reading.

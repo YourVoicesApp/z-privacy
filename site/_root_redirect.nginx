@@ -14,22 +14,30 @@
 # `script-src`). So the choice is made where the browser already says it:
 # `Accept-Language`.
 #
-# The rule: **the first of our five languages the browser names, in the order
+# The rule: **the first of our six languages the browser names, in the order
 # it names them; English when it names none of them.** The regex is searched,
 # so it finds the leftmost of ours in the header — «fr-CH, fr;q=0.9, en;q=0.8»
 # answers fr, «sv-SE, de;q=0.7» answers de, «ja-JP» answers en. Quality values
 # are not ranked: every browser sends its list already in its own order, and
 # ranking them would be a parser in a config file for no visitor we know of.
+#
+# **Since paper 125 (15 November 2026) «/» opens the web trial**, the chat —
+# rule 85: the first screen of z-privacy.com is Z's chat. So the redirect goes
+# to `/$lang/try/`, and Swedish joins the map (rule 86 (هـ)): the trial speaks
+# it, though the site has no Swedish pages yet. The front pages stay where they
+# are, at `/<lang>/`, and the trial's top line leads there.
 
-# In the `http {}` block (once):
+# In the `http {}` block (once). **Replace** the map's regex line, do not add
+# one: there is only ever one regex line. With the old one left above it,
+# Swedish is sent to English (measured on nginx 1.28.3, paper 125 §3.4).
 map $http_accept_language $zprivacy_lang {
     default                                         en;
-    "~*(?:^|,)\s*(?<zp>ar|de|fr|es|en)(?:[-;,\s]|$)" $zp;
+    "~*(?:^|,)\s*(?<zp>ar|de|fr|es|en|sv)(?:[-;,\s]|$)" $zp;
 }
 
 # In the z-privacy.com `server {}` block:
 location = / {
-    # A redirect, not a page: nothing at «/» to keep in step with five
+    # A redirect, not a page: nothing at «/» to keep in step with six
     # languages. 302 and `Vary`, because the answer depends on the visitor and
     # must not be cached as one answer for everybody.
     #
@@ -38,5 +46,5 @@ location = / {
     # it this one response would go out without the CSP.
     include snippets/zprivacy-headers.conf;
     add_header Vary Accept-Language always;
-    return 302 /$zprivacy_lang/;
+    return 302 /$zprivacy_lang/try/;
 }

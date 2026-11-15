@@ -260,9 +260,12 @@ else
   done
   grep -qE '^[[:space:]]*default[[:space:]]+en;' _root_redirect.nginx \
     || { say FAIL "«/» has no English answer for a browser that names none of ours"; FAIL=1; RED=1; }
-  grep -qE 'return 302 /\$zprivacy_lang/;' _root_redirect.nginx \
-    || { say FAIL "«/» is not answered with a redirect to the chosen language"; FAIL=1; RED=1; }
-  [ "$RED" = 0 ] && say PASS "«/» is the server's redirect by the browser's language (${LANGS// /, }; else en), and no page"
+  # Since paper 125 «/» opens the web trial in the chosen language (rule 85).
+  grep -qE 'return 302 /\$zprivacy_lang/try/;' _root_redirect.nginx \
+    || { say FAIL "«/» is not answered with a redirect to the web trial in the chosen language"; FAIL=1; RED=1; }
+  [ "$(grep -cE '^[[:space:]]*"~' _root_redirect.nginx)" = 1 ] \
+    || { say FAIL "the map holds more than one regex line: the first one wins, and Swedish goes to English"; FAIL=1; RED=1; }
+  [ "$RED" = 0 ] && say PASS "«/» is the server's redirect to the web trial by the browser's language (${LANGS// /, }; else en), one regex line, and no page"
 fi
 
 # What the first screen says, and what it does not offer.
