@@ -57,6 +57,12 @@ pub(crate) struct VaultStore {
     /// anything, and the auto-lock is covered because that door judges the
     /// clock before it answers.
     locks: u64,
+    /// **The trial's sessions** — paper 123: the web has no vault, and keeps
+    /// the list of its sessions here, in memory, with no key. Each method that
+    /// reads or writes the list of sessions has a web twin below, compiled
+    /// only there, that answers from it (`memory_sessions.rs`).
+    #[cfg(feature = "web")]
+    memory: crate::memory_sessions::MemorySessions,
 }
 
 /// The open vault, and the one value revealed from it.
@@ -434,6 +440,7 @@ impl VaultStore {
     /// exemption is a fact about the block rather than about the document: a
     /// screen that filtered it afterwards would be the same rule written in a
     /// second place.
+    #[cfg(not(feature = "web"))]
     pub(crate) fn hints(
         &mut self,
         active_profile: Option<&str>,
@@ -531,6 +538,7 @@ impl VaultStore {
     /// So the answer is a result now: `Ok(n)` is «n words became blocks», and
     /// an error is the disk's own refusal, carried to the one place that
     /// records what the disk said (`ops::the_decisions_are_written`).
+    #[cfg(not(feature = "web"))]
     pub(crate) fn remember_blocks(&mut self, words: &[(Kind, String, String)]) -> ApiResult<u32> {
         if words.is_empty() {
             return Ok(0);
@@ -573,6 +581,7 @@ impl VaultStore {
     /// forget doors, which already hold the vault open; they call
     /// `Vault::forget_the_blocks_of` directly and this hand stays what the
     /// un-protect door needs.
+    #[cfg(not(feature = "web"))]
     pub(crate) fn exempt_block(&mut self, value: &str, conversation: u32) -> bool {
         if self.state() != VaultState::Unlocked {
             return false;
@@ -607,6 +616,7 @@ impl VaultStore {
     /// the clock is the one the person made, not the per-token lookup
     /// underneath it. Taking `&self` is also what lets a caller hold a bench's
     /// store and this at the same time (`tokens::Values`).
+    #[cfg(not(feature = "web"))]
     pub(crate) fn block_value_for(&self, token: &str) -> Option<String> {
         self.open.as_ref()?.vault.block_value_for(token)
     }
@@ -652,6 +662,7 @@ impl VaultStore {
     /// The language one session was born into, or `None` if it has never been
     /// asked. Read on its own rather than added to the tuple above, because
     /// three callers want the handle and only two want this.
+    #[cfg(not(feature = "web"))]
     pub(crate) fn pack_of(&self, number: u32) -> Option<String> {
         self.open
             .as_ref()
@@ -662,6 +673,7 @@ impl VaultStore {
     /// **Write it, once asked or once changed.** The vault is resealed by
     /// `with_open_mut`, which is what makes this survive the power cut the
     /// whole of 062 is about.
+    #[cfg(not(feature = "web"))]
     pub(crate) fn set_pack(&mut self, number: u32, pack_id: &str) -> ApiResult<()> {
         let pack_id = pack_id.to_string();
         self.with_open_mut(|vault| {
@@ -677,6 +689,7 @@ impl VaultStore {
         })
     }
 
+    #[cfg(not(feature = "web"))]
     pub(crate) fn conversations(&self) -> Vec<(u32, String, u64)> {
         self.open
             .as_ref()
@@ -698,6 +711,7 @@ impl VaultStore {
     /// moved and refuse instead of guessing (062 §C). Keyed rather than plain
     /// because it is only ever compared inside the session that wrote it, and a
     /// keyed hash says nothing to anybody else.
+    #[cfg(not(feature = "web"))]
     pub(crate) fn begin_conversation(
         &mut self,
         name: &str,
@@ -729,6 +743,7 @@ impl VaultStore {
 
     /// Rename one. The number is the identity and never moves; the handle is a
     /// handle, and the owner may change it whenever he likes (062 §0).
+    #[cfg(not(feature = "web"))]
     pub(crate) fn rename_conversation(&mut self, number: u32, name: &str) -> ApiResult<()> {
         let name = name.to_string();
         self.with_open_mut(|vault| {
@@ -747,6 +762,7 @@ impl VaultStore {
     /// **Destroy one's key and record.** The sealed file is removed by the
     /// caller, which owns the data directory — and the key dying here is what
     /// makes the owner's warning a fact: nothing derives anything afterwards.
+    #[cfg(not(feature = "web"))]
     pub(crate) fn forget_conversation(&mut self, number: u32) -> ApiResult<String> {
         self.with_open_mut(|vault| {
             let Some(at) = vault.conversations.iter().position(|c| c.number == number) else {
@@ -767,6 +783,7 @@ impl VaultStore {
         Some(self.open.as_ref()?.vault.next_conversation_number())
     }
 
+    #[cfg(not(feature = "web"))]
     pub(crate) fn conversation_key(&self, number: u32) -> Option<crypto::SecretKey> {
         let talk = self.open.as_ref()?.vault.conversation(number)?;
         Some(zeroize::Zeroizing::new(talk.key))
@@ -779,6 +796,7 @@ impl VaultStore {
     /// same honest answer `naming_for` gave: with no key there is nothing for a
     /// stable name to be stable for, the tokens fall back to random ones, and
     /// an older answer is reported rather than passed through.
+    #[cfg(not(feature = "web"))]
     pub(crate) fn naming_of(&mut self, number: u32) -> Option<crate::tokens::Naming> {
         if self.state() != VaultState::Unlocked {
             return None;
@@ -835,6 +853,96 @@ impl VaultStore {
         crate::secure_file::replace_atomically(&path, "zv.new", &bytes, "vault.zv")?;
         self.disk_bytes = Some(bytes);
         Ok(())
+    }
+}
+
+/// **The trial's twins** — paper 123, the web only. The questions about the
+/// list of sessions and the blocks, answered from this page's memory. Nothing
+/// is sealed and nothing is written; a session's key names its tokens and does
+/// nothing else.
+#[cfg(feature = "web")]
+impl VaultStore {
+    pub(crate) fn pack_of(&self, number: u32) -> Option<String> {
+        self.memory.pack_of(number)
+    }
+
+    pub(crate) fn set_pack(&mut self, number: u32, pack_id: &str) -> ApiResult<()> {
+        self.memory.set_pack(number, pack_id)
+    }
+
+    pub(crate) fn conversations(&self) -> Vec<(u32, String, u64)> {
+        self.memory.rows()
+    }
+
+    /// A key and no hash: the key names the session's tokens, as the app's
+    /// does, and there is no restored session to compare a document against.
+    pub(crate) fn begin_conversation(
+        &mut self,
+        name: &str,
+        _document: Option<&str>,
+        pack_id: Option<&str>,
+    ) -> ApiResult<u32> {
+        self.memory.begin(name, pack_id)
+    }
+
+    pub(crate) fn rename_conversation(&mut self, number: u32, name: &str) -> ApiResult<()> {
+        self.memory.rename(number, name)
+    }
+
+    pub(crate) fn forget_conversation(&mut self, number: u32) -> ApiResult<String> {
+        self.memory.forget(number)
+    }
+
+    /// **The blocks, in this page's memory** — 089 rules 1–4 for the trial.
+    /// The same model's own writer, so a word's tokens only grow and its kind
+    /// follows the latest act, as in the app.
+    pub(crate) fn remember_blocks(&mut self, words: &[(Kind, String, String)]) -> ApiResult<u32> {
+        let mut made = 0u32;
+        for (kind, value, token) in words {
+            if self.memory.blocks.remember_block(*kind, value, token) {
+                made = made.saturating_add(1);
+            }
+        }
+        Ok(made)
+    }
+
+    /// What the vault layer of a scan finds: the blocks, read by the vault's
+    /// own `hints_for` — whole-word places, every one, as the app's.
+    pub(crate) fn hints(
+        &mut self,
+        active_profile: Option<&str>,
+        in_conversation: Option<u32>,
+    ) -> Vec<VaultHint> {
+        self.memory.blocks.hints_for(active_profile, in_conversation)
+    }
+
+    /// «In this conversation» (rule 53), for a word un-protected by hand.
+    pub(crate) fn exempt_block(&mut self, value: &str, conversation: u32) -> bool {
+        let reach = crate::vault::model::Exemption::Conversation(conversation);
+        self.memory.blocks.exempt_block(value, reach)
+    }
+
+    /// A token read back by the blocks (rule 4).
+    pub(crate) fn block_value_for(&self, token: &str) -> Option<String> {
+        self.memory.blocks.block_value_for(token)
+    }
+
+    /// This session's key — in memory, for its names (no file is sealed).
+    pub(crate) fn conversation_key(&self, number: u32) -> Option<crypto::SecretKey> {
+        self.memory.key_of(number)
+    }
+
+    /// **The naming this session's tokens come from** — 046/U, as in the app:
+    /// one value, one token, for the whole session.
+    pub(crate) fn naming_of(&mut self, number: u32) -> Option<crate::tokens::Naming> {
+        let key = self.memory.key_of(number)?;
+        crate::tokens::Naming::of_session(&key).ok()
+    }
+
+    /// **Is this one of the trial's sessions** — the web's half of `open_in`,
+    /// which asks the app's vault for a key the trial never makes.
+    pub(crate) fn holds_in_memory(&self, number: u32) -> bool {
+        self.memory.holds(number)
     }
 }
 
@@ -1205,3 +1313,4 @@ mod tests {
         let _ = std::fs::remove_dir_all(&dir);
     }
 }
+

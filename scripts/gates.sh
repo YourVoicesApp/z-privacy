@@ -142,7 +142,7 @@ fi
 if [ -n "$WEB_MISSING" ]; then
   for g in "G1c the web build compiles no file that names $CLIENT" "G1e the web build's tree holds no network crate" \
            "G1f a wasm32 build without the web feature is refused" "G1g the browser module imports only what is on its list" \
-           "G1h the web and the native core answer the same"; do
+           "G1h the web and the native core answer the same" "G1i the trial's memory sessions are the web's alone"; do
     skip "$g" "missing:$WEB_MISSING"
   done
 else
@@ -184,6 +184,25 @@ else
     pass "G1c   the control: the native build's own list holds $NET_DIR/http.rs and $(printf '%s\n' "$G1C_NATIVE_NAMES" | grep -c .) file(s) naming $CLIENT"
   else
     fail "G1c   the control: the native build's list does not show the network file, so the web reading cannot see one"
+  fi
+
+  # G1i: **the trial's sessions live in memory on the web, and nowhere else**
+  # — paper 123. `memory_sessions.rs` is the page's stand-in for the vault's
+  # list of sessions, their files and their blocks; in the app's build it must
+  # not exist at all, so that nothing the app keeps can be kept in memory by
+  # mistake. Read off the same two lists of compiled files as G1c: absent from
+  # the native one, and — the control that the reading can see it — present in
+  # the web one.
+  G1I_FILE=z_core/src/memory_sessions.rs
+  if [ -n "$G1C_NATIVE" ] && ! grep -qx "$G1I_FILE" <<< "$G1C_NATIVE"; then
+    pass "G1i the app's build compiles no memory sessions: $G1I_FILE is not among its $(printf '%s\n' "$G1C_NATIVE" | grep -c .) files"
+  else
+    fail "G1i $G1I_FILE is compiled into the app's build (or its list could not be read)"
+  fi
+  if grep -qx "$G1I_FILE" <<< "$G1C_WEB"; then
+    pass "G1i   the control: the web build's own list holds $G1I_FILE"
+  else
+    fail "G1i   the control: the web build's list does not hold $G1I_FILE, so the native reading proves nothing"
   fi
 
   # G1e: the web tree holds no network crate and no vault crypto. The control
@@ -236,7 +255,24 @@ else
     else
       fail "G1h the web and the native core disagree:"; printf '%s\n' "$G1H_OUT" | tail -20 | sed 's/^/        /'
     fi
-    rm -f "$G1H_WORK/transcript.jsonl"
+    # **The chat** (paper 123): a three-turn chat in six languages, what each
+    # side hands out — take-outs, turns, restored answers, refusals — compared
+    # against the app with a vault; its control is a take-out with its history
+    # cut off, which must be seen.
+    if G1H_CHAT=$(node bridges/web/tests/chat_parity.mjs "$WEB_OUT" "$WEB_NATIVE/debug/examples/parity_replay" "$G1H_WORK" 2>&1); then
+      pass "G1h $(printf '%s\n' "$G1H_CHAT" | tail -1); the control (a take-out without its history) bit"
+    else
+      fail "G1h the web's chat and the app's disagree:"; printf '%s\n' "$G1H_CHAT" | tail -20 | sed 's/^/        /'
+    fi
+    # **The blocks** (paper 123): a protected value is protected at every
+    # whole-word place in the trial, as in the app; its control is the value
+    # inside a longer word, which must stay as it is.
+    if G1H_BLOCKS=$(node bridges/web/tests/the_blocks.mjs "$WEB_OUT" 2>&1); then
+      pass "G1h $G1H_BLOCKS"
+    else
+      fail "G1h the trial's blocks:"; printf '%s\n' "$G1H_BLOCKS" | tail -20 | sed 's/^/        /'
+    fi
+    rm -f "$G1H_WORK/transcript.jsonl" "$G1H_WORK/chat-transcript.jsonl"
     rmdir "$G1H_WORK" 2>/dev/null || true
   else
     fail "G1h the parity replay does not build, or there is no browser module:"; tail -15 /tmp/g1h.$$ | sed 's/^/        /'
@@ -1126,11 +1162,16 @@ G46_READERS=$(awk '
 ' "$OPS_C" | sort -u | tr '\n' ' ' | sed 's/ $//')
 # And the one place the gateway's context is filled.
 G46_FILLS=$(grep -c 'context: crate::gateway::Context {' "$OPS_C" 2>/dev/null || echo 0)
+# **A fourth reader since paper 123**, and it is the ruling rather than a
+# second builder: `question_to_take_out`, the web trial's copy, carries exactly
+# what `ask_model` hands the gateway — this builder's lines, flattened by the
+# gateway's own `instructions` — so a person's model is shown what the app's is
+# (`the_trials_take_out_is_what_the_model_is_handed`).
 if [ "$G46_BUILT" = "1" ] && [ "$G46_FILLS" = "1" ] \
-   && [ "$G46_READERS" = "ask_model build_the_chat the_question_alone" ]; then
-  pass "G46 one builder makes the chat, and its readers are the three that need it: ask_model, build_the_chat, the_question_alone"
+   && [ "$G46_READERS" = "ask_model build_the_chat question_to_take_out the_question_alone" ]; then
+  pass "G46 one builder makes the chat, and its readers are the four that need it: ask_model, build_the_chat, question_to_take_out, the_question_alone"
 else
-  fail "G46 the chat is built in $G46_BUILT place(s), the context is filled in $G46_FILLS, and the readers are «$G46_READERS» — expected one, one, and «ask_model build_the_chat the_question_alone»"
+  fail "G46 the chat is built in $G46_BUILT place(s), the context is filled in $G46_FILLS, and the readers are «$G46_READERS» — expected one, one, and «ask_model build_the_chat question_to_take_out the_question_alone»"
 fi
 
 # **And the copy assembles nothing of its own** — point 3's own half. The door
@@ -2983,10 +3024,14 @@ DOORS_OUT=$(awk '
   /payload_view\(/ { handed = 1 }
   END { verdict() }
 ' "$DOORS" | sort -u | tr '\n' ' ' | sed 's/ $//')
-if [ "$DOORS_OUT" = "ask_model chat_to_take_out payload_to_take_out send" ]; then
-  pass "G36 four doors take text out of this machine, and the list is the measured one"
+# **And a fifth since paper 123**: `question_to_take_out`, the web trial's copy
+# of a question that follows another — what `ask_model` hands its model, for a
+# person to carry. Compiled for the web and the test build only; read here as a
+# door all the same, because it is one.
+if [ "$DOORS_OUT" = "ask_model chat_to_take_out payload_to_take_out question_to_take_out send" ]; then
+  pass "G36 five doors take text out of this machine, and the list is the measured one"
 else
-  fail "G36 the doors that take text out are: $DOORS_OUT — expected «ask_model chat_to_take_out payload_to_take_out send», so a door appeared that nobody measures"
+  fail "G36 the doors that take text out are: $DOORS_OUT — expected «ask_model chat_to_take_out payload_to_take_out question_to_take_out send», so a door appeared that nobody measures"
 fi
 
 # **And every door that takes text out takes the preview's copy with it — with
@@ -2998,7 +3043,7 @@ fi
 # `copying_the_chat_leaves_a_document_that_never_left_in_the_preview` is the
 # measurement, and it is what makes this line an exception rather than a hole.
 G36_STAYS=""
-for door in ask_model payload_to_take_out send; do
+for door in ask_model payload_to_take_out question_to_take_out send; do
   if ! awk -v want="$door" '
     $0 ~ "^(pub\\(crate\\) )?fn " want "\\(" { inside = 1 }
     inside && /the_preview_has_left\(/ { found = 1 }
@@ -3194,13 +3239,24 @@ BLOCKS=the_decisions_are_written
 # **Nothing deletes a block.** Every way a `Vec` loses an element, named — and
 # the whole of `z_core/src` asked, not only the vault, because a block deleted
 # from `ops` would be a block deleted.
-G35_GONE=$(grep -RnE '\.blocks\s*\.\s*(remove|retain|clear|pop|drain|truncate|swap_remove|dedup|split_off)|\.blocks\s*=' \
+#
+# **With one exception, named, and it is not the vault's**: the web trial keeps
+# the app's blocks in the page's memory (paper 123), and «Start over» — rule 87
+# (د), «يمسح كل شيء دفعة واحدة» — empties that memory, blocks and all, so that
+# no value of the old text is protected in the new one. It lives in
+# `memory_sessions.rs`, which the app's build does not compile (G1i), and it is
+# the only line there that may; anything else that deletes a block is refused.
+G35_MEMORY=z_core/src/memory_sessions.rs
+G35_ALL=$(grep -RnE '\.blocks\s*\.\s*(remove|retain|clear|pop|drain|truncate|swap_remove|dedup|split_off)|\.blocks\s*=' \
              z_core/src --include='*.rs' 2>/dev/null || true)
-if [ -z "$G35_GONE" ]; then
-  pass "G35 nothing in the core removes a block: it can be exempted from work, never deleted"
+G35_GONE=$(grep -v "^$G35_MEMORY:" <<< "$G35_ALL" | grep . || true)
+G35_TRIAL=$(grep "^$G35_MEMORY:" <<< "$G35_ALL" | grep -c . || true)
+if [ -z "$G35_GONE" ] && [ "$G35_TRIAL" -le 1 ]; then
+  pass "G35 nothing in the core removes a block: it can be exempted from work, never deleted (the trial's page memory empties once, at «Start over»: $G35_TRIAL line, web only)"
 else
   fail "G35 a block is deleted, and the owner's rule is that a block never disappears:"
   printf '%s\n' "$G35_GONE" | sed 's/^/        /'
+  [ "$G35_TRIAL" -le 1 ] || printf '        %s more than once in %s\n' "$G35_TRIAL" "$G35_MEMORY"
 fi
 
 # And the one writer. A second function reaching into the table is not wrong by

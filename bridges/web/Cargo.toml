@@ -32,8 +32,12 @@ z_core = { path = "../../z_core", features = ["web"] }
 # or the glue and the module disagree about their own imports.
 wasm-bindgen = "=0.2.130"
 
+# Natively this crate exists only for the parity replay. `fake_provider` is
+# the test build's feature, and the one that compiles `z_core::web` — the
+# trial's own doors (paper 123) — for a native build: the replay needs them,
+# and the app's build never has them.
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-z_core = { path = "../../z_core" }
+z_core = { path = "../../z_core", features = ["fake_provider"] }
 
 [[example]]
 name = "parity_replay"

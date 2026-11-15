@@ -35,6 +35,8 @@ mod ops;
 mod config;
 mod conversation;
 mod data_dir;
+#[cfg(feature = "web")]
+mod memory_sessions;
 mod gateway;
 mod payload;
 mod returning;
@@ -110,6 +112,41 @@ pub mod measuring {
     /// into `haystack` itself.
     pub fn whole_word_places(haystack: &str, needle: &str) -> Vec<(usize, usize)> {
         crate::text::occurrences(haystack, needle)
+    }
+}
+
+/// **The trial's own doors** — paper 123, beside the contract and not in it.
+///
+/// `api` is the contract the app's bridge is generated from, whole; these two
+/// are the web trial's and have no caller in the app, so they stand outside it
+/// and the app's bridge never sees them. Compiled for the web build, and for the
+/// test build (`fake_provider`) whose suite measures the take-out against
+/// `ask_model` and replays the trial's calls natively.
+#[cfg(any(feature = "web", feature = "fake_provider"))]
+pub mod web {
+    use crate::api::{ApiResult, PayloadHandle, SessionId};
+
+    /// The take-out for a question that follows another, and its handle.
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub struct QuestionToTakeOut {
+        /// The exchange before, then the question: what `ask_model` hands the
+        /// gateway, flattened as the gateway flattens it.
+        pub text: String,
+        /// The question's payload, which an answer pasted back is tied to.
+        pub handle: PayloadHandle,
+    }
+
+    /// **The question that follows, with the exchange before it** — rule 87
+    /// (أ). See `ops::question_to_take_out`.
+    pub fn question_to_take_out(session: SessionId) -> ApiResult<QuestionToTakeOut> {
+        let (text, handle) = crate::ops::question_to_take_out(session)?;
+        Ok(QuestionToTakeOut { text, handle })
+    }
+
+    /// **Start over** — rule 87 (د): the bench and the session it writes into
+    /// go from memory together. See `ops::close_the_trial`.
+    pub fn close(session: SessionId) -> ApiResult<()> {
+        crate::ops::close_the_trial(session)
     }
 }
 

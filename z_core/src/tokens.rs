@@ -593,7 +593,143 @@ pub(crate) fn restore(raw: &str, values: &Values<'_>, allowed: &[String]) -> Res
     if !plain.is_empty() {
         out.push(Segment { text: plain, piece: Piece::Words });
     }
-    Restoration { segments: out, unknown }
+    // **Then the tokens a chat page changed the shape of** — rule 87 (ب). The
+    // walk above is untouched and reads every token it read before; what it
+    // left as words is read once more for the two shapes the ruling names.
+    let mut read: Vec<Segment> = Vec::with_capacity(out.len());
+    for segment in out {
+        if segment.piece != Piece::Words {
+            read.push(segment);
+            continue;
+        }
+        for piece in reshaped_tokens(&segment.text, values, allowed, &mut unknown) {
+            match (read.last_mut(), piece.piece) {
+                (Some(last), Piece::Words) if last.piece == Piece::Words => last.text.push_str(&piece.text),
+                _ => read.push(piece),
+            }
+        }
+    }
+    Restoration { segments: read, unknown }
+}
+
+/// **A token whose shape the chat page changed** — rule 87 (ب), paper 123
+/// §2.3, measured before it was written (the §0 table of that paper).
+///
+/// A rendered chat eats the `__` around a token as markdown bold, and copying
+/// it gives `Z_9F3F_PERSON_A2C0`; a markdown source escapes every `_` as `\_`.
+/// Either way the answer came back with the person's names as codes nobody
+/// could read. So in what the walk left as words, a candidate is read as a
+/// token when **all** of these hold:
+///
+/// * its form is one of two: the `__` eaten on either side or both, or every
+///   `_` escaped as `\_` — nothing else (one `_` lost, a space inside, lower
+///   case, a direction mark: all stay text, as the ruling leaves them);
+/// * put back into its true shape it parses as a token (`parts_of`) **and is
+///   in this payload's allowed list**, asked first and deciding by itself, so
+///   reading more shapes cannot widen what a turn may carry: an eaten look-alike
+///   of another namespace stays text, and is not even reported;
+/// * it stands at a word boundary — no letter, digit, `_` or `\` glued before
+///   or after it.
+///
+/// An **intact** token found here is one the walk paired wrongly (an eaten
+/// close before it took its opening `__`), and it is read exactly as the walk
+/// reads one: restored when allowed, reported when not.
+fn reshaped_tokens(
+    text: &str,
+    values: &Values<'_>,
+    allowed: &[String],
+    unknown: &mut Vec<String>,
+) -> Vec<Segment> {
+    let mut out: Vec<Segment> = Vec::new();
+    let mut plain = String::new();
+    let mut cursor = 0usize;
+    let push_plain = |out: &mut Vec<Segment>, plain: &mut String| {
+        if !plain.is_empty() {
+            out.push(Segment { text: std::mem::take(plain), piece: Piece::Words });
+        }
+    };
+    while cursor < text.len() {
+        let Some(rest) = text.get(cursor..) else { break };
+        let found = reshaped_at(text, cursor).and_then(|(end, token, intact)| {
+            let allowed_here = allowed.iter().any(|t| t == &token);
+            match allowed_here.then(|| values.value_for(&token)).flatten() {
+                Some(value) => Some((end, Segment { text: value, piece: Piece::Restored })),
+                None if intact => {
+                    if !unknown.iter().any(|t| t == &token) {
+                        unknown.push(token.clone());
+                    }
+                    Some((end, Segment { text: token, piece: Piece::Unresolved }))
+                }
+                None => None,
+            }
+        });
+        match found {
+            Some((end, segment)) => {
+                push_plain(&mut out, &mut plain);
+                out.push(segment);
+                cursor = end;
+            }
+            None => {
+                let Some(c) = rest.chars().next() else { break };
+                plain.push(c);
+                cursor += c.len_utf8();
+            }
+        }
+    }
+    push_plain(&mut out, &mut plain);
+    out
+}
+
+/// One candidate at byte `at`: where it ends, the token it stands for, and
+/// whether it was intact. `None` when nothing at `at` is one of the shapes.
+fn reshaped_at(text: &str, at: usize) -> Option<(usize, String, bool)> {
+    const ESCAPED: &str = "\\_";
+    let rest = text.get(at..)?;
+    let glued = |c: char| c.is_alphanumeric() || c == '_' || c == '\\';
+    let free_before = text.get(..at).and_then(|b| b.chars().next_back()).is_none_or(|c| !glued(c));
+    let run = |from: usize, ok: &dyn Fn(u8) -> bool| -> usize {
+        text.as_bytes().get(from..).map_or(0, |b| b.iter().take_while(|x| ok(**x)).count())
+    };
+    let alnum = |b: u8| b.is_ascii_alphanumeric();
+    let upper = |b: u8| b.is_ascii_uppercase() || b.is_ascii_digit();
+    // Three parts after the `Z`, with `sep` between them.
+    let parts = |mut at: usize, sep: &str| -> Option<(usize, String)> {
+        let ns_len = run(at, &alnum);
+        let ns = text.get(at..at + ns_len)?;
+        at += ns_len;
+        at += text.get(at..)?.starts_with(sep).then_some(sep.len())?;
+        let kind_len = run(at, &upper);
+        let kind = text.get(at..at + kind_len)?;
+        at += kind_len;
+        at += text.get(at..)?.starts_with(sep).then_some(sep.len())?;
+        let tail_len = run(at, &alnum);
+        let tail = text.get(at..at + tail_len)?;
+        Some((at + tail_len, format!("__Z_{ns}_{kind}_{tail}__")))
+    };
+    let (end, token, intact) = if rest.starts_with("\\_\\_Z\\_") {
+        // Every `_` escaped, the two closing ones too.
+        let (end, token) = parts(at + 3 * ESCAPED.len() + 1, ESCAPED)?;
+        let end = end + text.get(end..)?.starts_with("\\_\\_").then_some(2 * ESCAPED.len())?;
+        (end, token, false)
+    } else {
+        let lead = rest.starts_with("__Z_");
+        if !lead && !rest.starts_with("Z_") {
+            return None;
+        }
+        let (end, token) = parts(at + if lead { 4 } else { 2 }, "_")?;
+        let trail = text.get(end..).is_some_and(|t| t.starts_with("__"));
+        (if trail { end + 2 } else { end }, token, lead && trail)
+    };
+    parts_of(&token)?;
+    // A reshaped token stands on its own; an intact one is read as the walk
+    // reads it, wherever it stands.
+    if !intact {
+        let free_after = text.get(end..).and_then(|t| t.chars().next()).is_none_or(|c| !glued(c));
+        if !free_before || !free_after {
+            return None;
+        }
+    }
+    Some((end, token, intact))
 }
 
 /// Is this candidate one of **our** token names?

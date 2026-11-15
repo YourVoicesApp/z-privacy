@@ -864,6 +864,10 @@ pub(crate) struct Core {
     /// absent means this run has not read that session's file at all, and a
     /// write with nothing read behind it may only create.
     pub session_as_read: BTreeMap<u32, Option<Vec<u8>>>,
+    /// **Each trial session's file, in memory** — paper 123, the web only.
+    /// What `sessions/N.zs` holds in the app, unsealed and never written.
+    #[cfg(feature = "web")]
+    pub memory_bodies: crate::memory_sessions::MemoryBodies,
     /// **What the disk said about the last act that tried to write** — paper
     /// 102 §2.
     ///
@@ -895,6 +899,8 @@ impl Core {
             chats_opened: Vec::new(),
             conversation_before_the_lock: None,
             session_as_read: BTreeMap::new(),
+            #[cfg(feature = "web")]
+            memory_bodies: crate::memory_sessions::MemoryBodies::default(),
             the_disk_refused: None,
         }
     }

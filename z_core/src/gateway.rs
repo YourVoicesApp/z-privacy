@@ -148,7 +148,12 @@ pub(crate) fn send(request: Request) -> ApiResult<Answer> {
 /// take them apart will be given them apart; this is V1's flattening and it
 /// lives here rather than in a provider, so no provider learns what a workspace
 /// is.
-fn instructions(context: &Context) -> String {
+///
+/// **Read by one more hand since paper 123**: the trial's take-out
+/// (`ops::question_to_take_out`) flattens the same history with this same
+/// function, so what a person carries to their own model is what `ask_model`
+/// hands the gateway — one flattening, not two.
+pub(crate) fn instructions(context: &Context) -> String {
     let mut out = String::new();
     for line in context.workspace.iter().chain(context.history.iter()) {
         if line.trim().is_empty() {

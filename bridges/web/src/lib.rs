@@ -1,6 +1,6 @@
 //! # z_web — the trial's door into the core (paper 122 part A)
 //!
-//! The page loads this as `z_web.js` + `z_web_bg.wasm` and calls ten
+//! The page loads this as `z_web.js` + `z_web_bg.wasm` and calls fifteen
 //! synchronous functions, each taking one JSON string and answering one. The
 //! doors themselves live in [`doors`], as plain Rust, so that the parity test
 //! can replay the browser's calls through the native core.
@@ -36,5 +36,10 @@ mod exports {
         z_payload_to_take_out,
         z_ingest_answer,
         z_restored_view,
+        z_set_question,
+        z_question_to_take_out,
+        z_turns,
+        z_end_the_chat,
+        z_close,
     );
 }

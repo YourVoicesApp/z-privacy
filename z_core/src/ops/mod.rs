@@ -48,6 +48,32 @@ pub(crate) fn close_session(session: SessionId) -> ApiResult<()> {
     }
 }
 
+/// **Start over** — rule 87 (د), paper 123 §2.4: the bench, and the session
+/// it writes its turns into, leave memory in one act.
+///
+/// The bench goes with its tokens, its payloads and its answers, so a later
+/// call with its id is refused as `InvalidSession` and none of its tokens
+/// restores anywhere: a new bench has its own store, and an answer pasted into
+/// it names tokens no allowed list of its holds. The session goes too — on the
+/// web its record and its body are this page's memory and are dropped; the
+/// chat a new text begins is a new session with a new number.
+///
+/// Refused by name for a bench that is not open, and nothing is forgotten then.
+#[cfg(any(feature = "web", feature = "fake_provider"))]
+pub(crate) fn close_the_trial(session: SessionId) -> ApiResult<()> {
+    with_core(|core| {
+        if core.sessions_get(session.id).is_none() {
+            return Err(ApiError::InvalidSession);
+        }
+        if let Some(number) = core.open_conversation {
+            conversation::forget_in(core, number)?;
+            core.chats_opened.retain(|n| *n != number);
+        }
+        core.close(session.id);
+        Ok(())
+    })
+}
+
 pub(crate) fn session_revision(session: SessionId) -> ApiResult<Revision> {
     with_session(session.id, |s| Revision { n: s.revision }).ok_or(ApiError::InvalidSession)
 }
@@ -886,6 +912,39 @@ pub(crate) fn chat_to_take_out(session: SessionId) -> ApiResult<crate::api::Chat
     // question would come home unresolved and the person would read their own
     // token in the answer.
     Ok(crate::api::ChatToTakeOut { what_leaves: payload_view(handle)?, handle })
+}
+
+/// **The question that follows, with the exchange before it, for a person to
+/// carry** — paper 123, rule 87 (أ): the trial's take-out for turn two and
+/// after, «as in the app».
+///
+/// **Exactly what `ask_model` hands the gateway, from the same builders**:
+/// the history is `the_chat_so_far` (110: the one exchange before, as it
+/// travelled), flattened by `gateway::instructions`, which is how the gateway
+/// writes it for a provider; then the question alone, as `build_the_question_
+/// alone` built it — the payload this answer will be tied to. No second
+/// builder, and no wider history than the app sends: the parity test
+/// (`the_trials_take_out_is_what_the_model_is_handed`) holds the two equal.
+///
+/// The handle is the question's, so an answer pasted against it is restored by
+/// that payload's allowed list (G9) — the question's tokens and every token
+/// the chat has carried, as `the_question_alone` draws it — and the turn it
+/// writes keeps its question.
+///
+/// It is a door text leaves by, so it asks the one law (G28), and it takes the
+/// preview's copy out as `ask_model` does (089 rule 9). Compiled for the web,
+/// and for the test build that measures it against `ask_model`; the app has no
+/// caller for it.
+#[cfg(any(feature = "web", feature = "fake_provider"))]
+pub(crate) fn question_to_take_out(session: SessionId) -> ApiResult<(String, PayloadHandle)> {
+    no_word_waits(session.id)?;
+    let handle = build_the_question_alone(session)?;
+    let question = payload_view(handle)?.text;
+    let history = with_core(crate::ops::conversation::the_chat_so_far)?.lines;
+    let before = crate::gateway::instructions(&crate::gateway::Context { workspace: Vec::new(), history });
+    with_core(|core| conversation::the_preview_has_left(core, session.id));
+    let text = if before.is_empty() { question } else { format!("{before}\n\n{question}") };
+    Ok((text, handle))
 }
 
 /// The chat as one payload, kept like any other so that what leaves is named by

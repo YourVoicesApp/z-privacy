@@ -305,6 +305,7 @@ pub(crate) fn open() -> ApiResult<Option<u32>> {
 /// have known was wrong. So the stale number is dropped here rather than
 /// answered twice: one fact, one source, and the next document is born into a
 /// session that exists.
+#[cfg(not(feature = "web"))]
 pub(crate) fn open_in(core: &mut crate::session::Core) -> Option<u32> {
     let held = core.open_conversation?;
     if core.vault.state() == crate::api::VaultState::Unlocked
@@ -355,16 +356,24 @@ pub(crate) fn rename(number: u32, name: String) -> ApiResult<()> {
 /// the key is already gone, and a ciphertext nobody can open is a better
 /// leftover than a key for a conversation the person believes is deleted.
 pub(crate) fn forget(number: u32) -> ApiResult<String> {
-    with_core(|core| {
-        let name = core.vault.forget_conversation(number)?;
-        if core.open_conversation == Some(number) {
-            core.open_conversation = None;
-        }
-        if let Some(dir) = core.vault.dir() {
-            crate::conversation::remove(dir, number)?;
-        }
-        Ok(name)
-    })
+    with_core(|core| forget_in(core, number))
+}
+
+/// The forgetting itself, with the core in hand — split out of [`forget`] for
+/// the trial's «Start over» (paper 123), which forgets the session in the same
+/// act that closes the bench.
+pub(crate) fn forget_in(core: &mut crate::session::Core, number: u32) -> ApiResult<String> {
+    let name = core.vault.forget_conversation(number)?;
+    if core.open_conversation == Some(number) {
+        core.open_conversation = None;
+    }
+    // The trial's file is the page's memory, and it goes with the record.
+    #[cfg(feature = "web")]
+    core.memory_bodies.remove(number);
+    if let Some(dir) = core.vault.dir() {
+        crate::conversation::remove(dir, number)?;
+    }
+    Ok(name)
 }
 
 /// Add one exchange to the open session's file.
@@ -1192,6 +1201,7 @@ fn take_the_names(
 /// in between, or a file an older vault left at this number in this folder. It
 /// is refused by name (`SessionChangedElsewhere`), and the refusal reaches the
 /// glass — §2 — rather than being swallowed by the one caller that discards it.
+#[cfg(not(feature = "web"))]
 fn write_body(
     core: &mut crate::session::Core,
     number: u32,
@@ -1225,6 +1235,7 @@ fn write_body(
 /// **Read this session's file, and remember what was there** — the other half
 /// of the guard above: a body is handed to a caller together with the fact
 /// that these were the bytes it came from.
+#[cfg(not(feature = "web"))]
 fn body(
     core: &mut crate::session::Core,
     number: u32,
@@ -1246,3 +1257,48 @@ fn body(
         }
     }
 }
+
+// ---------------------------------------------------------------- the trial
+//
+// **The web's three twins** — paper 123, the lead's cut. The trial has no vault
+// and no files, so its session is open while this page holds it, and its file
+// is a body in the page's memory (`memory_sessions.rs`). Everything that calls
+// these three is the app's own code, unchanged.
+
+/// The trial's session is open while this page holds it. A number the memory
+/// list no longer holds (it was closed) is dropped, as the app drops a stale
+/// one.
+#[cfg(feature = "web")]
+pub(crate) fn open_in(core: &mut crate::session::Core) -> Option<u32> {
+    let held = core.open_conversation?;
+    if core.vault.holds_in_memory(held) {
+        return Some(held);
+    }
+    core.open_conversation = None;
+    None
+}
+
+/// The trial's file is the page's memory: no seal, no disk.
+#[cfg(feature = "web")]
+fn write_body(
+    core: &mut crate::session::Core,
+    number: u32,
+    body: &crate::conversation::Body,
+) -> ApiResult<()> {
+    if !core.vault.holds_in_memory(number) {
+        return Err(ApiError::PayloadRefused {
+            reason: "there is no session open to write to".to_string(),
+        });
+    }
+    core.memory_bodies.put(number, body);
+    Ok(())
+}
+
+#[cfg(feature = "web")]
+fn body(
+    core: &mut crate::session::Core,
+    number: u32,
+) -> ApiResult<Option<crate::conversation::Body>> {
+    Ok(core.memory_bodies.get(number))
+}
+

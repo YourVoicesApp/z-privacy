@@ -7,7 +7,9 @@
 // same `init` the page calls), and every call is written down as
 // `{door, request, response}`. The native replay (`examples/parity_replay.rs`)
 // then sends the same requests, in the same order, through the same doors
-// built against the **native** core, and every answer must be the same:
+// built against the **native** core — since paper 123 the app's own, with a
+// vault in a temporary folder, because the trial keeps the app's blocks in its
+// memory and is measured against the app — and every answer must be the same:
 // findings, marks, protected text, restored text, refusals.
 //
 // Tokens are the one thing allowed to differ, and only in their letters: each
@@ -80,6 +82,8 @@ const utf16 = (text, needle) => text.indexOf(needle);
 const summary = [];
 for (const [lang, handWord, handKind] of LANGUAGES) {
   const text = fs.readFileSync(path.join(here, 'fixtures', `${lang}.txt`), 'utf8');
+  // Each language on an empty vault on the native side (see the replay).
+  transcript.push({ door: '__fresh_vault', request: '{}', response: '{"ok":{}}' });
   const session = ok(lang, 'open', call('z_open', { pack: lang }))?.session;
   if (session === undefined) continue;
   ok(lang, 'import', call('z_import_text', { session, text }));
@@ -115,7 +119,10 @@ for (const [lang, handWord, handKind] of LANGUAGES) {
     expect(lang, 'PIN: z_protect on a suggestion leaves it open', still.error === 'open_suggestions' && still.count === before.count);
     ok(lang, 'unprotect the pinned place', call('z_unprotect', { session, start: last.start, end: last.end }));
     view = ok(lang, 'scan after the pin', call('z_scan', { session }))?.view ?? view;
-    expect(lang, 'the pinned suggestion is open again', view.marks.some((m) => m.state === 'suggested' && m.start === last.start && m.end === last.end));
+    // Since paper 123 the trial has the app's blocks: the value is still
+    // protected at its other place, so a rescan protects this one again (as the
+    // app does) or asks again — it never leaves it in the clear.
+    expect(lang, 'the pinned place is not left in the clear', view.marks.some((m) => m.start === last.start && m.end === last.end));
     void p;
   }
 
@@ -151,12 +158,19 @@ for (const [lang, handWord, handKind] of LANGUAGES) {
   expect(lang, 'the restored answer is the document, with every value back', restored.text === `Answer:\n${view.text}`);
   expect(lang, 'something was restored', restored.segments.some((s) => s.piece === 'restored'));
   summary.push(`${lang}: ${scanned} marks after the scan, ${out.protected_count} protected, left «${left ?? '-'}»`);
+  // Each language is its own trial: «Start over» before the next.
+  ok(lang, 'close', call('z_close', { session }));
 }
 
 // ------------------------------------------------------------- the replay
 const file = path.join(work, 'transcript.jsonl');
 fs.writeFileSync(file, transcript.map((t) => JSON.stringify(t)).join('\n') + '\n');
-const run = spawnSync(replayBin, [file], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+// **Against the app, vault and all** — paper 123: the trial keeps its blocks
+// in memory as the app keeps them in its vault, so the native side it is
+// measured against is the app's own, with a vault in a temporary folder.
+const vaults = fs.mkdtempSync(path.join(work, 'vaults-'));
+const run = spawnSync(replayBin, ['--vault', vaults, file], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+fs.rmSync(vaults, { recursive: true, force: true });
 if (run.status !== 0) {
   console.error(`the native replay failed (${run.status}): ${run.stderr}`);
   process.exit(1);
