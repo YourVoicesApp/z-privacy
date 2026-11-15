@@ -24,7 +24,16 @@
 - **17.86 % cached**;
 - 1.19k requests from AI crawlers.
 
-**Not measured:** there is no nginx on this machine, so the lines in §3 are checked by `nginx -t` on the server and by the curl checks in §5, not here.
+**Measured by ed, 15 Nov:**
+- He ran Ubuntu's own nginx 1.28.3 package, unpacked without root, on `127.0.0.1` against `site-trial/` (scratchpad `ngx125/`).
+- The first draft of §3 answered **500** on `/<lang>/try/`: an `alias` to a file, plus the index module, gives `index.htmlindex.html`.
+- A map that kept the old line above the new one sent Swedish to `/en/try/`.
+- Both are corrected below, and every other line works as written:
+  - the 301;
+  - `alias` with `$trial_file`, with the right types and headers;
+  - no traversal (`../` → 404, `%2e%2e` → 400);
+  - `.wasm` as `application/wasm`;
+  - the front pages unchanged.
 
 ## 1 · Where the trial stands (rule 85: the first screen is the chat)
 
@@ -74,7 +83,17 @@ add_header Permissions-Policy "geolocation=(), camera=(), microphone=(), interes
 add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
 ```
 
-**3. The locations,** in the z-privacy.com `server {}` block, above the existing ones:
+**3. The locations,** in the z-privacy.com `server {}` block, **above every existing `location ~` line.** nginx checks regex locations in file order, so an existing one such as `location ~* \.(js|css|wasm)$` placed above would take the trial's files.
+
+First, look at what is there:
+
+```
+grep -n 'location' <the z-privacy.com file>
+```
+
+If it shows a `location ^~ /en/` (or `/ar/`, `/de/`, and so on), stop and send the lead the output: such a prefix stops the trial's regexes from ever being checked.
+
+The lines:
 
 ```
 # /<lang>/try → /<lang>/try/
@@ -84,14 +103,14 @@ location ~ ^/(en|ar|de|fr|es|sv)/try$ { return 301 /$1/try/; }
 location ~ ^/(?:en|ar|de|fr|es|sv)/try/(?:index\.html)?$ {
     include snippets/zprivacy-trial-headers.conf;
     add_header Cache-Control "no-cache" always;
-    alias /srv/zprivacy/site-trial/index.html;
-    default_type text/html;
+    root /srv/zprivacy/site-trial;
+    try_files /index.html =404;
 }
 location ~ ^/(?:en|ar|de|fr|es|sv)/try/flutter_bootstrap\.js$ {
     include snippets/zprivacy-trial-headers.conf;
     add_header Cache-Control "no-cache" always;
-    alias /srv/zprivacy/site-trial/flutter_bootstrap.js;
-    default_type text/javascript;
+    root /srv/zprivacy/site-trial;
+    try_files /flutter_bootstrap.js =404;
 }
 # Every other file of the trial.
 location ~ ^/(?:en|ar|de|fr|es|sv)/try/(?<trial_file>.+)$ {
@@ -101,7 +120,7 @@ location ~ ^/(?:en|ar|de|fr|es|sv)/try/(?<trial_file>.+)$ {
 }
 ```
 
-**4. «/» to the trial:** in the `map` (in `http {}`), add `sv`:
+**4. «/» to the trial:** in the `map` (in `http {}`), **replace** the regex line with this one. There must be only one regex line: with the old one left above it, Swedish is sent to English (measured).
 
 ```
     "~*(?:^|,)\s*(?<zp>ar|de|fr|es|en|sv)(?:[-;,\s]|$)" $zp;
