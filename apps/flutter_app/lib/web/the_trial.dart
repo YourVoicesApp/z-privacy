@@ -174,6 +174,13 @@ class TheTrial extends StatefulWidget {
   static const erase = ValueKey<String>('trial-erase');
   static const cancelStartOver = ValueKey<String>('trial-start-over-cancel');
 
+  // Paper 124: Scribe's editor (rule 88 (ح)).
+  static const scribe = ValueKey<String>('trial-scribe');
+  static const scribeLogo = ValueKey<String>('trial-scribe-logo');
+  static const scribeSentence = ValueKey<String>('trial-scribe-sentence');
+  static ValueKey<String> sendToTheEditor(int answer) =>
+      ValueKey<String>('trial-send-to-the-editor-$answer');
+
   @override
   State<TheTrial> createState() => _TheTrialState();
 }
@@ -548,8 +555,11 @@ class _TheTrialState extends State<TheTrial> {
     await emptyTheClipboardFirst();
     _ourCopyIsOnTheClipboard = false;
     if (_done.isEmpty) return;
-    await Clipboard.setData(ClipboardData(text: _theDocumentAsText(t)));
+    final copy = _theDocumentAsText(t);
+    await Clipboard.setData(ClipboardData(text: copy));
     _ourCopyIsOnTheClipboard = true;
+    // Z's copy, to Scribe's editor: a paste of it there counts as AI (88 (د)).
+    page.handTheCopyToTheEditor(copy);
   }
 
   /// **«Start over»** (87 (د)). With a document on the page it asks once;
@@ -594,6 +604,8 @@ class _TheTrialState extends State<TheTrial> {
     }
     _reading?.cancel();
     _asking?.cancel();
+    // Scribe's editor goes with everything else (rule 88 (ح)).
+    page.dropTheEditor();
     final core = _core;
     if (core == null || !mounted) return;
     try {
@@ -736,6 +748,8 @@ class _TheTrialState extends State<TheTrial> {
         ],
         const SizedBox(height: 16),
         _answerSide(t),
+        const SizedBox(height: 10),
+        _scribe(t),
         if (_chatOpen) ...[const SizedBox(height: 16), _theChat(t)],
         if (_chatOpen) ...[const SizedBox(height: 18), _document(t)],
         const SizedBox(height: 24),
@@ -1025,6 +1039,57 @@ class _TheTrialState extends State<TheTrial> {
     ),
   );
 
+  /// **Scribe's button** (paper 124, rule 88 (ح)), under the answer box: its
+  /// mark, and beside it the sentence with Scribe's name in bold. It opens
+  /// Scribe's editor over the trial (`the_page.dart`); nothing of the trial
+  /// goes with it — an answer goes only by «Send to the editor».
+  Widget _scribe(AppLocalizations t) {
+    final sentence = t.trialScribe;
+    const name = 'Scribe';
+    final at = sentence.indexOf(name);
+    return Align(
+      alignment: AlignmentDirectional.centerStart,
+      child: TextButton(
+        key: TheTrial.scribe,
+        onPressed: () => page.openTheEditor(),
+        style: TextButton.styleFrom(
+          foregroundColor: Zc.ink,
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Image.asset(
+              'assets/scribe/scribe-mark.png',
+              key: TheTrial.scribeLogo,
+              width: 24,
+              height: 24,
+            ),
+            const SizedBox(width: 10),
+            Flexible(
+              child: Text.rich(
+                key: TheTrial.scribeSentence,
+                TextSpan(
+                  children: at < 0
+                      ? [TextSpan(text: sentence)]
+                      : [
+                          if (at > 0) TextSpan(text: sentence.substring(0, at)),
+                          const TextSpan(
+                            text: name,
+                            style: TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                          TextSpan(text: sentence.substring(at + name.length)),
+                        ],
+                ),
+                style: Zc.body.copyWith(fontFamily: trialFont),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   /// **The chat** (rule 87 (أ), rules 65–68), under the answer box: the
   /// thread, each answer coded with one «Show the text», drawn by the app's
   /// own turn widget (`the_chat_turn.dart`) — and the box for the next
@@ -1049,6 +1114,8 @@ class _TheTrialState extends State<TheTrial> {
                   setState(() => _openTurn = _openTurn == i ? null : i),
               onSaid: (line) => _said(line),
               coded: _coded,
+              // Paper 124: Z's copy of a restored answer, to the editor.
+              onCopied: page.handTheCopyToTheEditor,
             ),
             const SizedBox(height: 14),
           ],
@@ -1179,6 +1246,17 @@ class _TheTrialState extends State<TheTrial> {
               ),
               textDirection: theWayTheTextReads(_done[i].turn.answer.text),
               style: Zc.document,
+            ),
+            // Paper 124: the answer, restored, into Scribe's editor as AI's.
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: TextButton.icon(
+                key: TheTrial.sendToTheEditor(i),
+                onPressed: () =>
+                    page.openTheEditor(insert: _done[i].turn.answer.text),
+                icon: const Icon(Icons.edit_note_outlined, size: 18),
+                label: Text(t.trialSendToTheEditor),
+              ),
             ),
           ],
           const SizedBox(height: 20),

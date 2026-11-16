@@ -47,7 +47,13 @@ class ChatTurnView extends StatelessWidget {
     required this.onShow,
     required this.onSaid,
     required this.coded,
+    this.onCopied,
   });
+
+  /// After «Copy Restored» put the answer on the clipboard: the web trial
+  /// hands that copy to Scribe's editor, so a paste of it counts as AI
+  /// (paper 124, 88 (د)). The desktop passes none.
+  final ValueChanged<String>? onCopied;
 
   final ChatTurnShown turn;
 
@@ -111,7 +117,7 @@ class ChatTurnView extends StatelessWidget {
         ),
         if (open) ...[
           const SizedBox(height: 8),
-          _Bubble(turn: turn, at: at, onSaid: onSaid),
+          _Bubble(turn: turn, at: at, onSaid: onSaid, onCopied: onCopied),
         ],
       ],
     );
@@ -173,7 +179,14 @@ class _Side extends StatelessWidget {
 /// who cancels is left with an empty clipboard rather than with whatever they
 /// had copied before.
 class _Bubble extends StatefulWidget {
-  const _Bubble({required this.turn, required this.at, required this.onSaid});
+  const _Bubble({
+    required this.turn,
+    required this.at,
+    required this.onSaid,
+    this.onCopied,
+  });
+
+  final ValueChanged<String>? onCopied;
 
   final ChatTurnShown turn;
   final int at;
@@ -331,6 +344,7 @@ class _BubbleState extends State<_Bubble> {
     if (sure != true || !mounted) return;
     await Clipboard.setData(ClipboardData(text: text));
     if (!mounted) return;
+    widget.onCopied?.call(text);
     widget.onSaid(sentences.restoredTextCopied);
   }
 }

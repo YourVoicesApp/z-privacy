@@ -718,5 +718,7 @@
   "trialErase": "امسح",
   "trialQuestionNumber": "السؤال {n}",
   "theChatYou": "أنت",
-  "theChatCoded": "مرمّز"
+  "theChatCoded": "مرمّز",
+  "trialScribe": "Scribe: محرر نصوص خاص لكتابة الوثائق.",
+  "trialSendToTheEditor": "أرسل إلى المحرر"
 }

@@ -718,5 +718,7 @@
   "trialErase": "Radera",
   "trialQuestionNumber": "Fråga {n}",
   "theChatYou": "Du",
-  "theChatCoded": "Kodat"
+  "theChatCoded": "Kodat",
+  "trialScribe": "Scribe: en textredigerare för att skriva dokument.",
+  "trialSendToTheEditor": "Skicka till redigeraren"
 }

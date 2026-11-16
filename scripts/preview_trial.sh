@@ -17,6 +17,10 @@
 # stands on the live site is the owner's word (paper 122 §4); this is only the
 # preview's address.
 #
+# **CanvasKit is served at `/try/canvaskit/`** (paper 124), the build's own
+# `canvaskit/`, with the trial's headers: Z's page and Scribe's editor both
+# load it from there, as they will on the server.
+#
 # **Every other address is the live site's tree, read and never written**:
 # `/en/`, `/en/download/` and the rest come from `site/`, with `site/_headers`,
 # so the trial's two links («About Z, download and guide» and the band's
@@ -49,7 +53,9 @@ LANGS = ('en', 'ar', 'de', 'fr', 'es', 'sv')
 
 def read_headers(path):
     """`_headers` as the site writes it: a path pattern on its own line, its
-    headers indented under it, `#` for a comment. Applied exactly as written."""
+    headers indented under it, `#` for a comment, and `! Name` to take off a
+    header an earlier rule set (Cloudflare's detach; paper 124 uses it for
+    Scribe's page). Applied exactly as written."""
     rules, pattern = [], None
     if not os.path.isfile(path):
         return rules
@@ -60,6 +66,8 @@ def read_headers(path):
         if not line[0].isspace():
             pattern = line.strip()
             rules.append((pattern, []))
+        elif pattern is not None and line.strip().startswith('!'):
+            rules[-1][1].append((line.strip()[1:].strip(), None))
         elif pattern is not None and ':' in line:
             name, value = line.strip().split(':', 1)
             rules[-1][1].append((name.strip(), value.strip()))
@@ -84,6 +92,10 @@ class Preview(http.server.BaseHTTPRequestHandler):
         if path in ('', '/'):
             return ('redirect', '/en/try/')
         parts = path.split('/')
+        # CanvasKit, one copy at one absolute address for every language and
+        # for both pages, Z's and Scribe's (paper 124), as the server has it.
+        if len(parts) >= 4 and parts[1] == 'try' and parts[2] == 'canvaskit':
+            return (TRIAL, '/'.join(parts[2:]), TRIAL_HEADERS)
         if len(parts) >= 3 and parts[1] in LANGS and parts[2] == 'try':
             if len(parts) == 3:
                 return ('redirect', path + '/')
@@ -107,10 +119,16 @@ class Preview(http.server.BaseHTTPRequestHandler):
         self.send_header('Content-Length', str(len(body)))
         self.send_header('Cache-Control', 'no-store')
         url_path = urllib.parse.urlsplit(self.path).path
+        sent = []
         for pattern, headers in rules:
             if fnmatch.fnmatchcase(url_path, pattern) or fnmatchcase_root(pattern, url_path):
                 for name, value in headers:
-                    self.send_header(name, value)
+                    if value is None:  # `! Name`: what an earlier rule set goes
+                        sent = [(n, v) for n, v in sent if n.lower() != name.lower()]
+                    else:
+                        sent.append((name, value))
+        for name, value in sent:
+            self.send_header(name, value)
         self.end_headers()
         if self.command != 'HEAD':
             self.wfile.write(body)

@@ -2859,4 +2859,11 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get theChatCoded => 'codificado';
+
+  @override
+  String get trialScribe =>
+      'Scribe: un editor de texto para escribir documentos.';
+
+  @override
+  String get trialSendToTheEditor => 'Enviar al editor';
 }

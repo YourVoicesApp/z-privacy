@@ -5472,6 +5472,24 @@ else
   fi
 fi
 
+# **G74, Scribe's editor** — paper 124, rule 88 (ح). Against the assembled
+# trial (`site-trial/`, or Z_SITE_TRIAL): Z's page and Scribe's, each with its
+# real module. `scripts/check_the_editor_in_a_browser.sh` drives Chrome as a
+# visitor goes — the Scribe button, the frame, typing, «Send to the editor»,
+# «Close», «Start over» — then reads the browser's storage (empty) and the
+# CSP reports (none), and the control: a page of another origin may not frame
+# the editor. A tree with no assembled trial says so as a skip.
+G74_TRIAL="${Z_SITE_TRIAL:-$PWD/site-trial}"
+if ! command -v google-chrome >/dev/null 2>&1 && ! command -v chromium >/dev/null 2>&1; then
+  skip "G74 Scribe's editor in the trial" "no Chrome on this machine"
+elif [ ! -f "$G74_TRIAL/scribe/scribe_engine_bg.wasm" ]; then
+  skip "G74 Scribe's editor in the trial" "no assembled trial with Scribe's page at $G74_TRIAL (scripts/build_site_trial.sh)"
+elif G74E_OUT=$(scripts/check_the_editor_in_a_browser.sh "$G74_TRIAL" 2>&1); then
+  pass "G74 Scribe's editor in Chrome, real modules: $(grep -c '^ok' <<< "$G74E_OUT") steps, the storage empty after them, no CSP report, and another origin may not frame it"
+else
+  fail "G74 Scribe's editor in the trial:"; grep -E '^FAIL|check_the_editor' <<< "$G74E_OUT" | head -20 | sed 's/^/        /'
+fi
+
 NUMBERS=docs/MEASURED_ON_LINUX.txt
 if [ ! -f "$NUMBERS" ]; then
   fail "the numbers Windows is compared against: $NUMBERS is missing"

@@ -63,7 +63,13 @@ printf '<!doctype html><title>fixture</title>\n' > "$FIX/index.html"
 printf '// fixture\n' > "$FIX/z_web.js"
 printf '\0asm\1\0\0\0' > "$FIX/z_web_bg.wasm"
 CSP="default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; connect-src 'self'"
-printf '# fixture\n/*\n  Content-Security-Policy: %s\n  X-Fixture: one, two\n' "$CSP" > "$FIX/_headers"
+# Paper 124: Scribe's page under scribe/, whose rule takes the two framing
+# headers of /* off (`! Name`) and sends its own.
+SCRIBE_CSP="default-src 'none'; frame-ancestors 'self'"
+mkdir -p "$FIX/scribe" "$FIX/canvaskit"
+printf '\0asm\1\0\0\0' > "$FIX/canvaskit/canvaskit.wasm"
+printf '<!doctype html><title>scribe fixture</title>\n' > "$FIX/scribe/index.html"
+printf '# fixture\n/*\n  Content-Security-Policy: %s\n  X-Frame-Options: DENY\n  X-Fixture: one, two\n\n/*/try/scribe/*\n  ! Content-Security-Policy\n  ! X-Frame-Options\n  Content-Security-Policy: %s\n  X-Frame-Options: SAMEORIGIN\n' "$CSP" "$SCRIBE_CSP" > "$FIX/_headers"
 
 LOG="$WORK/preview.out"
 "$PREVIEW" "$FIX" 0 > "$LOG" 2>/dev/null &
@@ -84,8 +90,23 @@ else
   HEAD="$(curl -s -D - -o /dev/null "http://127.0.0.1:$PORT/ar/try/")"
   grep -qxF "Content-Security-Policy: $CSP"$'\r' <<< "$HEAD" && ok "the CSP is sent exactly as _headers writes it" || bad "the CSP is not the one in _headers"
   grep -qxF "X-Fixture: one, two"$'\r' <<< "$HEAD" && ok "every header of _headers is sent" || bad "a header of _headers is missing"
+  # Paper 124: `! Name` takes off what /* set, for Scribe's page only.
+  SHEAD="$(curl -s -D - -o /dev/null "http://127.0.0.1:$PORT/sv/try/scribe/")"
+  [ "$(grep -ci '^Content-Security-Policy:' <<< "$SHEAD")" = 1 ] && grep -qxF "Content-Security-Policy: $SCRIBE_CSP"$'\r' <<< "$SHEAD" \
+    && ok "Scribe's page is sent its own CSP, and only it (\`! Content-Security-Policy\`)" || bad "Scribe's page is not sent exactly its own CSP"
+  [ "$(grep -ci '^X-Frame-Options:' <<< "$SHEAD")" = 1 ] && grep -qxF "X-Frame-Options: SAMEORIGIN"$'\r' <<< "$SHEAD" \
+    && grep -qxF "X-Fixture: one, two"$'\r' <<< "$SHEAD" \
+    && ok "…and X-Frame-Options SAMEORIGIN alone, the other headers of /* kept" || bad "Scribe's page's X-Frame-Options or other headers are wrong"
+  grep -qxF "X-Frame-Options: DENY"$'\r' <<< "$HEAD" && ! grep -qi 'SAMEORIGIN' <<< "$HEAD" \
+    && ok "the trial's own page still may not be framed (DENY)" || bad "the trial's page lost its DENY"
   WASM="$(curl -s -D - -o /dev/null "http://127.0.0.1:$PORT/en/try/z_web_bg.wasm")"
   grep -qi '^Content-Type: application/wasm' <<< "$WASM" && ok ".wasm is application/wasm" || bad ".wasm has another type"
+  # Paper 124: CanvasKit at one absolute address, the trial's own copy.
+  CK="$(curl -s -D - -o "$WORK/ck.wasm" "http://127.0.0.1:$PORT/try/canvaskit/canvaskit.wasm")"
+  grep -qi '^Content-Type: application/wasm' <<< "$CK" && cmp -s "$WORK/ck.wasm" "$FIX/canvaskit/canvaskit.wasm" \
+    && grep -qxF "X-Frame-Options: DENY"$'\r' <<< "$CK" \
+    && ok "CanvasKit is served at /try/canvaskit/, the build's own, with the trial's headers" \
+    || bad "/try/canvaskit/ does not serve the build's CanvasKit"
   [ "$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$PORT/en/try/_headers")" = 404 ] \
     && ok "_headers itself is not served" || bad "_headers is served as a file"
   printf 'record\n' > "$FIX/_trial.nginx"
@@ -104,6 +125,22 @@ if python3 -I scripts/write_trial_nginx.py "$REC" >/dev/null && python3 -I scrip
 else
   bad "the server record does not hold _headers's headers"
 fi
+cp "$REC/_trial.nginx" "$REC/good"
+# Paper 124: Scribe's snippet is checked as the trial's is.
+sed -i "/^# ---- 2b/,/^# ---- 3/s/frame-ancestors 'self'/frame-ancestors */" "$REC/_trial.nginx"
+if python3 -I scripts/write_trial_nginx.py --check "$REC" >/dev/null 2>&1; then
+  bad "the control: a record whose Scribe CSP differs from _headers passed the check"
+else
+  ok "the control: a record whose Scribe CSP differs from _headers is refused"
+fi
+cp "$REC/good" "$REC/_trial.nginx"
+# Paper 124: what the real _headers says about frames.
+TRIAL_CSP="$(sed -n '/^\/\*$/,/^$/p' apps/flutter_app/web/_headers | grep -m1 'Content-Security-Policy:')"
+SCRIBE_REAL="$(sed -n '/^\/\*\/try\/scribe\/\*$/,$p' apps/flutter_app/web/_headers | grep -m1 'Content-Security-Policy:')"
+grep -q "frame-src 'self'" <<< "$TRIAL_CSP" && grep -q "frame-ancestors 'none'" <<< "$TRIAL_CSP" \
+  && grep -q "frame-ancestors 'self'" <<< "$SCRIBE_REAL" && ! grep -q "frame-src" <<< "$SCRIBE_REAL" \
+  && ok "the trial may frame its own origin and be framed by none; Scribe's page may be framed by its own origin only" \
+  || bad "the trial's _headers do not say who may frame whom as paper 124 does"
 sed -i "s/connect-src 'self';/connect-src *;/" "$REC/_trial.nginx"
 if python3 -I scripts/write_trial_nginx.py --check "$REC" >/dev/null 2>&1; then
   bad "the control: a record whose CSP differs from _headers passed the check"

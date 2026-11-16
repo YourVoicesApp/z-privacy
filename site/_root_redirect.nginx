@@ -17,7 +17,7 @@
 # The rule: **the first of our six languages the browser names, in the order
 # it names them; English when it names none of them.** The regex is searched,
 # so it finds the leftmost of ours in the header — «fr-CH, fr;q=0.9, en;q=0.8»
-# answers fr, «sv-SE, de;q=0.7» answers de, «ja-JP» answers en. Quality values
+# answers fr, «da-DK, de;q=0.7» answers de, «ja-JP» answers en. Quality values
 # are not ranked: every browser sends its list already in its own order, and
 # ranking them would be a parser in a config file for no visitor we know of.
 #

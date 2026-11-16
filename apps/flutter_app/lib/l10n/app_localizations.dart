@@ -4436,6 +4436,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'coded'**
   String get theChatCoded;
+
+  /// Paper 124, rule 88 (ح): beside Scribe's logo, under the web trial's answer box; it opens Scribe's editor. «Scribe» is the product's name, drawn bold, never translated. Written with AI in German, French and Spanish (paper 124); Arabic and Swedish are the lead's.
+  ///
+  /// In en, this message translates to:
+  /// **'Scribe: a text editor for writing documents.'**
+  String get trialScribe;
+
+  /// Paper 124, rule 88 (ح): under each restored answer in the web trial's document; the answer goes into Scribe's editor as AI's text, and the editor opens. Scribe's own answer quotes it word for word. Written with AI in German, French and Spanish (paper 124); Arabic and Swedish are the lead's.
+  ///
+  /// In en, this message translates to:
+  /// **'Send to the editor'**
+  String get trialSendToTheEditor;
 }
 
 class _AppLocalizationsDelegate

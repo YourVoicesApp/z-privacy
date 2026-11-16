@@ -265,7 +265,27 @@ else
     || { say FAIL "«/» is not answered with a redirect to the web trial in the chosen language"; FAIL=1; RED=1; }
   [ "$(grep -cE '^[[:space:]]*"~' _root_redirect.nginx)" = 1 ] \
     || { say FAIL "the map holds more than one regex line: the first one wins, and Swedish goes to English"; FAIL=1; RED=1; }
-  [ "$RED" = 0 ] && say PASS "«/» is the server's redirect to the web trial by the browser's language (${LANGS// /, }; else en), one regex line, and no page"
+  # The record's own examples («fr-CH, …» answers fr) are asked of the map's
+  # regex itself, so a language joining the map cannot leave one wrong.
+  EXAMPLES=$(python3 -I - _root_redirect.nginx <<'PY'
+import re, sys
+text = open(sys.argv[1], encoding='utf-8').read()
+regex = re.search(r'"~\*(.+?)" \$zp;', text).group(1).replace('(?<zp>', '(?P<zp>')
+prose = re.sub(r'\n#\s?', ' ', text)  # a comment that wraps is one sentence
+pairs = re.findall(r'«([^»]+)»\s+answers\s+([a-z]{2})', prose)
+bad = []
+for header, want in pairs:
+    m = re.search(regex, header, re.I)
+    got = m.group('zp').lower() if m else 'en'
+    if got != want:
+        bad.append(f'«{header}» answers {got}, the record says {want}')
+print(len(pairs) if not bad else 'BAD ' + '; '.join(bad))
+PY
+)
+  case "$EXAMPLES" in
+    ''|0|BAD*) say FAIL "the redirect record's examples do not hold: ${EXAMPLES:-none found}"; FAIL=1; RED=1 ;;
+  esac
+  [ "$RED" = 0 ] && say PASS "«/» is the server's redirect to the web trial by the browser's language (${LANGS// /, }; else en), one regex line, its $EXAMPLES examples hold, and no page"
 fi
 
 # What the first screen says, and what it does not offer.

@@ -718,5 +718,7 @@
   "trialErase": "Löschen",
   "trialQuestionNumber": "Frage {n}",
   "theChatYou": "Sie",
-  "theChatCoded": "codiert"
+  "theChatCoded": "codiert",
+  "trialScribe": "Scribe: ein Texteditor zum Schreiben von Dokumenten.",
+  "trialSendToTheEditor": "An den Editor senden"
 }

@@ -2869,4 +2869,10 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get theChatCoded => 'مرمّز';
+
+  @override
+  String get trialScribe => 'Scribe: محرر نصوص خاص لكتابة الوثائق.';
+
+  @override
+  String get trialSendToTheEditor => 'أرسل إلى المحرر';
 }

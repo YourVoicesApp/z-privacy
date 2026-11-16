@@ -14,6 +14,16 @@
 #       --csp                    no code generated at run time
 #       --no-wasm-dry-run        the JavaScript build only, said out loud
 #
+#   * **Scribe's editor page** (paper 124) — `tools/build_web_editor.sh` of the
+#     Scribe tree at SCRIBE_ROOT (`~/mono-scribe` unless said): its page, its
+#     engine module and its two faces, put at `scribe/`, served at
+#     `/<lang>/try/scribe/`. It loads **this** build's CanvasKit, which both
+#     pages name at one absolute address, `/try/canvaskit/` (the server maps
+#     it to `canvaskit/` here), so the two pages must come from the same
+#     Flutter engine: the build is
+#     refused when their `engineRevision`s differ. Z's copy of Scribe's mark
+#     (`assets/scribe/`) must be Scribe's own, byte for byte;
+#
 # and assembles OUT from them, with `_trial.nginx` — the server's record
 # (paper 125), written from `_headers` beside it: the Flutter build (with `web/_headers`, the
 # trial's CSP, which Flutter copies in; the fonts it bundles under
@@ -72,6 +82,13 @@ if [ "$ONLY_CHECK" = 1 ]; then
 fi
 
 command -v flutter >/dev/null || die "no flutter"
+SCRIBE_ROOT="$(realpath -m -- "${SCRIBE_ROOT:-$HOME/mono-scribe}")"
+[ -x "$SCRIBE_ROOT/tools/build_web_editor.sh" ] \
+  || die "no Scribe with its web editor at $SCRIBE_ROOT (tools/build_web_editor.sh); set SCRIBE_ROOT"
+for mark in scribe-mark.png 1.5x/scribe-mark.png 2.0x/scribe-mark.png 3.0x/scribe-mark.png; do
+  cmp -s -- "$ROOT/apps/flutter_app/assets/scribe/$mark" "$SCRIBE_ROOT/flutter/assets/brand/$mark" \
+    || die "Z's copy of Scribe's mark ($mark) is not Scribe's own"
+done
 WORK="$(mktemp -d "${TMPDIR:-/tmp}/site-trial-build.XXXXXX")"
 trap 'rm -rf -- "$WORK"' EXIT
 
@@ -83,6 +100,8 @@ trap 'rm -rf -- "$WORK"' EXIT
     --no-web-resources-cdn --csp --no-wasm-dry-run -o "$WORK/web"
 ) || die "flutter build web failed"
 
+"$SCRIBE_ROOT/tools/build_web_editor.sh" "$WORK/scribe" >/dev/null || die "Scribe's editor page did not build"
+
 ASSEMBLED="$WORK/site-trial"
 cp -a "$WORK/web" "$ASSEMBLED"
 rm -f -- "$ASSEMBLED/flutter_service_worker.js" "$ASSEMBLED/version.json" "$ASSEMBLED/.last_build_id"
@@ -90,6 +109,19 @@ rm -f -- "$ASSEMBLED"/canvaskit/skwasm* "$ASSEMBLED"/canvaskit/wimp*
 rm -rf -- "$ASSEMBLED/canvaskit/experimental_webparagraph"
 find "$ASSEMBLED" -name '*.symbols' -type f -delete
 cp -- "$WORK/core/z_web.js" "$WORK/core/z_web_bg.wasm" "$ASSEMBLED/"
+cp -a -- "$WORK/scribe" "$ASSEMBLED/scribe"
+rm -f -- "$ASSEMBLED/scribe/.scribe-web-editor"
+# One engine for the two pages: Scribe's loads Z's CanvasKit.
+revision() { grep -oE '"engineRevision":"[0-9a-f]+"' "$1" | head -1; }
+Z_REV="$(revision "$ASSEMBLED/flutter_bootstrap.js")"
+S_REV="$(revision "$ASSEMBLED/scribe/flutter_bootstrap.js")"
+[ -n "$Z_REV" ] && [ "$Z_REV" = "$S_REV" ] \
+  || die "Scribe's page was built by another Flutter engine ($S_REV, Z's is $Z_REV): it loads Z's CanvasKit"
+# …and from one address, the same for both pages and every language.
+for b in flutter_bootstrap.js scribe/flutter_bootstrap.js; do
+  grep -q 'canvasKitBaseUrl: *"/try/canvaskit/"' "$ASSEMBLED/$b" \
+    || die "$b does not load CanvasKit from /try/canvaskit/"
+done
 : > "$ASSEMBLED/.site-trial"
 
 # **The server's record** (paper 125 §2.2): `_trial.nginx`, beside `_headers`,
@@ -101,10 +133,12 @@ python3 -I "$ROOT/scripts/write_trial_nginx.py" --check "$ASSEMBLED" >/dev/null 
 # What a page needs, checked before the folder is put in place.
 for f in index.html flutter_bootstrap.js flutter.js main.dart.js _headers _trial.nginx z_web.js z_web_bg.wasm \
          canvaskit/canvaskit.js canvaskit/canvaskit.wasm canvaskit/chromium/canvaskit.wasm \
-         assets/FontManifest.json assets/assets/fonts/DejaVuSans.ttf; do
+         assets/FontManifest.json assets/assets/fonts/DejaVuSans.ttf \
+         scribe/index.html scribe/flutter_bootstrap.js scribe/main.dart.js scribe/scribe_engine.js \
+         scribe/scribe_engine_bg.wasm scribe/fonts/Inter.ttf scribe/fonts/NotoNaskhArabic.ttf; do
   [ -f "$ASSEMBLED/$f" ] || die "the assembled folder has no $f"
 done
-for f in flutter_service_worker.js version.json; do
+for f in flutter_service_worker.js version.json scribe/canvaskit scribe/flutter_service_worker.js; do
   [ ! -e "$ASSEMBLED/$f" ] || die "the assembled folder still holds $f"
 done
 

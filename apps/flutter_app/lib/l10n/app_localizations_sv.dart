@@ -2859,4 +2859,11 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get theChatCoded => 'Kodat';
+
+  @override
+  String get trialScribe =>
+      'Scribe: en textredigerare för att skriva dokument.';
+
+  @override
+  String get trialSendToTheEditor => 'Skicka till redigeraren';
 }

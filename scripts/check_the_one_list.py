@@ -365,6 +365,9 @@ def strings_on(line: str) -> list[str]:
 # product in two of them. Matched whole, never as a part — «Z Privacy keeps
 # nothing» is a sentence.
 PRODUCT_NAMES = {'Z Privacy', 'z-pdf', 'YourVoices', 'Grok', 'xAI', 'Ollama',
+                 # Paper 124: the editor's own name, drawn bold in its sentence
+                 # and given to its frame; the same in every language.
+                 'Scribe',
                  # A model's own name, which is the same in every language and is
                  # typed into a field rather than read as a sentence.
                  'llama3.2'}
@@ -444,7 +447,15 @@ A_COMMAND_THE_MACHINE_READS = {'url.dll,FileProtocolHandler'}
 # `dart:js_interop_unsafe`: `URL`, `Blob` and three methods. They are read by
 # the browser and never by a person, and a translated one would be a property
 # that does not exist. Named one by one, for the reason the command above is.
-A_NAME_THE_BROWSER_READS = {'URL', 'Blob', 'createObjectURL', 'createElement', 'revokeObjectURL'}
+A_NAME_THE_BROWSER_READS = {'URL', 'Blob', 'createObjectURL', 'createElement', 'revokeObjectURL',
+                            # Paper 124: Scribe's frame — the browser's names
+                            # for it, and its address beside the page.
+                            'contentWindow', 'postMessage', 'addEventListener',
+                            'cssText', 'appendChild', 'scribe/'}
+
+# **A CSS declaration list is not a sentence** — paper 124: the frame's own
+# style (`position:fixed;inset:0;…`), properties and values the browser reads.
+CSS_DECLARATIONS = re.compile(r'(?:[a-z-]+:[^;:\s]+;)+(?:[a-z-]+:[^;:\s]+)?')
 
 # **The core's own labels for its providers** — paper 122, rule 85 (g). The
 # app draws them as the core hands them (`Provider::label`), the same in
@@ -538,6 +549,8 @@ def sentences_in(path: pathlib.Path) -> list[str]:
             if v in A_COMMAND_THE_MACHINE_READS:      # an argument, not a word
                 continue
             if v in A_NAME_THE_BROWSER_READS:         # a browser object's name
+                continue
+            if CSS_DECLARATIONS.fullmatch(v):         # a style the browser reads
                 continue
             if v in THE_CORES_PROVIDER_LABELS:        # the core's own label
                 continue            # **A date pattern is not a sentence.** `'d MMM y'` is what `intl`

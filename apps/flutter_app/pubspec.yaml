@@ -67,6 +67,12 @@ flutter:
     # packaging/linux/third-party/dejavu-LICENSE.txt and it is named in
     # NOTICES.txt beside the others.
     - assets/fonts/
+    # **Scribe's mark** (paper 124): the button that opens Scribe's editor in the
+    # web trial. Not ours to draw: these are Scribe's own files, made by its
+    # `tools/brand/make_scribe_icons.py`, copied byte for byte, and
+    # `scripts/build_site_trial.sh` refuses a build where they differ from the
+    # Scribe it assembles. Kept apart from assets/brand/, which is Z's mark only.
+    - assets/scribe/
   # **The web trial's one font** (paper 122): the same DejaVu Sans, declared as
   # a family so the browser draws Latin, Arabic and Swedish from our own origin
   # and never asks a font CDN for a fallback (`connect-src 'self'`). The

@@ -25,9 +25,26 @@
 #   `default-src 'none'` stay as the site has them, and leaving the page keeps
 #   nothing (rule 85 (c)).
 # * No COOP/COEP: the core and the renderer need no shared memory.
+# * `frame-src 'self'` — paper 124: Scribe's editor opens over the trial in an
+#   `<iframe>` of our own origin (`/<lang>/try/scribe/`). Nothing else may be
+#   framed; nothing may frame the trial (`frame-ancestors 'none'`).
+#
+# **Scribe's page, `/*/try/scribe/*`**, is the one page that may be framed,
+# and only by our own origin: the rule below takes the two headers of `/*`
+# that forbid it off (`! Name`, as Cloudflare's `_headers` writes a detach) and
+# sends its own — the same policy, with `frame-ancestors 'self'` and
+# `X-Frame-Options: SAMEORIGIN`, and without `frame-src` (it frames nothing).
+# The other three headers of `/*` stay as they are. The server's record,
+# `_trial.nginx`, is written from these two rules.
 /*
-  Content-Security-Policy: default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; connect-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self'; form-action 'none'; frame-ancestors 'none'; base-uri 'none'
+  Content-Security-Policy: default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; connect-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self'; frame-src 'self'; form-action 'none'; frame-ancestors 'none'; base-uri 'none'
   Referrer-Policy: no-referrer
   X-Content-Type-Options: nosniff
   X-Frame-Options: DENY
   Permissions-Policy: geolocation=(), camera=(), microphone=(), interest-cohort=()
+
+/*/try/scribe/*
+  ! Content-Security-Policy
+  ! X-Frame-Options
+  Content-Security-Policy: default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; connect-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self'; form-action 'none'; frame-ancestors 'self'; base-uri 'none'
+  X-Frame-Options: SAMEORIGIN
