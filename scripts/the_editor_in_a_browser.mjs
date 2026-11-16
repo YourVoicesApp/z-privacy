@@ -19,6 +19,9 @@
 //      editor — `frame-ancestors 'self'` refuses it, and Chrome says so;
 //   5b. Z's copy handed over (`scribe-z-copy`) and pasted → AI; the control,
 //      other text pasted → Paste (the frame's clipboard a stub in memory);
+//      the browser's own paste (no Ctrl+V: a trusted paste event from
+//      Chrome's in-memory clipboard) → AI for Z's copy, Paste for other
+//      text, never Keyboard, each counted once; typing still Keyboard;
 //      no save, print, export or download control; both pages load CanvasKit
 //      from `/try/canvaskit/`;
 //   6. «Close» → the frame is hidden and keeps the words; the button again →
@@ -179,6 +182,44 @@ const post = (type, text) =>
       /2 words \\(15%\\)/.test(window.__words(window.__fdoc()))`, 8000),
     'the control: any other paste counts as Paste: 2 words (15%); AI 8 (62%), keyboard 3 (23%)');
 
+  // **The browser's own paste** — its menu, a long press on a phone — comes
+  // with no Ctrl+V key: a trusted \`paste\` event, which once went into the
+  // hidden text field and was counted as Keyboard (pinned red against the
+  // editor before the fix). It must go by the paste door: Z's copy is AI,
+  // other text Paste. The text is put on Chrome's own clipboard — in memory,
+  // Chrome is started with no display — and the edit command pastes it.
+  await send('Browser.grantPermissions', { origin: base,
+    permissions: ['clipboardReadWrite', 'clipboardSanitizedWrite'] });
+  const nativePaste = async (text) => {
+    await js(`(() => { const w = window.__fdoc().defaultView;
+      return w.Clipboard.prototype.writeText.call(w.navigator.clipboard, ${JSON.stringify(text)}); })()`);
+    await page.s('Input.insertText', { text: ' ' });
+    await page.s('Input.dispatchKeyEvent', { type: 'rawKeyDown', key: 'F24', code: 'F24',
+      windowsVirtualKeyCode: 135, commands: ['paste'] });
+    await page.s('Input.dispatchKeyEvent', { type: 'keyUp', key: 'F24', code: 'F24', windowsVirtualKeyCode: 135 });
+    await sleep(800);
+  };
+  const report = () => js(`(window.__words(window.__fdoc()).match(/\\d+ words \\(\\d+%\\)/g) || []).join(' · ')`);
+  // Z's copy again: 12, 3 and 2 of 17 words → 70, 18 and 12 %.
+  await nativePaste('Copied from Z here.');
+  check(await until(`/12 words \\(70%\\)/.test(window.__words(window.__fdoc())) &&
+      /3 words \\(18%\\)/.test(window.__words(window.__fdoc())) &&
+      /2 words \\(12%\\)/.test(window.__words(window.__fdoc()))`, 8000),
+    `the browser's own paste of Z's copy counts as AI, not Keyboard: 12 words (70%), keyboard 3 (18%), paste 2 (12%) — ${await report()}`);
+  // Other text: 12, 3 and 4 of 19 → 63, 16 and 21 %.
+  await nativePaste('Other native.');
+  check(await until(`/12 words \\(63%\\)/.test(window.__words(window.__fdoc())) &&
+      /3 words \\(16%\\)/.test(window.__words(window.__fdoc())) &&
+      /4 words \\(21%\\)/.test(window.__words(window.__fdoc()))`, 8000),
+    `the browser's own paste of other text counts as Paste, once: 4 words (21%) — ${await report()}`);
+  // The control: typing is still the keyboard's. 12, 5 and 4 of 21 → 57, 24, 19.
+  await page.s('Input.insertText', { text: ' two more' });
+  await sleep(800);
+  check(await until(`/12 words \\(57%\\)/.test(window.__words(window.__fdoc())) &&
+      /5 words \\(24%\\)/.test(window.__words(window.__fdoc())) &&
+      /4 words \\(19%\\)/.test(window.__words(window.__fdoc()))`, 8000),
+    `the control: typed words still count as Keyboard: 5 words (24%) — ${await report()}`);
+
   // No save and no print (88 (و)): no control the visitor could press says so.
   const controls = await js(`[...window.__fdoc().querySelectorAll('[role="button"], [role="menuitem"], flt-semantics[flt-tappable]')]
     .map((e) => (e.getAttribute('aria-label') || '') + ' ' + (e.textContent || '')).join('\\n')`);
@@ -196,7 +237,7 @@ const post = (type, text) =>
   check(await until(`window.__frame().style.display === 'none'`, 5000), '«Close» hides the frame');
   check(await until(`window.__press(document, 'Scribe: a text editor')`, 5000), 'the Scribe button again');
   check(await until(`window.__frame().style.display === 'block'`, 5000) &&
-    await until(`/8 words \\(62%\\)/.test(window.__words(window.__fdoc()))`, 5000),
+    await until(`/12 words \\(57%\\)/.test(window.__words(window.__fdoc()))`, 5000),
     '…opens the same editor, its words kept');
 
   // Close it, then «Start over»: with no document Z erases at once.

@@ -53,7 +53,10 @@ trap cleanup EXIT
 PREVIEW_PID=$!
 # Chrome's own sockets live under TMPDIR, and a socket's path may not pass
 # 108 bytes: a long TMPDIR aborts it, so it is started with the system's.
-env -u TMPDIR "$CHROME" --headless=new --no-first-run --no-default-browser-check --disable-extensions \
+# **No display and no Wayland**: headless Chrome then cannot reach the
+# machine's clipboard at all — its clipboard is its own, in memory, and the
+# browser's own paste (paper 124) is measured there.
+env -u TMPDIR -u DISPLAY -u WAYLAND_DISPLAY "$CHROME" --headless=new --no-first-run --no-default-browser-check --disable-extensions \
   --remote-debugging-port="$DEVTOOLS_PORT" --user-data-dir="$PROFILE" about:blank \
   >/dev/null 2>&1 &
 CHROME_PID=$!
