@@ -50,6 +50,25 @@ void main() {
     expect(button.top, greaterThanOrEqualTo(box.bottom), reason: 'under it');
   });
 
+  testWidgets('pinned first (rule 88 (ط)): at 1440 px the press splits the '
+      'screen — Z in the start third, its parts stacked — not an overlay '
+      '(red while the editor lay over Z)', (tester) async {
+    await pumpTrial(tester);
+    expect(
+      tester.getRect(find.byKey(TheTrial.answer)).right,
+      greaterThan(1440 / 3),
+      reason: 'before the press: Z at full width',
+    );
+    await press(tester, TheTrial.scribe);
+    await tester.pumpAndSettle();
+    final answer = tester.getRect(find.byKey(TheTrial.answer));
+    expect(answer.right, lessThanOrEqualTo(1440 / 3), reason: 'Z\'s third');
+    final original = tester.getRect(find.byKey(TheTrial.original));
+    final safe = tester.getRect(find.byKey(TheTrial.safe));
+    expect(safe.top, greaterThanOrEqualTo(original.bottom), reason: 'stacked');
+    expect(original.width, closeTo(safe.width, 0.5), reason: 'same width');
+  });
+
   testWidgets('«Scribe» is bold in the sentence, and the sentence is the '
       'lead\'s in Arabic and Swedish', (tester) async {
     await pumpTrial(tester);
@@ -70,7 +89,105 @@ void main() {
   testWidgets('the button opens the editor, empty', (tester) async {
     await pumpTrial(tester);
     await press(tester, TheTrial.scribe);
-    expect(editorActs(), [('editor-open', '', 0)]);
+    expect(editorActs(), [
+      ('editor-place', 'split', 0),
+      ('editor-open', '', 0),
+    ]);
+  });
+
+  testWidgets('rule 88 (ط), Arabic: Z\'s third is on the right, the editor '
+      'on the left; the split is 1 : 2 at 1440 px', (tester) async {
+    await pumpTrial(tester, language: 'ar');
+    await press(tester, TheTrial.scribe);
+    await tester.pumpAndSettle();
+    expect(editorActs().first, ('editor-place', 'split', 1), reason: 'rtl');
+    final third = tester.getRect(find.byKey(TheTrial.zThird));
+    expect(third.width, 480);
+    expect(third.right, 1440, reason: 'the start side in Arabic is the right');
+    final answer = tester.getRect(find.byKey(TheTrial.answer));
+    expect(answer.left, greaterThanOrEqualTo(960));
+  });
+
+  testWidgets('rule 88 (ط), English: Z\'s third is on the left', (
+    tester,
+  ) async {
+    await pumpTrial(tester);
+    await press(tester, TheTrial.scribe);
+    await tester.pumpAndSettle();
+    final third = tester.getRect(find.byKey(TheTrial.zThird));
+    expect((third.left, third.width), (0.0, 480.0));
+  });
+
+  testWidgets('the editor\'s «Close» returns Z to its full width', (
+    tester,
+  ) async {
+    await pumpTrial(tester);
+    await press(tester, TheTrial.scribe);
+    await tester.pumpAndSettle();
+    expect(find.byKey(TheTrial.zThird), findsOneWidget);
+    page.theEditorClosed!();
+    await tester.pumpAndSettle();
+    expect(find.byKey(TheTrial.zThird), findsNothing);
+    expect(
+      tester.getRect(find.byKey(TheTrial.answer)).right,
+      greaterThan(1440 / 3),
+    );
+  });
+
+  testWidgets('below ${TheTrial.splitFrom.toInt()} px (a phone) the editor '
+      'opens over Z, and Z keeps its full width', (tester) async {
+    await pumpTrial(tester, size: const Size(390, 844));
+    await press(tester, TheTrial.scribe);
+    await tester.pumpAndSettle();
+    expect(editorActs().first, ('editor-place', 'over', 0));
+    expect(find.byKey(TheTrial.zThird), findsNothing);
+  });
+
+  testWidgets('«Copy the answer to the editor»: beside «Add an answer», '
+      'disabled before an answer, then it sends the latest restored answer '
+      'and opens the editor beside Z', (tester) async {
+    await pumpTrial(tester);
+    final button = find.byKey(TheTrial.copyTheAnswerToTheEditor);
+    expect(button, findsOneWidget);
+    expect(
+      tester.widget<ButtonStyleButton>(button).onPressed,
+      isNull,
+      reason: 'no answer yet',
+    );
+    final add = tester.getRect(find.byKey(TheTrial.restore));
+    expect(tester.getRect(button).top, lessThan(add.bottom), reason: 'beside');
+    expect(en.trialCopyTheAnswerToTheEditor, 'Copy the answer to the editor');
+    expect(ar.trialCopyTheAnswerToTheEditor, 'انسخ الجواب إلى المحرر');
+    expect(sv.trialCopyTheAnswerToTheEditor, 'Kopiera svaret till redigeraren');
+
+    await firstTurn(tester);
+    await ask(tester, 'And the boats?');
+    await press(tester, TheTrial.copyProtected);
+    final token = RegExp(r'__Z_[A-Z0-9_]+__').firstMatch(clipboard.last)!;
+    await tester.enterText(
+      find.byKey(TheTrial.answer),
+      'The boats wait for ${token.group(0)}.',
+    );
+    await tester.pump();
+    await restore(tester);
+    expect(tester.widget<ButtonStyleButton>(button).onPressed, isNotNull);
+    await press(tester, TheTrial.copyTheAnswerToTheEditor);
+    await tester.pumpAndSettle();
+    expect(
+      editorActs().where((a) => a.$1 == 'editor-open').single.$2,
+      'The boats wait for Anna Lindqvist.',
+      reason: 'the latest, restored',
+    );
+    expect(find.byKey(TheTrial.zThird), findsOneWidget);
+  });
+
+  testWidgets('«Start over» returns Z to its full width', (tester) async {
+    await pumpTrial(tester);
+    await press(tester, TheTrial.scribe);
+    await tester.pumpAndSettle();
+    await press(tester, TheTrial.startOver);
+    await tester.pumpAndSettle();
+    expect(find.byKey(TheTrial.zThird), findsNothing);
   });
 
   testWidgets('«Send to the editor» under each restored answer: the answer '

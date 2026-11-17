@@ -2874,5 +2874,8 @@ class AppLocalizationsAr extends AppLocalizations {
   String get trialScribe => 'Scribe: محرر نصوص خاص لكتابة الوثائق.';
 
   @override
+  String get trialCopyTheAnswerToTheEditor => 'انسخ الجواب إلى المحرر';
+
+  @override
   String get trialSendToTheEditor => 'أرسل إلى المحرر';
 }

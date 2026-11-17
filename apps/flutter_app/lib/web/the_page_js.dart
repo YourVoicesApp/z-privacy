@@ -40,8 +40,9 @@ void goTo(String address) {
 // ---- Scribe's editor (paper 124, rule 88 (ح)) ------------------------------
 //
 // Scribe's page, `scribe/` beside this one (`/<lang>/try/scribe/`), in an
-// `<iframe>` of our own origin laid over the trial's glass — a DOM element of
-// its own, not a Flutter view. The two pages speak by `postMessage`, **our own
+// `<iframe>` of our own origin — a DOM element of its own, not a Flutter
+// view — beside the trial's glass in two thirds of the width, or over it on
+// a phone (rule 88 (ط), [placeTheEditor]). The two pages speak by `postMessage`, **our own
 // origin only, both ways**, and only with the frame we made:
 //
 //   here → Scribe:  {type: 'scribe-insert', text}   «Send to the editor»
@@ -59,6 +60,41 @@ bool _frameIsReady = false;
 final List<(String, String)> _waitingForTheEditor = <(String, String)>[];
 String? _theLastZCopy;
 bool _listening = false;
+
+// Where the frame stands (rule 88 (ط)): beside Z in two thirds of the width,
+// on the end side — the left when the page reads right to left — or over Z
+// at the full screen, on a phone.
+bool _split = false;
+bool _rightToLeft = false;
+void Function()? _whenClosed;
+
+String get _theFramesStyle {
+  const common =
+      'border:0;margin:0;z-index:2147483000;background:#25211C;display:block;';
+  if (!_split) {
+    return 'position:fixed;inset:0;width:100%;height:100%;' + common;
+  }
+  final side = _rightToLeft ? 'left:0;' : 'right:0;';
+  return 'position:fixed;top:0;bottom:0;height:100%;width:66.6667%;' +
+      side +
+      common;
+}
+
+void _styleTheFrame(JSObject frame) => frame
+    .getProperty<JSObject>('style'.toJS)
+    .setProperty('cssText'.toJS, _theFramesStyle.toJS);
+
+void placeTheEditor({required bool split, required bool rightToLeft}) {
+  _split = split;
+  _rightToLeft = rightToLeft;
+  final frame = _frame;
+  if (frame == null) return;
+  final style = frame.getProperty<JSObject>('style'.toJS);
+  if (style.getProperty<JSString>('display'.toJS).toDart == 'none') return;
+  _styleTheFrame(frame);
+}
+
+void whenTheEditorCloses(void Function() then) => _whenClosed = then;
 
 String get _ourOrigin => globalContext
     .getProperty<JSObject>('location'.toJS)
@@ -110,6 +146,7 @@ void _fromTheEditor(JSObject event) {
           ?.getProperty<JSObject>('style'.toJS)
           .setProperty('display'.toJS, 'none'.toJS);
       globalContext.callMethod<JSAny?>('focus'.toJS);
+      _whenClosed?.call();
   }
 }
 
@@ -128,14 +165,7 @@ void openTheEditor({String? insert}) {
       ..setProperty('src'.toJS, _theEditorAddress.toJS)
       ..setProperty('title'.toJS, 'Scribe'.toJS)
       ..setProperty('id'.toJS, 'scribe-editor'.toJS);
-    frame
-        .getProperty<JSObject>('style'.toJS)
-        .setProperty(
-          'cssText'.toJS,
-          ('position:fixed;inset:0;width:100%;height:100%;border:0;margin:0;'
-                  'z-index:2147483000;background:#25211C;display:block')
-              .toJS,
-        );
+    _styleTheFrame(frame);
     _frame = frame;
     _frameIsReady = false;
     _waitingForTheEditor.clear();
@@ -145,9 +175,7 @@ void openTheEditor({String? insert}) {
         .getProperty<JSObject>('body'.toJS)
         .callMethod<JSAny?>('appendChild'.toJS, frame);
   } else {
-    frame
-        .getProperty<JSObject>('style'.toJS)
-        .setProperty('display'.toJS, 'block'.toJS);
+    _styleTheFrame(frame);
     if (_frameIsReady) _frameWindow?.callMethod<JSAny?>('focus'.toJS);
   }
   if (insert != null) _toTheEditor('scribe-insert', insert);

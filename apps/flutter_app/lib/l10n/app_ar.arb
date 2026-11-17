@@ -720,5 +720,6 @@
   "theChatYou": "أنت",
   "theChatCoded": "مرمّز",
   "trialScribe": "Scribe: محرر نصوص خاص لكتابة الوثائق.",
+  "trialCopyTheAnswerToTheEditor": "انسخ الجواب إلى المحرر",
   "trialSendToTheEditor": "أرسل إلى المحرر"
 }

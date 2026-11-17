@@ -2854,5 +2854,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get trialScribe => 'Scribe: a text editor for writing documents.';
 
   @override
+  String get trialCopyTheAnswerToTheEditor => 'Copy the answer to the editor';
+
+  @override
   String get trialSendToTheEditor => 'Send to the editor';
 }

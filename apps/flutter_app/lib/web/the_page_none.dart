@@ -27,3 +27,19 @@ void handTheCopyToTheEditor(String text) =>
 
 /// The editor and everything in it, gone: «Start over», or the page left.
 void dropTheEditor() => thePageWasAsked.add(('editor-drop', '', 0));
+
+/// Where the editor stands (rule 88 (ط)): [split], beside Z in two thirds of
+/// the width, on the end side ([rightToLeft]: the left); else over Z, at the
+/// full screen (a phone).
+void placeTheEditor({required bool split, required bool rightToLeft}) =>
+    thePageWasAsked.add((
+      'editor-place',
+      split ? 'split' : 'over',
+      rightToLeft ? 1 : 0,
+    ));
+
+/// What the trial is told when the visitor closes the editor (its «Close»,
+/// `scribe-close`). A test calls it as the page would.
+void Function()? theEditorClosed;
+
+void whenTheEditorCloses(void Function() then) => theEditorClosed = then;

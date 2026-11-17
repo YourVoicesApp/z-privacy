@@ -720,5 +720,6 @@
   "theChatYou": "Sie",
   "theChatCoded": "codiert",
   "trialScribe": "Scribe: ein Texteditor zum Schreiben von Dokumenten.",
+  "trialCopyTheAnswerToTheEditor": "Antwort in den Editor kopieren",
   "trialSendToTheEditor": "An den Editor senden"
 }

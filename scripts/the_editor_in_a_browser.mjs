@@ -9,7 +9,8 @@
 //
 //   1. Z's page, `/en/try/`; the page's semantics switched on, so a button is
 //      found by its words, never by a coordinate;
-//   2. the Scribe button → Scribe's frame stands over the page, at
+//   2. the Scribe button → Scribe's frame stands beside Z, in the end two
+//      thirds of the width (rule 88 (ط); over Z below 1080 px), at
 //      `scribe/`, and says it is ready;
 //   3. words typed into the frame by the browser's own input (CDP
 //      `insertText`, the IME's path) → the report counts them as Keyboard;
@@ -27,6 +28,9 @@
 //   6. «Close» → the frame is hidden and keeps the words; the button again →
 //      it stands again with them;
 //   7. «Start over» → the frame is gone from the page;
+//   7b. «Copy the answer to the editor», in Arabic: disabled before an
+//      answer; after a real turn (typed, «Copy Protected», an answer added)
+//      it opens the editor on the left two thirds and the answer counts as AI;
 //   8. the browser's storage, read: localStorage, sessionStorage, cookies,
 //      IndexedDB, Cache Storage and service workers — all empty (85 (c)) —
 //      and no Content-Security-Policy violation was reported, in either page.
@@ -95,7 +99,8 @@ const helpers = `
   window.__press = (doc, re) => {
     const r = new RegExp(re);
     const b = [...doc.querySelectorAll('[role="button"], flt-semantics[flt-tappable]')]
-      .find((e) => r.test((e.getAttribute('aria-label') || '') + (e.textContent || '')));
+      .find((e) => e.getAttribute('aria-disabled') !== 'true' &&
+        r.test((e.getAttribute('aria-label') || '') + (e.textContent || '')));
     if (!b) return false;
     b.click();
     return true;
@@ -120,9 +125,12 @@ async function theEditorOpen(page, lang) {
 
 async function type(page, text) {
   const { s, js } = page;
-  const box = await js(`(() => { const r = window.__frame().getBoundingClientRect(); return [r.width, r.height]; })()`);
-  await s('Input.dispatchMouseEvent', { type: 'mousePressed', x: box[0] / 2, y: Math.min(box[1] * 0.45, 420), button: 'left', clickCount: 1 });
-  await s('Input.dispatchMouseEvent', { type: 'mouseReleased', x: box[0] / 2, y: Math.min(box[1] * 0.45, 420), button: 'left', clickCount: 1 });
+  // The middle of the sheet, wherever the frame stands (beside Z or over it).
+  const box = await js(`(() => { const r = window.__frame().getBoundingClientRect(); return [r.left, r.width, r.height]; })()`);
+  const x = box[0] + box[1] / 2;
+  const y = Math.min(box[2] * 0.45, 420);
+  await s('Input.dispatchMouseEvent', { type: 'mousePressed', x, y, button: 'left', clickCount: 1 });
+  await s('Input.dispatchMouseEvent', { type: 'mouseReleased', x, y, button: 'left', clickCount: 1 });
   await sleep(600);
   await s('Input.insertText', { text });
   await sleep(800);
@@ -136,6 +144,11 @@ const post = (type, text) =>
   const page = await openPage(`${base}/en/try/`, 1440, 900);
   const { js, until } = page;
   await theEditorOpen(page, 'en');
+  // Rule 88 (ط): at 1440 px the editor stands beside Z, in two thirds of the
+  // width on the end side — the right in English.
+  const rect = await js(`(() => { const r = window.__frame().getBoundingClientRect(); return [r.left, r.width, r.height]; })()`);
+  check(Math.abs(rect[0] - 480) <= 1 && Math.abs(rect[1] - 960) <= 1 && rect[2] === 900,
+    `the editor stands beside Z, in the right two thirds: x ${rect[0]}, ${rect[1]} × ${rect[2]} px`);
 
   await type(page, 'three typed words');
   check(await until(`/3 words \\(100%\\)/.test(window.__words(window.__fdoc()))`, 8000),
@@ -259,6 +272,56 @@ const post = (type, text) =>
   check(kept === '', `the browser keeps nothing after the editor's flow${kept ? ': ' + kept : ''}`);
   await send('Target.closeTarget', { targetId: page.targetId });
 }
+// **«Copy the answer to the editor»** (rule 88 (ط)), on a page of its own:
+// disabled before an answer; after a real turn — a text typed, «Copy
+// Protected», an answer pasted and added, all by the real module — it sends
+// the answer into the editor, which opens beside Z, and counts it as AI. In
+// Arabic, so the editor stands on the left.
+{
+  await send('Browser.grantPermissions', { origin: base,
+    permissions: ['clipboardReadWrite', 'clipboardSanitizedWrite'] });
+  const page = await openPage(`${base}/ar/try/`, 1440, 900);
+  const { s, js, until } = page;
+  await until(`!!document.querySelector('flutter-view, flt-glass-pane')`);
+  await js(helpers);
+  await until(`window.__sem(document) > 0`);
+  const label = 'انسخ الجواب إلى المحرر';
+  const state = (re) => js(`(() => { const b = [...document.querySelectorAll('flt-semantics[role="button"]')]
+    .find((e) => new RegExp(${JSON.stringify(re)}).test(e.textContent || '')); return b ? String(b.getAttribute('aria-disabled')) : 'none'; })()`);
+  check(await until(`!!document.querySelectorAll('textarea').length`, 10000) && await state(label) === 'true',
+    '«Copy the answer to the editor» is there, and disabled before an answer');
+  // A box by its own words (its hint, as the page names it), or the first.
+  const typeInto = async (hint, text) => {
+    const at = await js(`(() => { const all = [...document.querySelectorAll('textarea')];
+      const box = ${JSON.stringify(hint)} ? all.find((e) => (e.getAttribute('aria-label') || '').startsWith(${JSON.stringify(hint)})) : all[0];
+      const r = box.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; })()`);
+    for (const type of ['mousePressed', 'mouseReleased']) {
+      await s('Input.dispatchMouseEvent', { type, x: at[0], y: at[1], button: 'left', clickCount: 1 });
+    }
+    await sleep(500);
+    await s('Input.insertText', { text });
+    await sleep(800);
+  };
+  await typeInto('', 'Dear Anna Lindqvist, Björn wrote to anna@example.org about the contract.');
+  check(await until(`window.__press(document, ${JSON.stringify('نسخ النص المحمي')})`, 15000), '«Copy Protected» is pressed');
+  await sleep(800);
+  await typeInto('ألصِق الجواب', 'The boats are in the harbour.');
+  check(await until(`window.__press(document, ${JSON.stringify('^أضِف جواباً$')})`, 10000), '«Add an answer» is pressed');
+  check(await until(`(() => { const b = [...document.querySelectorAll('flt-semantics[role="button"]')]
+      .find((e) => /${label}/.test(e.textContent || '')); return b && b.getAttribute('aria-disabled') !== 'true'; })()`, 10000),
+    '…and «Copy the answer to the editor» is enabled');
+  check(await until(`window.__press(document, ${JSON.stringify(label)})`, 5000), '«Copy the answer to the editor» is pressed');
+  check(await until(`!!window.__frame()`), 'the editor opens');
+  await until(`!!(window.__fdoc() && window.__fdoc().querySelector('flutter-view, flt-glass-pane'))`);
+  await until(`window.__sem(window.__fdoc()) > 0`);
+  const rect = await js(`(() => { const r = window.__frame().getBoundingClientRect(); return [r.left, r.width]; })()`);
+  check(Math.abs(rect[0]) <= 1 && Math.abs(rect[1] - 960) <= 1,
+    `in Arabic the editor stands on the left two thirds, Z on the right: x ${rect[0]}, ${rect[1]} px`);
+  check(await until(`/6 كلمات \\(100\\u200e?%/.test(window.__words(window.__fdoc()))`, 10000),
+    `the answer arrives counted as AI: 6 words, 100 % — ${(await js(`window.__words(window.__fdoc())`)).match(/\d+ كلمات[^\n]*|[^\n]*كلمات[^\n]*/g)?.slice(0, 3).join(' · ')}`);
+  await send('Target.closeTarget', { targetId: page.targetId });
+}
+
 check(violations.length === 0, `no Content-Security-Policy violation in either page${violations.length ? ': ' + violations[0] : ''}`);
 
 // The control: the editor in a page of another origin is refused.

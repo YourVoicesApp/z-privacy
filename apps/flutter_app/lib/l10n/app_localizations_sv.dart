@@ -2865,5 +2865,8 @@ class AppLocalizationsSv extends AppLocalizations {
       'Scribe: en textredigerare för att skriva dokument.';
 
   @override
+  String get trialCopyTheAnswerToTheEditor => 'Kopiera svaret till redigeraren';
+
+  @override
   String get trialSendToTheEditor => 'Skicka till redigeraren';
 }

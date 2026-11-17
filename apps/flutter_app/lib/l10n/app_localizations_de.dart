@@ -2869,5 +2869,8 @@ class AppLocalizationsDe extends AppLocalizations {
       'Scribe: ein Texteditor zum Schreiben von Dokumenten.';
 
   @override
+  String get trialCopyTheAnswerToTheEditor => 'Antwort in den Editor kopieren';
+
+  @override
   String get trialSendToTheEditor => 'An den Editor senden';
 }

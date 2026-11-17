@@ -4443,6 +4443,12 @@ abstract class AppLocalizations {
   /// **'Scribe: a text editor for writing documents.'**
   String get trialScribe;
 
+  /// Rule 88 (ط), paper 124: beside «Add an answer» in the web trial; disabled until an answer has been added, then it puts the latest restored answer into Scribe's editor as AI's text and opens the editor beside Z. Written with AI in German, French and Spanish; Arabic and Swedish are the lead's.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy the answer to the editor'**
+  String get trialCopyTheAnswerToTheEditor;
+
   /// Paper 124, rule 88 (ح): under each restored answer in the web trial's document; the answer goes into Scribe's editor as AI's text, and the editor opens. Scribe's own answer quotes it word for word. Written with AI in German, French and Spanish (paper 124); Arabic and Swedish are the lead's.
   ///
   /// In en, this message translates to:

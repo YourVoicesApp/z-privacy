@@ -181,6 +181,21 @@ class TheTrial extends StatefulWidget {
   static ValueKey<String> sendToTheEditor(int answer) =>
       ValueKey<String>('trial-send-to-the-editor-$answer');
 
+  /// Rule 88 (ط): beside «Add an answer», the latest restored answer into the
+  /// editor as AI's; disabled until an answer has been added.
+  static const copyTheAnswerToTheEditor = ValueKey<String>(
+    'trial-copy-the-answer-to-the-editor',
+  );
+
+  /// Z's third, while the editor stands beside it.
+  static const zThird = ValueKey<String>('trial-z-third');
+
+  /// Rule 88 (ط): the width from which the editor stands **beside** Z — two
+  /// thirds for it, one for Z, whose third is then 360 px or more, enough
+  /// for Z's parts stacked. Below it (a phone, a narrow window) the editor
+  /// opens over Z at the full screen, as before.
+  static const double splitFrom = 1080;
+
   @override
   State<TheTrial> createState() => _TheTrialState();
 }
@@ -227,9 +242,18 @@ class _TheTrialState extends State<TheTrial> {
   bool _noteIsTheApp = false;
   bool _providersOpen = false;
 
+  /// Scribe's editor is open (rule 88 (ط)); and whether the page was last
+  /// told to stand it beside Z ([TheTrial.splitFrom]) or over it.
+  bool _editorOpen = false;
+  bool? _placedSplit;
+
   @override
   void initState() {
     super.initState();
+    // The editor's own «Close»: Z takes its full width again.
+    page.whenTheEditorCloses(() {
+      if (mounted) setState(() => _editorOpen = false);
+    });
     // The acts under the original follow the caret and the selection.
     _text.addListener(_moved);
     _question.addListener(_moved);
@@ -604,8 +628,10 @@ class _TheTrialState extends State<TheTrial> {
     }
     _reading?.cancel();
     _asking?.cancel();
-    // Scribe's editor goes with everything else (rule 88 (ح)).
+    // Scribe's editor goes with everything else (rule 88 (ح)), and Z takes
+    // its full width again (88 (ط)).
     page.dropTheEditor();
+    if (mounted) setState(() => _editorOpen = false);
     final core = _core;
     if (core == null || !mounted) return;
     try {
@@ -635,42 +661,87 @@ class _TheTrialState extends State<TheTrial> {
 
   void _theAppIsNeeded() => _said(sentences.trialKeysNeedTheApp, theApp: true);
 
+  bool _splitFits(BuildContext context) =>
+      MediaQuery.sizeOf(context).width >= TheTrial.splitFrom;
+
+  /// Scribe's editor, opened — beside Z when the window is wide enough, over
+  /// it when not — and with [insert] an answer sent into it as AI's.
+  void _openTheEditor({String? insert}) {
+    _placeTheEditor(_splitFits(context));
+    page.openTheEditor(insert: insert);
+    setState(() => _editorOpen = true);
+  }
+
+  void _placeTheEditor(bool split) {
+    _placedSplit = split;
+    page.placeTheEditor(
+      split: split,
+      rightToLeft: Directionality.of(context) == TextDirection.rtl,
+    );
+  }
+
   // ------------------------------------------------------------ the glass
 
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
+    final split = _editorOpen && _splitFits(context);
+    // A window that crosses [TheTrial.splitFrom] with the editor open moves
+    // the editor beside Z, or over it.
+    if (_editorOpen && _placedSplit != split) {
+      _placedSplit = split;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _editorOpen) _placeTheEditor(split);
+      });
+    }
+    final glass = _glass(t);
     return Scaffold(
       backgroundColor: Zc.paper,
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _aboutLine(t),
-            _noticeBand(t),
-            Expanded(
-              child: LayoutBuilder(
-                builder: (context, box) => SingleChildScrollView(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: box.maxWidth < 600 ? 14 : 28,
-                    vertical: 16,
-                  ),
-                  child: _failed
-                      ? Text(sentences.unnamedTrouble, style: Zc.body)
-                      : _core == null
-                      ? const SizedBox(
-                          height: 2,
-                          child: LinearProgressIndicator(color: Zc.clay),
-                        )
-                      : _work(t, wide: box.maxWidth >= 900),
+      // Rule 88 (ط): with the editor beside it, Z keeps the start third —
+      // the right in Arabic — and the editor's frame stands over the rest.
+      body: split
+          ? Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                SizedBox(
+                  key: TheTrial.zThird,
+                  width: MediaQuery.sizeOf(context).width / 3,
+                  child: glass,
                 ),
-              ),
-            ),
-          ],
-        ),
-      ),
+                const Expanded(child: SizedBox.shrink()),
+              ],
+            )
+          : glass,
     );
   }
+
+  Widget _glass(AppLocalizations t) => SafeArea(
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _aboutLine(t),
+        _noticeBand(t),
+        Expanded(
+          child: LayoutBuilder(
+            builder: (context, box) => SingleChildScrollView(
+              padding: EdgeInsets.symmetric(
+                horizontal: box.maxWidth < 600 ? 14 : 28,
+                vertical: 16,
+              ),
+              child: _failed
+                  ? Text(sentences.unnamedTrouble, style: Zc.body)
+                  : _core == null
+                  ? const SizedBox(
+                      height: 2,
+                      child: LinearProgressIndicator(color: Zc.clay),
+                    )
+                  : _work(t, wide: box.maxWidth >= 900),
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
 
   Widget _aboutLine(AppLocalizations t) => Container(
     color: Zc.card,
@@ -1026,14 +1097,28 @@ class _TheTrialState extends State<TheTrial> {
           ),
         ),
         const SizedBox(height: 10),
-        Align(
-          alignment: AlignmentDirectional.centerStart,
-          child: FilledButton(
-            key: TheTrial.restore,
-            onPressed: _restore,
-            style: FilledButton.styleFrom(backgroundColor: Zc.river),
-            child: Text(t.addAnAnswer),
-          ),
+        Wrap(
+          spacing: 10,
+          runSpacing: 8,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            FilledButton(
+              key: TheTrial.restore,
+              onPressed: _restore,
+              style: FilledButton.styleFrom(backgroundColor: Zc.river),
+              child: Text(t.addAnAnswer),
+            ),
+            // Rule 88 (ط): the latest restored answer into the editor, as
+            // AI's (`scribe-insert`); it opens the editor if it is closed.
+            OutlinedButton.icon(
+              key: TheTrial.copyTheAnswerToTheEditor,
+              onPressed: _done.isEmpty
+                  ? null
+                  : () => _openTheEditor(insert: _done.last.turn.answer.text),
+              icon: const Icon(Icons.edit_note_outlined, size: 18),
+              label: Text(t.trialCopyTheAnswerToTheEditor),
+            ),
+          ],
         ),
       ],
     ),
@@ -1041,7 +1126,8 @@ class _TheTrialState extends State<TheTrial> {
 
   /// **Scribe's button** (paper 124, rule 88 (ح)), under the answer box: its
   /// mark, and beside it the sentence with Scribe's name in bold. It opens
-  /// Scribe's editor over the trial (`the_page.dart`); nothing of the trial
+  /// Scribe's editor beside the trial, or over it on a phone (rule 88 (ط),
+  /// `the_page.dart`); nothing of the trial
   /// goes with it — an answer goes only by «Send to the editor».
   Widget _scribe(AppLocalizations t) {
     final sentence = t.trialScribe;
@@ -1051,7 +1137,7 @@ class _TheTrialState extends State<TheTrial> {
       alignment: AlignmentDirectional.centerStart,
       child: TextButton(
         key: TheTrial.scribe,
-        onPressed: () => page.openTheEditor(),
+        onPressed: () => _openTheEditor(),
         style: TextButton.styleFrom(
           foregroundColor: Zc.ink,
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
@@ -1253,7 +1339,7 @@ class _TheTrialState extends State<TheTrial> {
               child: TextButton.icon(
                 key: TheTrial.sendToTheEditor(i),
                 onPressed: () =>
-                    page.openTheEditor(insert: _done[i].turn.answer.text),
+                    _openTheEditor(insert: _done[i].turn.answer.text),
                 icon: const Icon(Icons.edit_note_outlined, size: 18),
                 label: Text(t.trialSendToTheEditor),
               ),

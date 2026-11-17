@@ -720,5 +720,6 @@
   "theChatYou": "Du",
   "theChatCoded": "Kodat",
   "trialScribe": "Scribe: en textredigerare för att skriva dokument.",
+  "trialCopyTheAnswerToTheEditor": "Kopiera svaret till redigeraren",
   "trialSendToTheEditor": "Skicka till redigeraren"
 }
