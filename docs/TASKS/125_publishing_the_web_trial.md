@@ -178,10 +178,50 @@ The lead runs these from this machine; they are only reads of our own site.
 1. **A line on each front page,** «Try Z in your browser», leading to `/<lang>/try/`, in the five languages. This changes `site/`. G59 must still pass.
 2. **`llms.txt`,** a short plain text that says what Z is and links the trial, the front pages and the download page. It is read by AI crawlers. Its sentences must pass G59's rule: the site says nothing the tree does not.
 
-## 7 · Paper 124's addendum (written when 124 is merged)
+## 7 · Paper 124's addendum: Scribe's editor (written 18 Nov; the build is `feat/web-trial` 9766d1f with Scribe 6e524e5)
 
-These go to the server in one later step, with their own checks:
-- the shared CanvasKit path `/try/canvaskit/`;
-- the Scribe bundle at `/<lang>/try/scribe/`;
-- `frame-src 'self'` in the trial snippet;
-- a location for `/<lang>/try/scribe/` with `frame-ancestors 'self'` and `X-Frame-Options SAMEORIGIN`, and not DENY.
+The lines are the record's (`site-trial/_trial.nginx`, sections 2, 2b and 3). The order matters: nginx first, then the files, because the new pages ask for `/try/canvaskit/`, which the old configuration does not serve. The lead tested the two edits below on copies.
+
+**0. Before:**
+```
+cp /etc/nginx/sites-enabled/z-privacy ~/nginx-z-before-125-7.conf
+cp /etc/nginx/snippets/zprivacy-trial-headers.conf ~/trial-headers-before-125-7.conf
+```
+
+**1. `frame-src 'self'` in the trial's CSP:**
+```
+sed -i "s/img-src 'self'; form-action/img-src 'self'; frame-src 'self'; form-action/" /etc/nginx/snippets/zprivacy-trial-headers.conf
+grep -c "frame-src 'self'" /etc/nginx/snippets/zprivacy-trial-headers.conf
+```
+It must print `1`.
+
+**2. Scribe's snippet:** a new file, `/etc/nginx/snippets/zprivacy-trial-scribe-headers.conf`, holding the six lines of the record's section 2b.
+
+**3. The four locations** (CanvasKit and Scribe's three) go in a file `~/z-scribe-locations.conf`, holding the record's lines from «# CanvasKit» to the end of the third Scribe location. They are then inserted right after the 301 line, which is above the trial's other locations:
+```
+grep -c 'return 301 /\$1/try/;' /etc/nginx/sites-enabled/z-privacy
+sed -i '/return 301 \/\$1\/try\/;/r /root/z-scribe-locations.conf' /etc/nginx/sites-enabled/z-privacy
+```
+The first command must print `1`. If it does not, stop and send the lead its output.
+
+**4. Test, then reload:**
+```
+nginx -t && systemctl reload nginx
+```
+
+**5. The files,** from this machine, with the same line as on 17 Nov:
+```
+rsync -a --delete --exclude _headers --exclude _trial.nginx --exclude .site-trial ~/z/build-lead-122/site-trial/ root@65.108.13.150:/srv/zprivacy/site-trial/
+```
+
+**6. Cloudflare:** Purge Cache → Custom Purge → prefix, for `z-privacy.com/en/try/`, `/ar/try/`, `/de/try/`, `/fr/try/`, `/es/try/`, `/sv/try/` and `/try/canvaskit/`. The rule «z trial files» (`*/try/*`) already covers `/try/canvaskit/`.
+
+**Checks (the lead, by curl):**
+- `/ar/try/` → 200, with `frame-src 'self'` in its CSP;
+- `/ar/try/scribe/` → 200, with `frame-ancestors 'self'` and `x-frame-options: SAMEORIGIN`;
+- `/try/canvaskit/canvaskit.wasm` → 200, `application/wasm`;
+- `/ar/try/scribe/scribe_engine_bg.wasm` → 200, `application/wasm`.
+
+**The owner** then opens `z-privacy.com` at full width: the editor sits beside Z, and «Copy the answer to the editor» works.
+
+**Rolling back:** put back the two copies of step 0, then `nginx -t && systemctl reload nginx`.
